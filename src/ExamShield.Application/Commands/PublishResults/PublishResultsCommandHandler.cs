@@ -11,11 +11,14 @@ public sealed class PublishResultsCommandHandler
 {
     private readonly IScoreRepository _scores;
     private readonly IAuditLogRepository _auditLog;
+    private readonly ICacheService _cache;
 
-    public PublishResultsCommandHandler(IScoreRepository scores, IAuditLogRepository auditLog)
+    public PublishResultsCommandHandler(
+        IScoreRepository scores, IAuditLogRepository auditLog, ICacheService cache)
     {
         _scores = scores;
         _auditLog = auditLog;
+        _cache = cache;
     }
 
     public async Task<PublishResultsResult> Handle(
@@ -32,9 +35,13 @@ public sealed class PublishResultsCommandHandler
         }
 
         if (unpublished.Count > 0)
+        {
             await _auditLog.AppendAsync(
                 AuditLog.Record(AuditAction.ResultsPublished,
                     reason: $"Published {unpublished.Count} result(s) for exam {command.ExamId}"), ct);
+            await _cache.InvalidateAsync(CacheKeys.PublishedResults, ct);
+            await _cache.InvalidateAsync(CacheKeys.Statistics, ct);
+        }
 
         return new PublishResultsResult(unpublished.Count);
     }

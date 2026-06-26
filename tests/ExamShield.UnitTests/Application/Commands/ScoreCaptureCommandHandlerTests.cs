@@ -1,3 +1,4 @@
+using ExamShield.Application;
 using ExamShield.Application.Commands.ScoreCapture;
 using ExamShield.Domain.Entities;
 using ExamShield.Domain.Enums;
@@ -16,13 +17,14 @@ public sealed class ScoreCaptureCommandHandlerTests
     private readonly IAnswerKeyRepository _answerKeys = Substitute.For<IAnswerKeyRepository>();
     private readonly IScoreRepository _scores = Substitute.For<IScoreRepository>();
     private readonly IAuditLogRepository _auditLog = Substitute.For<IAuditLogRepository>();
+    private readonly ICacheService _cache = Substitute.For<ICacheService>();
     private readonly ScoreCaptureCommandHandler _sut;
 
     private static readonly AnswerKey Key = new(
         new Dictionary<int, string> { [1] = "A", [2] = "B", [3] = "C" });
 
     public ScoreCaptureCommandHandlerTests() =>
-        _sut = new ScoreCaptureCommandHandler(_captures, _ocrResults, _answerKeys, _scores, _auditLog);
+        _sut = new ScoreCaptureCommandHandler(_captures, _ocrResults, _answerKeys, _scores, _auditLog, _cache);
 
     private static Capture UploadedCapture()
     {
@@ -105,5 +107,19 @@ public sealed class ScoreCaptureCommandHandlerTests
         await _auditLog.Received(1).AppendAsync(
             Arg.Is<AuditLog>(e => e.Action == AuditAction.ScoreGenerated && e.CaptureId == capture.Id),
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_AfterScoring_InvalidatesStatisticsCache()
+    {
+        var capture = UploadedCapture();
+        var ocr = HighConfidenceOcrResult(capture.Id);
+        _captures.GetByIdAsync(capture.Id, Arg.Any<CancellationToken>()).Returns(capture);
+        _ocrResults.GetByCaptureIdAsync(capture.Id, Arg.Any<CancellationToken>()).Returns(ocr);
+        _answerKeys.GetByExamIdAsync(capture.ExamId, Arg.Any<CancellationToken>()).Returns(Key);
+
+        await _sut.Handle(new ScoreCaptureCommand(capture.Id.Value), default);
+
+        await _cache.Received(1).InvalidateAsync(CacheKeys.Statistics, Arg.Any<CancellationToken>());
     }
 }

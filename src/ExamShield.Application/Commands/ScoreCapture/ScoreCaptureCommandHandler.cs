@@ -14,16 +14,19 @@ public sealed class ScoreCaptureCommandHandler : IRequestHandler<ScoreCaptureCom
     private readonly IAnswerKeyRepository _answerKeys;
     private readonly IScoreRepository _scores;
     private readonly IAuditLogRepository _auditLog;
+    private readonly ICacheService _cache;
 
     public ScoreCaptureCommandHandler(
         ICaptureRepository captures, IOcrResultRepository ocrResults,
-        IAnswerKeyRepository answerKeys, IScoreRepository scores, IAuditLogRepository auditLog)
+        IAnswerKeyRepository answerKeys, IScoreRepository scores,
+        IAuditLogRepository auditLog, ICacheService cache)
     {
         _captures = captures;
         _ocrResults = ocrResults;
         _answerKeys = answerKeys;
         _scores = scores;
         _auditLog = auditLog;
+        _cache = cache;
     }
 
     public async Task<ScoreCaptureResult> Handle(ScoreCaptureCommand command, CancellationToken ct)
@@ -42,6 +45,7 @@ public sealed class ScoreCaptureCommandHandler : IRequestHandler<ScoreCaptureCom
         await _scores.AddAsync(score, ct);
         await _auditLog.AppendAsync(
             AuditLog.Record(AuditAction.ScoreGenerated, captureId: capture.Id), ct);
+        await _cache.InvalidateAsync(CacheKeys.Statistics, ct);
 
         return new ScoreCaptureResult(score.Id.Value, score.CorrectAnswers, score.TotalQuestions, score.Percentage);
     }

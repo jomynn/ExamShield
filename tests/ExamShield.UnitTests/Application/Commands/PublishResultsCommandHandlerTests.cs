@@ -1,3 +1,4 @@
+using ExamShield.Application;
 using ExamShield.Application.Commands.PublishResults;
 using ExamShield.Domain.Entities;
 using ExamShield.Domain.Interfaces;
@@ -12,10 +13,11 @@ public sealed class PublishResultsCommandHandlerTests
 {
     private readonly IScoreRepository _scores = Substitute.For<IScoreRepository>();
     private readonly IAuditLogRepository _auditLog = Substitute.For<IAuditLogRepository>();
+    private readonly ICacheService _cache = Substitute.For<ICacheService>();
     private readonly PublishResultsCommandHandler _sut;
 
     public PublishResultsCommandHandlerTests() =>
-        _sut = new PublishResultsCommandHandler(_scores, _auditLog);
+        _sut = new PublishResultsCommandHandler(_scores, _auditLog, _cache);
 
     private static Score BuildScore(ExamId examId) =>
         Score.Create(CaptureId.New(), examId, StudentId.New(),
@@ -73,5 +75,30 @@ public sealed class PublishResultsCommandHandlerTests
         var result = await _sut.Handle(new PublishResultsCommand(examId.Value), default);
 
         result.PublishedCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Handle_WhenPublishing_InvalidatesResultsAndStatisticsCache()
+    {
+        var examId = ExamId.New();
+        _scores.GetByExamIdAsync(examId, Arg.Any<CancellationToken>())
+            .Returns(new List<Score> { BuildScore(examId) });
+
+        await _sut.Handle(new PublishResultsCommand(examId.Value), default);
+
+        await _cache.Received(1).InvalidateAsync(CacheKeys.PublishedResults, Arg.Any<CancellationToken>());
+        await _cache.Received(1).InvalidateAsync(CacheKeys.Statistics, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_WhenNoScores_DoesNotInvalidateCache()
+    {
+        var examId = ExamId.New();
+        _scores.GetByExamIdAsync(examId, Arg.Any<CancellationToken>())
+            .Returns(new List<Score>());
+
+        await _sut.Handle(new PublishResultsCommand(examId.Value), default);
+
+        await _cache.DidNotReceive().InvalidateAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 }

@@ -1,5 +1,6 @@
 using ExamShield.Domain.Interfaces;
 using ExamShield.Infrastructure.Alerts;
+using ExamShield.Infrastructure.Cache;
 using ExamShield.Infrastructure.OCR;
 using ExamShield.Infrastructure.Persistence;
 using ExamShield.Infrastructure.Persistence.Repositories;
@@ -53,6 +54,13 @@ public static class ServiceCollectionExtensions
             ? new byte[32]
             : Convert.FromBase64String(wmOptions.HmacKeyBase64);
         services.AddSingleton<IWatermarkService>(new HmacWatermarkService(hmacKey));
+        var cacheOptions = configuration.GetSection(CacheOptions.Section).Get<CacheOptions>() ?? new CacheOptions();
+        if (cacheOptions.Type == "Redis")
+            services.AddStackExchangeRedisCache(o => o.Configuration = cacheOptions.ConnectionString);
+        else
+            services.AddDistributedMemoryCache();
+        services.AddSingleton<ICacheService, CacheService>();
+
         services.AddHttpClient("Alerts");
         services.AddSingleton<IAlertService, AlertService>();
         return services;
