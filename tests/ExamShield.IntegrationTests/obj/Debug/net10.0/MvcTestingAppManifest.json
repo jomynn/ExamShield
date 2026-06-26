@@ -1,6 +1,0 @@
-{
-  "ExamShield.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/Volumes\/External\/Workspace\/ExamShield\/src\/ExamShield.Api",
-  "ExamShield.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/Volumes\/External\/Workspace\/ExamShield\/src\/ExamShield.Application",
-  "ExamShield.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/Volumes\/External\/Workspace\/ExamShield\/src\/ExamShield.Domain",
-  "ExamShield.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/Volumes\/External\/Workspace\/ExamShield\/src\/ExamShield.Infrastructure"
-}
