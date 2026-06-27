@@ -44,13 +44,16 @@ function ResultPanel({ data }: { data: PublicVerifyResponse }) {
 
 export default function PublicVerificationPage() {
   const [input, setInput] = useState('')
+  const [mode, setMode] = useState<'captureId' | 'hash'>('captureId')
   const [state, setState] = useState<VerifyState>({ status: 'idle' })
 
   async function handleVerify() {
     if (!input.trim()) return
     setState({ status: 'loading' })
     try {
-      const data = await api.publicVerify(input.trim())
+      const data = mode === 'hash'
+        ? await api.publicVerifyByHash(input.trim())
+        : await api.publicVerify(input.trim())
       setState({ status: 'success', data })
     } catch (err) {
       setState({ status: 'error', message: err instanceof Error ? err.message : 'Verification failed.' })
@@ -62,8 +65,20 @@ export default function PublicVerificationPage() {
       <div className="space-y-1">
         <h1 className="text-3xl font-bold text-foreground">Verify Answer Sheet</h1>
         <p className="text-muted-foreground">
-          Enter a Capture ID to verify its hash and digital signature.
+          Enter a Capture ID or SHA-256 hash to verify authenticity and digital signature.
         </p>
+      </div>
+
+      <div className="flex gap-2 mb-1">
+        {(['captureId', 'hash'] as const).map(m => (
+          <button
+            key={m}
+            onClick={() => { setMode(m); setInput(''); setState({ status: 'idle' }) }}
+            className={`px-3 py-1 rounded text-xs ${mode === m ? 'bg-primary text-primary-foreground' : 'border border-border text-muted-foreground hover:text-foreground'}`}
+          >
+            {m === 'captureId' ? 'Capture ID' : 'SHA-256 Hash'}
+          </button>
+        ))}
       </div>
 
       <div className="flex gap-2">
@@ -72,7 +87,7 @@ export default function PublicVerificationPage() {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleVerify()}
-          placeholder="Capture ID (UUID)"
+          placeholder={mode === 'hash' ? 'SHA-256 hash (64 hex chars)' : 'Capture ID (UUID)'}
           className="flex-1 rounded-lg border border-border bg-card px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <button

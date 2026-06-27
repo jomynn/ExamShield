@@ -120,6 +120,9 @@ export const api = {
   publicVerify: (captureId: string) =>
     request<PublicVerifyResponse>(`/public/verify?captureId=${encodeURIComponent(captureId)}`),
 
+  publicVerifyByHash: (hashHex: string) =>
+    request<PublicVerifyResponse>(`/public/verify?hashHex=${encodeURIComponent(hashHex)}`),
+
   getCaptures: (page = 1, pageSize = 50, examId?: string, status?: string) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
     if (examId) params.set('examId', examId)

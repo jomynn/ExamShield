@@ -21,4 +21,5 @@ public interface ICaptureRepository
     Task<bool> ExistsByStudentExamPageAsync(
         StudentId studentId, ExamId examId, PageNumber pageNumber,
         CancellationToken ct = default);
+    Task<Capture?> FindByHashAsync(Hash hash, CancellationToken ct = default);
 }

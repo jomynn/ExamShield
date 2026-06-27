@@ -17,8 +17,12 @@ public sealed class PublicVerifyCaptureQueryHandler(
 {
     public async Task<PublicVerifyResult> Handle(PublicVerifyCaptureQuery request, CancellationToken ct)
     {
-        var capture = await captures.GetByIdAsync(new CaptureId(request.CaptureId), ct)
-            ?? throw new CaptureNotFoundException(request.CaptureId);
+        var capture = request.CaptureId.HasValue
+            ? await captures.GetByIdAsync(new CaptureId(request.CaptureId.Value), ct)
+            : await captures.FindByHashAsync(Hash.FromHex(request.HashHex!), ct);
+
+        if (capture is null)
+            throw new CaptureNotFoundException(request.CaptureId ?? Guid.Empty);
 
         if (capture.StorageKey is null)
             return new PublicVerifyResult(capture.Id.Value, false, false, false, false, capture.CapturedAt);

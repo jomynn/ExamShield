@@ -20,12 +20,15 @@ public static class PublicEndpoints
     }
 
     private static async Task<IResult> PublicVerifyAsync(
-        Guid? captureId, ISender sender, CancellationToken ct)
+        Guid? captureId, string? hashHex, ISender sender, CancellationToken ct)
     {
-        if (captureId is null)
-            return Results.BadRequest("captureId query parameter is required.");
+        if (captureId is null && string.IsNullOrWhiteSpace(hashHex))
+            return Results.BadRequest("Either captureId or hashHex query parameter is required.");
 
-        var result = await sender.Send(new PublicVerifyCaptureQuery(captureId.Value), ct);
+        if (captureId is not null && !string.IsNullOrWhiteSpace(hashHex))
+            return Results.BadRequest("Provide captureId or hashHex, not both.");
+
+        var result = await sender.Send(new PublicVerifyCaptureQuery(captureId, hashHex), ct);
 
         return Results.Ok(new PublicVerifyResponse(
             result.CaptureId, result.IsValid, result.HashValid,

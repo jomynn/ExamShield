@@ -68,4 +68,7 @@ public sealed class InMemoryCaptureRepository : ICaptureRepository
               && c.ExamId    == examId
               && c.PageNumber == pageNumber
               && c.Status    != CaptureStatus.Tampered));
+
+    public Task<Capture?> FindByHashAsync(Hash hash, CancellationToken ct = default) =>
+        Task.FromResult(_store.Values.FirstOrDefault(c => c.ExpectedHash.Hex == hash.Hex));
 }
