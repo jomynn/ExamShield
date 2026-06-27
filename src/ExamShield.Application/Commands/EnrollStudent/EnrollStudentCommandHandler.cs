@@ -22,6 +22,13 @@ public sealed class EnrollStudentCommandHandler(
         if (await candidates.ExistsAsync(exam.Id, studentId, ct))
             throw new StudentAlreadyEnrolledException(command.ExamId, command.StudentId);
 
+        if (exam.MaxCandidates is not null)
+        {
+            var enrolled = await candidates.CountByExamIdAsync(exam.Id, ct);
+            if (enrolled >= exam.MaxCandidates)
+                throw new ExamFullException(command.ExamId, exam.MaxCandidates.Value);
+        }
+
         var candidate = ExamCandidate.Enroll(exam.Id, studentId);
         await candidates.AddAsync(candidate, ct);
         await audit.AppendAsync(

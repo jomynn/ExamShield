@@ -27,6 +27,9 @@ public sealed class InMemoryExamCandidateRepository : IExamCandidateRepository
         return Task.FromResult(exists);
     }
 
+    public Task<int> CountByExamIdAsync(ExamId examId, CancellationToken ct = default) =>
+        Task.FromResult(_store.Values.Count(c => c.ExamId == examId));
+
     public Task RemoveAsync(ExamId examId, StudentId studentId, CancellationToken ct = default)
     {
         _store.TryRemove((examId.Value, studentId.Value), out _);

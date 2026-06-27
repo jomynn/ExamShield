@@ -7,7 +7,8 @@ namespace ExamShield.Application.Queries.GetExamById;
 public sealed record GetExamByIdResult(
     Guid ExamId, string Name, string? Description,
     string Status, int TotalQuestions, DateTimeOffset CreatedAt,
-    DateTimeOffset? ScheduledAt, DateTimeOffset? EndsAt);
+    DateTimeOffset? ScheduledAt, DateTimeOffset? EndsAt,
+    int? MaxCandidates = null);
 
 public sealed record GetExamByIdQuery(Guid ExamId) : IRequest<GetExamByIdResult?>;
 
@@ -22,6 +23,6 @@ public sealed class GetExamByIdQueryHandler(IExamRepository exams)
         return new GetExamByIdResult(
             exam.Id.Value, exam.Name, exam.Description,
             exam.Status.ToString(), exam.TotalQuestions, exam.CreatedAt,
-            exam.ScheduledAt, exam.EndsAt);
+            exam.ScheduledAt, exam.EndsAt, exam.MaxCandidates);
     }
 }

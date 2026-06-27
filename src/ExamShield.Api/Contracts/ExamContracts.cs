@@ -2,7 +2,8 @@ namespace ExamShield.Api.Contracts;
 
 public sealed record CreateExamRequest(
     string Name, string? Description, int TotalQuestions,
-    DateTimeOffset? ScheduledAt = null, DateTimeOffset? EndsAt = null);
+    DateTimeOffset? ScheduledAt = null, DateTimeOffset? EndsAt = null,
+    int? MaxCandidates = null);
 
 public sealed record SetAnswerKeyRequest(IReadOnlyDictionary<int, string> Answers);
 public sealed record AnswerKeyResponse(Guid ExamId, IReadOnlyDictionary<string, string> Answers, DateTimeOffset CreatedAt);
@@ -10,7 +11,8 @@ public sealed record AnswerKeyResponse(Guid ExamId, IReadOnlyDictionary<string, 
 public sealed record ExamResponse(
     Guid ExamId, string Name, string? Description,
     string Status, int TotalQuestions, DateTimeOffset CreatedAt,
-    DateTimeOffset? ScheduledAt, DateTimeOffset? EndsAt);
+    DateTimeOffset? ScheduledAt, DateTimeOffset? EndsAt,
+    int? MaxCandidates = null);
 
 public sealed record UpdateExamRequest(
     string Name, string? Description,

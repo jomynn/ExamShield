@@ -9,11 +9,12 @@ public sealed class CreateExamCommandHandler(IExamRepository exams)
 {
     public async Task<CreateExamResult> Handle(CreateExamCommand request, CancellationToken ct)
     {
-        var exam = Exam.Create(request.Name, request.Description, request.TotalQuestions, request.ScheduledAt, request.EndsAt);
+        var exam = Exam.Create(request.Name, request.Description, request.TotalQuestions,
+            request.ScheduledAt, request.EndsAt, request.MaxCandidates);
         await exams.AddAsync(exam, ct);
         return new CreateExamResult(
             exam.Id.Value, exam.Name, exam.Description,
             exam.TotalQuestions, exam.Status.ToString(), exam.CreatedAt,
-            exam.ScheduledAt, exam.EndsAt);
+            exam.ScheduledAt, exam.EndsAt, exam.MaxCandidates);
     }
 }

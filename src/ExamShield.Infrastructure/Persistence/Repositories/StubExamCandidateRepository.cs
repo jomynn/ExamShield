@@ -14,6 +14,9 @@ public sealed class StubExamCandidateRepository : IExamCandidateRepository
     public Task<bool> ExistsAsync(ExamId examId, StudentId studentId, CancellationToken ct = default) =>
         Task.FromResult(false);
 
+    public Task<int> CountByExamIdAsync(ExamId examId, CancellationToken ct = default) =>
+        Task.FromResult(0);
+
     public Task RemoveAsync(ExamId examId, StudentId studentId, CancellationToken ct = default) =>
         Task.CompletedTask;
 }

@@ -92,6 +92,7 @@ app.UseExceptionHandler(exceptionApp => exceptionApp.Run(async ctx =>
         CaptureAlreadyTamperedException   => (409, ex.Message),
         AnswerKeyAlreadySetException     => (409, ex.Message),
         StudentAlreadyEnrolledException  => (409, ex.Message),
+        ExamFullException                => (409, ex.Message),
         StudentHasCaptureException       => (409, ex.Message),
         StudentNotEnrolledException      => (404, ex.Message),
         HashMismatchException        => (400, ex.Message),

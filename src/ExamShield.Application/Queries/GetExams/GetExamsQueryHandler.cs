@@ -15,7 +15,7 @@ public sealed class GetExamsQueryHandler(IExamRepository exams)
             ct);
         var dtos = items
             .OrderByDescending(e => e.CreatedAt)
-            .Select(e => new ExamDto(e.Id.Value, e.Name, e.Description, e.Status.ToString(), e.TotalQuestions, e.CreatedAt, e.ScheduledAt, e.EndsAt))
+            .Select(e => new ExamDto(e.Id.Value, e.Name, e.Description, e.Status.ToString(), e.TotalQuestions, e.CreatedAt, e.ScheduledAt, e.EndsAt, e.MaxCandidates))
             .ToList();
         return new GetExamsResult(dtos, total, request.Page, request.PageSize);
     }

@@ -11,6 +11,7 @@ public sealed class Exam : AggregateRoot
     public string? Description { get; private set; }
     public ExamStatus Status { get; private set; }
     public int TotalQuestions { get; private set; }
+    public int? MaxCandidates { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset? ScheduledAt { get; private set; }
     public DateTimeOffset? EndsAt { get; private set; }
@@ -20,18 +21,22 @@ public sealed class Exam : AggregateRoot
 
     public static Exam Create(
         string name, string? description, int totalQuestions,
-        DateTimeOffset? scheduledAt = null, DateTimeOffset? endsAt = null)
+        DateTimeOffset? scheduledAt = null, DateTimeOffset? endsAt = null,
+        int? maxCandidates = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
         if (totalQuestions <= 0)
             throw new ArgumentOutOfRangeException(nameof(totalQuestions), "Must be greater than zero.");
         if (scheduledAt.HasValue && endsAt.HasValue && endsAt <= scheduledAt)
             throw new ArgumentException("EndsAt must be after ScheduledAt.", nameof(endsAt));
+        if (maxCandidates is <= 0)
+            throw new ArgumentOutOfRangeException(nameof(maxCandidates), "MaxCandidates must be greater than zero.");
 
         return new Exam
         {
             Id = ExamId.New(), Name = name, Description = description,
-            TotalQuestions = totalQuestions, CreatedAt = DateTimeOffset.UtcNow,
+            TotalQuestions = totalQuestions, MaxCandidates = maxCandidates,
+            CreatedAt = DateTimeOffset.UtcNow,
             Status = ExamStatus.Draft,
             ScheduledAt = scheduledAt, EndsAt = endsAt
         };
