@@ -61,7 +61,7 @@ public sealed class MfaLoginCommandHandlerTests
         var act = () => _sut.Handle(
             new MfaLoginCommand("admin@examshield.io", "password", "000000"), default);
 
-        await act.Should().ThrowAsync<UnauthorizedAccessException>();
+        await act.Should().ThrowAsync<InvalidCredentialsException>();
     }
 
     [Fact]

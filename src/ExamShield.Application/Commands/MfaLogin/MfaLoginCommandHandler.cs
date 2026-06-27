@@ -29,14 +29,29 @@ public sealed class MfaLoginCommandHandler : IRequestHandler<MfaLoginCommand, Lo
     {
         var user = await _users.FindByEmailAsync(new Email(command.Email), ct);
 
-        if (user is null || !user.IsActive || !_hasher.Verify(command.Password, user.PasswordHash))
+        if (user is null || !user.IsActive || user.IsLockedOut ||
+            !_hasher.Verify(command.Password, user.PasswordHash))
+        {
+            if (user is not null && user.IsActive && !user.IsLockedOut)
+            {
+                user.RecordFailedLogin(LoginCommandHandler.MaxFailedAttempts, LoginCommandHandler.LockoutDuration);
+                await _users.SaveAsync(user, ct);
+            }
             throw new InvalidCredentialsException();
+        }
 
         if (!user.MfaEnabled || user.MfaSecret is null)
             throw new InvalidCredentialsException();
 
         if (!_totp.Verify(user.MfaSecret, command.Code))
-            throw new UnauthorizedAccessException("Invalid MFA code.");
+        {
+            user.RecordFailedLogin(LoginCommandHandler.MaxFailedAttempts, LoginCommandHandler.LockoutDuration);
+            await _users.SaveAsync(user, ct);
+            throw new InvalidCredentialsException();
+        }
+
+        user.ResetFailedLogin();
+        await _users.SaveAsync(user, ct);
 
         var rawToken = LoginCommandHandler.GenerateRawToken();
         var hash = LoginCommandHandler.HashToken(rawToken);
