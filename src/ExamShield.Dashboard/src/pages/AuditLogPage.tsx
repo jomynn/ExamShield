@@ -57,9 +57,14 @@ async function downloadAuditCsv(captureId?: string) {
 }
 
 export default function AuditLogPage() {
-  const [page, setPage] = useState(1)
+  const [page, setPage]                     = useState(1)
   const [filterCaptureId, setFilterCaptureId] = useState('')
-  const { data, isLoading, isError } = useAuditLog(page, PAGE_SIZE)
+  const [filterAction, setFilterAction]       = useState('')
+  const { data, isLoading, isError } = useAuditLog(
+    page, PAGE_SIZE,
+    filterCaptureId || undefined,
+    filterAction || undefined
+  )
   const totalPages = data ? Math.max(1, Math.ceil(data.totalCount / PAGE_SIZE)) : 1
 
   return (
@@ -77,14 +82,27 @@ export default function AuditLogPage() {
         </div>
       </div>
 
-      <div className="flex gap-2 max-w-sm">
+      <div className="flex flex-wrap gap-2">
         <input
           type="text"
           placeholder="Filter by Capture ID"
           value={filterCaptureId}
-          onChange={e => setFilterCaptureId(e.target.value)}
-          className="flex-1 rounded border border-border bg-background px-3 py-1.5 text-sm"
+          onChange={e => { setFilterCaptureId(e.target.value); setPage(1) }}
+          className="rounded border border-border bg-background px-3 py-1.5 text-sm w-72"
         />
+        <select
+          value={filterAction}
+          onChange={e => { setFilterAction(e.target.value); setPage(1) }}
+          className="rounded border border-border bg-background px-3 py-1.5 text-sm"
+        >
+          <option value="">All Actions</option>
+          {[
+            'UserCreated','DeviceRegistered','CaptureRegistered','ImageUploaded',
+            'HashVerified','TamperingDetected','ManualReviewStarted','ManualReviewCompleted',
+            'OCRStarted','OCRCompleted','ScoreGenerated','ResultPublished',
+            'ReviewRequestSubmitted','AnswerKeySet','StudentEnrolled','StudentUnenrolled',
+          ].map(a => <option key={a} value={a}>{a}</option>)}
+        </select>
       </div>
 
       {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}

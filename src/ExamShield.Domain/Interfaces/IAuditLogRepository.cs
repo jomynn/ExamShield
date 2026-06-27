@@ -1,4 +1,5 @@
 using ExamShield.Domain.Entities;
+using ExamShield.Domain.Enums;
 using ExamShield.Domain.ValueObjects;
 
 namespace ExamShield.Domain.Interfaces;
@@ -9,7 +10,9 @@ public interface IAuditLogRepository
     Task AppendAsync(AuditLog entry, CancellationToken ct = default);
 
     Task<(IReadOnlyList<AuditLog> Entries, int TotalCount)> QueryAsync(
-        CaptureId? captureId, int page, int pageSize, CancellationToken ct = default);
+        CaptureId? captureId, int page, int pageSize,
+        AuditAction? action = null,
+        CancellationToken ct = default);
 
     // Returns entries in ascending chronological order for chain traversal/verification.
     Task<IReadOnlyList<AuditLog>> GetChainAsync(CaptureId captureId, CancellationToken ct = default);

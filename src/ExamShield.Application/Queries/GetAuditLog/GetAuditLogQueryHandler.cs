@@ -1,3 +1,4 @@
+using ExamShield.Domain.Enums;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.ValueObjects;
 using MediatR;
@@ -14,8 +15,11 @@ public sealed class GetAuditLogQueryHandler : IRequestHandler<GetAuditLogQuery, 
     public async Task<GetAuditLogResult> Handle(GetAuditLogQuery query, CancellationToken ct)
     {
         var captureId = query.CaptureId.HasValue ? new CaptureId(query.CaptureId.Value) : null;
+        AuditAction? action = query.Action is not null &&
+            Enum.TryParse<AuditAction>(query.Action, ignoreCase: true, out var parsed)
+            ? parsed : null;
 
-        var (entries, total) = await _repository.QueryAsync(captureId, query.Page, query.PageSize, ct);
+        var (entries, total) = await _repository.QueryAsync(captureId, query.Page, query.PageSize, action, ct);
 
         var dtos = entries.Select(e => new AuditLogDto(
             e.Id.Value,

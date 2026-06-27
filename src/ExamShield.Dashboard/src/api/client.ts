@@ -102,11 +102,12 @@ export const api = {
       body: JSON.stringify({ refreshToken }),
     }),
 
-  getAuditLog: (params?: { captureId?: string; page?: number; pageSize?: number }) => {
+  getAuditLog: (params?: { captureId?: string; page?: number; pageSize?: number; action?: string }) => {
     const q = new URLSearchParams()
     if (params?.captureId) q.set('captureId', params.captureId)
-    if (params?.page) q.set('page', String(params.page))
-    if (params?.pageSize) q.set('pageSize', String(params.pageSize))
+    if (params?.page)      q.set('page', String(params.page))
+    if (params?.pageSize)  q.set('pageSize', String(params.pageSize))
+    if (params?.action)    q.set('action', params.action)
     return request<AuditResponse>(`/audit?${q}`)
   },
 

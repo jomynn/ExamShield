@@ -3,6 +3,7 @@ using ExamShield.Api.Contracts;
 using ExamShield.Application.Queries.ExportAuditLog;
 using ExamShield.Application.Queries.GetAuditLog;
 using ExamShield.Application.Queries.VerifyAuditChain;
+using ExamShield.Domain.Enums;
 using MediatR;
 
 namespace ExamShield.Api.Endpoints;
@@ -37,9 +38,13 @@ public static class AuditEndpoints
         Guid? captureId = null,
         int page = 1,
         int pageSize = 50,
+        string? action = null,
         CancellationToken ct = default)
     {
-        var result = await sender.Send(new GetAuditLogQuery(captureId, page, pageSize), ct);
+        if (action is not null && !Enum.TryParse<AuditAction>(action, ignoreCase: true, out _))
+            return Results.BadRequest(new { error = $"Unknown audit action '{action}'." });
+
+        var result = await sender.Send(new GetAuditLogQuery(captureId, page, pageSize, action), ct);
 
         var response = new AuditLogResponse(
             result.Entries.Select(e => new AuditLogEntryResponse(

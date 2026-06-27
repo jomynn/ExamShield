@@ -1,4 +1,5 @@
 using ExamShield.Domain.Entities;
+using ExamShield.Domain.Enums;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.Services;
 using ExamShield.Domain.ValueObjects;
@@ -29,21 +30,19 @@ public sealed class AuditLogRepository(ExamShieldDbContext context, IServerSigni
     }
 
     public async Task<(IReadOnlyList<AuditLog> Entries, int TotalCount)> QueryAsync(
-        CaptureId? captureId, int page, int pageSize, CancellationToken ct = default)
+        CaptureId? captureId, int page, int pageSize,
+        AuditAction? action = null,
+        CancellationToken ct = default)
     {
         var query = context.AuditLogs.AsQueryable();
-
-        if (captureId is not null)
-            query = query.Where(e => e.CaptureId == captureId);
-
+        if (captureId is not null) query = query.Where(e => e.CaptureId == captureId);
+        if (action    is not null) query = query.Where(e => e.Action    == action);
         var total = await query.CountAsync(ct);
-
         var entries = await query
             .OrderByDescending(e => e.OccurredAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);
-
         return (entries, total);
     }
 

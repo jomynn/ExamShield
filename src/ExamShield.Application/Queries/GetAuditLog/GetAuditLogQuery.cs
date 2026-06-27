@@ -5,7 +5,8 @@ namespace ExamShield.Application.Queries.GetAuditLog;
 public sealed record GetAuditLogQuery(
     Guid? CaptureId = null,
     int Page = 1,
-    int PageSize = 50
+    int PageSize = 50,
+    string? Action = null
 ) : IRequest<GetAuditLogResult>;
 
 public sealed record GetAuditLogResult(

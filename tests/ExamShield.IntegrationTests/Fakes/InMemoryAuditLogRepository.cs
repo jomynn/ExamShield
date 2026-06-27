@@ -1,4 +1,5 @@
 using ExamShield.Domain.Entities;
+using ExamShield.Domain.Enums;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.Services;
 using ExamShield.Domain.ValueObjects;
@@ -24,20 +25,19 @@ public sealed class InMemoryAuditLogRepository(IServerSigningService signer) : I
     }
 
     public Task<(IReadOnlyList<AuditLog> Entries, int TotalCount)> QueryAsync(
-        CaptureId? captureId, int page, int pageSize, CancellationToken ct = default)
+        CaptureId? captureId, int page, int pageSize,
+        AuditAction? action = null,
+        CancellationToken ct = default)
     {
         var query = _entries.AsEnumerable();
-
-        if (captureId is not null)
-            query = query.Where(e => e.CaptureId == captureId);
-
+        if (captureId is not null) query = query.Where(e => e.CaptureId == captureId);
+        if (action    is not null) query = query.Where(e => e.Action    == action);
         var total = query.Count();
         var entries = query
             .OrderByDescending(e => e.OccurredAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToList();
-
         return Task.FromResult<(IReadOnlyList<AuditLog>, int)>((entries, total));
     }
 
