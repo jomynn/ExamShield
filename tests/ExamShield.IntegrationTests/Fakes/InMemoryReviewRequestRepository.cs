@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using ExamShield.Domain.Entities;
+using ExamShield.Domain.Enums;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.ValueObjects;
 
@@ -22,6 +23,16 @@ public sealed class InMemoryReviewRequestRepository : IReviewRequestRepository
     {
         _store[request.Id] = request;
         return Task.CompletedTask;
+    }
+
+    public Task<IReadOnlyList<ReviewRequest>> ListAllAsync(
+        ReviewRequestStatus? status = null, CancellationToken ct = default)
+    {
+        var items = _store.Values.AsEnumerable();
+        if (status.HasValue)
+            items = items.Where(r => r.Status == status.Value);
+        return Task.FromResult<IReadOnlyList<ReviewRequest>>(
+            items.OrderByDescending(r => r.CreatedAt).ToList());
     }
 
     public Task<IReadOnlyList<ReviewRequest>> ListByStudentAsync(

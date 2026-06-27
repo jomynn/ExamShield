@@ -1,4 +1,5 @@
 using ExamShield.Domain.Entities;
+using ExamShield.Domain.Enums;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,15 @@ public sealed class ReviewRequestRepository(ExamShieldDbContext context) : IRevi
     {
         context.ReviewRequests.Update(request);
         await context.SaveChangesAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<ReviewRequest>> ListAllAsync(
+        ReviewRequestStatus? status = null, CancellationToken ct = default)
+    {
+        var query = context.ReviewRequests.AsQueryable();
+        if (status.HasValue)
+            query = query.Where(r => r.Status == status.Value);
+        return await query.OrderByDescending(r => r.CreatedAt).ToListAsync(ct);
     }
 
     public Task<IReadOnlyList<ReviewRequest>> ListByStudentAsync(

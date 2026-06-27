@@ -2,6 +2,7 @@ using ExamShield.Api.Contracts;
 using ExamShield.Application.Commands.RejectReviewRequest;
 using ExamShield.Application.Commands.ResolveReviewRequest;
 using ExamShield.Application.Commands.SubmitReviewRequest;
+using ExamShield.Application.Queries.GetAllReviewRequests;
 using ExamShield.Application.Queries.GetReviewRequests;
 using ExamShield.Application.Queries.GetStudentResults;
 using ExamShield.Domain.Exceptions;
@@ -65,6 +66,22 @@ public static class StudentEndpoints
         .RequireAuthorization("Operator")
         .Produces<ReviewRequestListResponse>()
         .ProducesProblem(StatusCodes.Status400BadRequest);
+
+        app.MapGet("/admin/review-requests",
+            async (ISender sender, CancellationToken ct, string? status = null) =>
+            {
+                var result = await sender.Send(new GetAllReviewRequestsQuery(status), ct);
+                var items = result.Items
+                    .Select(r => new AllReviewRequestItemResponse(
+                        r.ReviewRequestId, r.StudentId, r.CaptureId,
+                        r.Reason, r.Status, r.ResolutionNote, r.CreatedAt))
+                    .ToList();
+                return Results.Ok(new AllReviewRequestsResponse(items));
+            })
+        .WithName("GetAllReviewRequests")
+        .WithTags("Admin")
+        .RequireAuthorization("Supervisor")
+        .Produces<AllReviewRequestsResponse>();
 
         app.MapPut("/student/review-requests/{id:guid}/resolve",
             async (Guid id, ProcessReviewRequestBody body, ISender sender, CancellationToken ct) =>

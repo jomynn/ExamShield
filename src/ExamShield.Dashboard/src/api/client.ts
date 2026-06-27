@@ -217,6 +217,9 @@ export const api = {
   getStudentReviewRequests: (studentId: string) =>
     request<{ items: ReviewRequestItem[] }>(`/student/review-requests?studentId=${studentId}`),
 
+  getAllReviewRequests: (status?: string) =>
+    request<{ items: ReviewRequestItem[] }>(`/admin/review-requests${status ? `?status=${status}` : ''}`),
+
   resolveReviewRequest: (id: string, note: string) =>
     request<void>(`/student/review-requests/${id}/resolve`, {
       method: 'PUT',

@@ -11,6 +11,12 @@ public sealed record ReviewRequestListResponse(IReadOnlyList<ReviewRequestItemRe
 
 public sealed record ProcessReviewRequestBody(string Note);
 
+public sealed record AllReviewRequestItemResponse(
+    Guid ReviewRequestId, Guid StudentId, Guid CaptureId,
+    string Reason, string Status, string? ResolutionNote, DateTimeOffset CreatedAt);
+
+public sealed record AllReviewRequestsResponse(IReadOnlyList<AllReviewRequestItemResponse> Items);
+
 public sealed record StudentResultItemResponse(
     Guid ScoreId, Guid CaptureId, Guid ExamId, string ExamName,
     int CorrectAnswers, int TotalQuestions, double Percentage,
