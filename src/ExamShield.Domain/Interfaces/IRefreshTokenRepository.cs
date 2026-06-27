@@ -11,4 +11,5 @@ public interface IRefreshTokenRepository
     Task<IReadOnlyList<RefreshToken>> ListActiveByUserAsync(UserId userId, CancellationToken ct = default);
     Task SaveAsync(RefreshToken token, CancellationToken ct = default);
     Task RevokeAllForUserAsync(UserId userId, CancellationToken ct = default);
+    Task<IReadOnlyList<RefreshToken>> ListAllActiveAsync(UserId? userId, CancellationToken ct = default);
 }

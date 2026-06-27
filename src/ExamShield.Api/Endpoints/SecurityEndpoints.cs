@@ -1,4 +1,5 @@
 using ExamShield.Api.Contracts;
+using ExamShield.Application.Queries.GetAllActiveSessions;
 using ExamShield.Application.Queries.GetLoginHistory;
 using ExamShield.Application.Queries.GetSecurityEvents;
 using MediatR;
@@ -20,6 +21,20 @@ public static class SecurityEndpoints
             .WithTags("Security")
             .RequireAuthorization()
             .Produces<LoginHistoryResponse>();
+
+        app.MapGet("/security/sessions", async (
+            ISender sender, CancellationToken ct, Guid? userId = null) =>
+        {
+            var result = await sender.Send(new GetAllActiveSessionsQuery(userId), ct);
+            var entries = result.Sessions
+                .Select(s => new AllSessionEntry(s.Id, s.UserId, s.CreatedAt, s.ExpiresAt))
+                .ToList();
+            return Results.Ok(new AllSessionsResponse(entries));
+        })
+        .WithName("GetAllActiveSessions")
+        .WithTags("Security")
+        .RequireAuthorization("Administrator")
+        .Produces<AllSessionsResponse>();
 
         return app;
     }

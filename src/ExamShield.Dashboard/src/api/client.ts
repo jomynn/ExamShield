@@ -60,6 +60,14 @@ export interface SecurityEventEntry {
 }
 export interface SecurityEventListResponse { events: SecurityEventEntry[] }
 
+export interface AllSessionEntry {
+  id: string
+  userId: string
+  createdAt: string
+  expiresAt: string
+}
+export interface AllSessionsResponse { sessions: AllSessionEntry[] }
+
 export interface LoginHistoryEntry {
   id: string
   eventType: string
@@ -124,6 +132,11 @@ export const api = {
 
   getSecurityEvents: (limit = 100) =>
     request<SecurityEventListResponse>(`/security/events?limit=${limit}`),
+
+  getAllActiveSessions: (userId?: string) => {
+    const query = userId ? `?userId=${userId}` : ''
+    return request<AllSessionsResponse>(`/security/sessions${query}`)
+  },
 
   getDashboardStats: () =>
     request<DashboardStatsResponse>('/dashboard/stats'),

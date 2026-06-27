@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { api, type SecurityEventEntry } from '../api/client'
+import { api, type SecurityEventEntry, type AllSessionEntry } from '../api/client'
 import StatusChip from '../components/ui/StatusChip'
 import type { StatusVariant } from '../components/ui/StatusChip'
 import { ShieldAlert } from 'lucide-react'
@@ -34,11 +34,27 @@ function EventRow({ event }: { event: SecurityEventEntry }) {
   )
 }
 
+function SessionRow({ session }: { session: AllSessionEntry }) {
+  return (
+    <tr className="hover:bg-muted/30 transition-colors">
+      <td className="px-4 py-2 font-mono text-xs text-muted-foreground">{session.userId}</td>
+      <td className="px-4 py-2 text-sm text-muted-foreground">{new Date(session.createdAt).toLocaleString()}</td>
+      <td className="px-4 py-2 text-sm text-muted-foreground">{new Date(session.expiresAt).toLocaleString()}</td>
+    </tr>
+  )
+}
+
 export default function SecurityCenterPage() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['security-events'],
     queryFn: () => api.getSecurityEvents(),
     refetchInterval: 30_000,
+  })
+
+  const { data: sessionsData } = useQuery({
+    queryKey: ['all-active-sessions'],
+    queryFn: () => api.getAllActiveSessions(),
+    refetchInterval: 60_000,
   })
 
   const criticalCount = data?.events.filter(e => e.severity === 'Critical').length ?? 0
@@ -83,6 +99,34 @@ export default function SecurityCenterPage() {
               )}
             </tbody>
           </table>
+        </div>
+      )}
+      {sessionsData && (
+        <div className="space-y-2">
+          <h2 className="text-lg font-semibold text-foreground">
+            Active Sessions ({sessionsData.sessions.length})
+          </h2>
+          <div className="overflow-hidden rounded-xl border border-border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50">
+                <tr>
+                  {['User ID', 'Created', 'Expires'].map(h => (
+                    <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {sessionsData.sessions.map(s => <SessionRow key={s.id} session={s} />)}
+                {sessionsData.sessions.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">
+                      No active sessions.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

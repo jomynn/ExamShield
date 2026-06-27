@@ -40,4 +40,12 @@ public sealed class InMemoryRefreshTokenRepository : IRefreshTokenRepository
             kv.Value.Revoke();
         return Task.CompletedTask;
     }
+
+    public Task<IReadOnlyList<RefreshToken>> ListAllActiveAsync(UserId? userId, CancellationToken ct = default)
+    {
+        var query = _store.Values.Where(t => t.IsActive);
+        if (userId is not null)
+            query = query.Where(t => t.UserId == userId);
+        return Task.FromResult<IReadOnlyList<RefreshToken>>(query.ToList());
+    }
 }

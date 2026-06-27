@@ -30,6 +30,15 @@ public sealed class RefreshTokenRepository(ExamShieldDbContext db) : IRefreshTok
         await db.SaveChangesAsync(ct);
     }
 
+    public async Task<IReadOnlyList<RefreshToken>> ListAllActiveAsync(UserId? userId, CancellationToken ct = default)
+    {
+        var query = db.RefreshTokens
+            .Where(t => t.RevokedAt == null && t.ExpiresAt > DateTimeOffset.UtcNow);
+        if (userId is not null)
+            query = query.Where(t => t.UserId == userId);
+        return await query.ToListAsync(ct);
+    }
+
     public async Task RevokeAllForUserAsync(UserId userId, CancellationToken ct = default)
     {
         var tokens = await db.RefreshTokens
