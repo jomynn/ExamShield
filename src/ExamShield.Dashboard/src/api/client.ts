@@ -446,8 +446,12 @@ export const api = {
       body: JSON.stringify({ token, newPassword }),
     }),
 
-  getLoginHistory: (limit = 100) =>
-    request<LoginHistoryResponse>(`/security/login-history?limit=${limit}`),
+  getLoginHistory: (limit = 100, from?: string, to?: string) => {
+    const params = new URLSearchParams({ limit: String(limit) })
+    if (from) params.set('from', from)
+    if (to)   params.set('to', to)
+    return request<LoginHistoryResponse>(`/security/login-history?${params}`)
+  },
 
   changePassword: (currentPassword: string, newPassword: string) =>
     request<void>('/auth/password/change', {

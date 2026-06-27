@@ -26,12 +26,16 @@ public sealed class InMemorySecurityEventRepository : ISecurityEventRepository
                   .OrderByDescending(e => e.OccurredAt).Take(limit).ToList());
 
     public Task<IReadOnlyList<SecurityEvent>> ListByTypesAsync(
-        IEnumerable<SecurityEventType> types, int limit, CancellationToken ct = default)
+        IEnumerable<SecurityEventType> types, int limit,
+        DateTimeOffset? from = null, DateTimeOffset? to = null,
+        CancellationToken ct = default)
     {
         var set = types.ToHashSet();
+        var query = _store.Where(e => set.Contains(e.EventType));
+        if (from is not null) query = query.Where(e => e.OccurredAt >= from);
+        if (to   is not null) query = query.Where(e => e.OccurredAt <= to);
         return Task.FromResult<IReadOnlyList<SecurityEvent>>(
-            _store.Where(e => set.Contains(e.EventType))
-                  .OrderByDescending(e => e.OccurredAt).Take(limit).ToList());
+            query.OrderByDescending(e => e.OccurredAt).Take(limit).ToList());
     }
 
     public Task<int> CountAllAsync(CancellationToken ct = default) =>

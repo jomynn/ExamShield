@@ -57,9 +57,13 @@ public static class SecurityEndpoints
     }
 
     private static async Task<IResult> GetLoginHistoryAsync(
-        ISender sender, int limit = 100, CancellationToken ct = default)
+        ISender sender,
+        int limit = 100,
+        DateTimeOffset? from = null,
+        DateTimeOffset? to = null,
+        CancellationToken ct = default)
     {
-        var result = await sender.Send(new GetLoginHistoryQuery(limit), ct);
+        var result = await sender.Send(new GetLoginHistoryQuery(limit, from, to), ct);
         var response = new LoginHistoryResponse(
             result.Events.Select(e =>
                 new LoginHistoryEntry(e.Id, e.EventType, e.UserId, e.IpAddress, e.OccurredAt))

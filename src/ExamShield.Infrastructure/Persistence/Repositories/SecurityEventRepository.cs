@@ -28,11 +28,15 @@ public sealed class SecurityEventRepository(ExamShieldDbContext context) : ISecu
             .ToListAsync(ct);
 
     public async Task<IReadOnlyList<SecurityEvent>> ListByTypesAsync(
-        IEnumerable<SecurityEventType> types, int limit, CancellationToken ct = default)
+        IEnumerable<SecurityEventType> types, int limit,
+        DateTimeOffset? from = null, DateTimeOffset? to = null,
+        CancellationToken ct = default)
     {
-        var set = types.ToHashSet();
-        return await context.SecurityEvents
-            .Where(e => set.Contains(e.EventType))
+        var set   = types.ToHashSet();
+        var query = context.SecurityEvents.Where(e => set.Contains(e.EventType));
+        if (from is not null) query = query.Where(e => e.OccurredAt >= from);
+        if (to   is not null) query = query.Where(e => e.OccurredAt <= to);
+        return await query
             .OrderByDescending(e => e.OccurredAt)
             .Take(limit)
             .ToListAsync(ct);

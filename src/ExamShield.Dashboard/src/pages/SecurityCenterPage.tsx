@@ -49,6 +49,8 @@ const SEVERITIES = ['', 'Info', 'Warning', 'High', 'Critical']
 
 export default function SecurityCenterPage() {
   const [severity, setSeverity] = useState('')
+  const [loginFrom, setLoginFrom] = useState('')
+  const [loginTo, setLoginTo]     = useState('')
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['security-events', severity],
@@ -59,6 +61,12 @@ export default function SecurityCenterPage() {
   const { data: sessionsData } = useQuery({
     queryKey: ['all-active-sessions'],
     queryFn: () => api.getAllActiveSessions(),
+    refetchInterval: 60_000,
+  })
+
+  const { data: loginData } = useQuery({
+    queryKey: ['login-history', loginFrom, loginTo],
+    queryFn: () => api.getLoginHistory(200, loginFrom || undefined, loginTo || undefined),
     refetchInterval: 60_000,
   })
 
@@ -145,6 +153,59 @@ export default function SecurityCenterPage() {
           </div>
         </div>
       )}
+      <div className="space-y-2">
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold text-foreground">Login History</h2>
+          <input
+            type="datetime-local"
+            title="From"
+            value={loginFrom}
+            onChange={e => setLoginFrom(e.target.value)}
+            className="rounded border border-border bg-background px-2 py-1 text-xs text-foreground"
+          />
+          <input
+            type="datetime-local"
+            title="To"
+            value={loginTo}
+            onChange={e => setLoginTo(e.target.value)}
+            className="rounded border border-border bg-background px-2 py-1 text-xs text-foreground"
+          />
+          {(loginFrom || loginTo) && (
+            <button
+              onClick={() => { setLoginFrom(''); setLoginTo('') }}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >Clear</button>
+          )}
+        </div>
+        <div className="overflow-hidden rounded-xl border border-border">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                {['Event', 'User', 'IP', 'Time'].map(h => (
+                  <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {(loginData?.events ?? []).map(e => (
+                <tr key={e.id}>
+                  <td className="px-4 py-2">{e.eventType}</td>
+                  <td className="px-4 py-2 text-muted-foreground">{e.userId ?? '—'}</td>
+                  <td className="px-4 py-2 text-muted-foreground">{e.ipAddress ?? '—'}</td>
+                  <td className="px-4 py-2 text-muted-foreground">{new Date(e.occurredAt).toLocaleString()}</td>
+                </tr>
+              ))}
+              {(loginData?.events.length ?? 0) === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                    No login events in range.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   )
 }
