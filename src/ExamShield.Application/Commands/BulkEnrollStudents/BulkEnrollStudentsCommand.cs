@@ -1,5 +1,6 @@
 using ExamShield.Domain.Entities;
 using ExamShield.Domain.Enums;
+using ExamShield.Domain.Exceptions;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.ValueObjects;
 using MediatR;
@@ -26,19 +27,28 @@ public sealed class BulkEnrollStudentsCommandHandler(
         var exam = await exams.GetByIdAsync(new ExamId(command.ExamId), ct)
             ?? throw new KeyNotFoundException($"Exam {command.ExamId} not found.");
 
-        int enrolled = 0, skipped = 0;
-
+        // Separate new students from duplicates up front so capacity can be checked atomically
+        var newIds    = new List<Guid>();
+        var skipCount = 0;
         foreach (var id in command.StudentIds)
         {
-            var studentId = new StudentId(id);
-            if (await candidates.ExistsAsync(exam.Id, studentId, ct))
-            {
-                skipped++;
-                continue;
-            }
-            await candidates.AddAsync(ExamCandidate.Enroll(exam.Id, studentId), ct);
-            enrolled++;
+            if (await candidates.ExistsAsync(exam.Id, new StudentId(id), ct))
+                skipCount++;
+            else
+                newIds.Add(id);
         }
+
+        if (exam.MaxCandidates is not null)
+        {
+            var currentCount = await candidates.CountByExamIdAsync(exam.Id, ct);
+            if (currentCount + newIds.Count > exam.MaxCandidates)
+                throw new ExamFullException(command.ExamId, exam.MaxCandidates.Value);
+        }
+
+        foreach (var id in newIds)
+            await candidates.AddAsync(ExamCandidate.Enroll(exam.Id, new StudentId(id)), ct);
+
+        int enrolled = newIds.Count, skipped = skipCount;
 
         if (enrolled > 0)
             await audit.AppendAsync(
