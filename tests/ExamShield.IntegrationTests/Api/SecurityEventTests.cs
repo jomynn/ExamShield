@@ -51,7 +51,7 @@ public sealed class SecurityEventTests(TestWebApplicationFactory factory)
 
         var capResp = await _client.PostAsJsonAsync("/capture",
             new RegisterCaptureRequest(
-                Guid.NewGuid(), Guid.NewGuid(), dev!.DeviceId, 1,
+                factory.ActiveExamId, Guid.NewGuid(), dev!.DeviceId, 1,
                 Convert.ToHexString(hash), sig));
         var cap = await capResp.Content.ReadFromJsonAsync<RegisterCaptureResponse>();
 

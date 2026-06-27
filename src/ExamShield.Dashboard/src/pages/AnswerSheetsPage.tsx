@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api/client'
 import ImageViewer from '../components/ImageViewer'
+import Pagination from '../components/Pagination'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5083'
 
@@ -13,9 +14,12 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export default function AnswerSheetsPage() {
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 20
+
   const { data, isLoading } = useQuery({
-    queryKey: ['answer-sheets'],
-    queryFn: api.getCaptures,
+    queryKey: ['answer-sheets', page],
+    queryFn: () => api.getCaptures(page, PAGE_SIZE),
   })
 
   const [viewingId, setViewingId] = useState<string | null>(null)
@@ -28,7 +32,14 @@ export default function AnswerSheetsPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold text-white mb-6">Answer Sheets</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-white">Answer Sheets</h1>
+        {data && (
+          <span className="text-sm text-muted-foreground">
+            {data.totalCount} total
+          </span>
+        )}
+      </div>
 
       {viewingId && (
         <div className="mb-6">
@@ -99,6 +110,12 @@ export default function AnswerSheetsPage() {
         {captures.length === 0 && (
           <div className="p-8 text-center text-[#8B949E]">No answer sheets yet.</div>
         )}
+
+        <Pagination
+          page={page}
+          totalPages={data?.totalPages ?? 1}
+          onPageChange={setPage}
+        />
       </div>
     </div>
   )

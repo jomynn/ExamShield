@@ -25,7 +25,7 @@ public sealed class AuditSignatureTests(TestWebApplicationFactory factory)
         var hashHex = new string('b', 64);
         var captureResp = await _client.PostAsJsonAsync("/capture",
             new RegisterCaptureRequest(
-                Guid.NewGuid(), Guid.NewGuid(), device!.DeviceId,
+                factory.ActiveExamId, Guid.NewGuid(), device!.DeviceId,
                 1, hashHex, _ecdsa.SignHash(Convert.FromHexString(hashHex))));
         var capture = await captureResp.Content.ReadFromJsonAsync<RegisterCaptureResponse>();
         _captureId = capture!.CaptureId;

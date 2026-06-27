@@ -24,4 +24,13 @@ public sealed class ExamRepository(ExamShieldDbContext context) : IExamRepositor
 
     public async Task<IReadOnlyList<Exam>> ListAllAsync(CancellationToken ct = default) =>
         await context.Exams.ToListAsync(ct);
+
+    public async Task<(IReadOnlyList<Exam> Items, int TotalCount)> ListPagedAsync(
+        int page, int pageSize, CancellationToken ct = default)
+    {
+        var query = context.Exams.OrderByDescending(e => e.CreatedAt);
+        var total = await query.CountAsync(ct);
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
+        return (items, total);
+    }
 }

@@ -14,29 +14,37 @@ public sealed class RegisterCaptureCommandHandler
     private readonly IDeviceRepository _devices;
     private readonly ISignatureVerificationService _sigService;
     private readonly IAuditLogRepository _auditLog;
+    private readonly IExamRepository _exams;
 
     public RegisterCaptureCommandHandler(
         ICaptureRepository repository,
         IDeviceRepository devices,
         ISignatureVerificationService sigService,
-        IAuditLogRepository auditLog)
+        IAuditLogRepository auditLog,
+        IExamRepository exams)
     {
         _repository = repository;
         _devices = devices;
         _sigService = sigService;
         _auditLog = auditLog;
+        _exams = exams;
     }
 
     public async Task<RegisterCaptureResult> Handle(
         RegisterCaptureCommand command, CancellationToken ct)
     {
-        // Validate value objects first — fast fail before any I/O
         var hash = Hash.FromHex(command.HashHex);
         var signature = new Signature(command.SignatureBytes);
         var examId = new ExamId(command.ExamId);
         var studentId = new StudentId(command.StudentId);
         var deviceId = new DeviceId(command.DeviceId);
         var pageNumber = new PageNumber(command.PageNumber);
+
+        var exam = await _exams.GetByIdAsync(examId, ct)
+            ?? throw new KeyNotFoundException($"Exam '{command.ExamId}' not found.");
+
+        if (exam.Status != ExamStatus.Active)
+            throw new ExamNotActiveException(command.ExamId);
 
         var device = await _devices.GetByIdAsync(deviceId, ct)
             ?? throw new DeviceNotFoundException(command.DeviceId);

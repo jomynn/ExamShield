@@ -14,5 +14,7 @@ public enum AuditAction
     OCRCompleted,
     ScoreGenerated,
     ResultPublished,
-    ResultsPublished
+    ResultsPublished,
+    ReviewRequestSubmitted,
+    AnswerKeySet
 }

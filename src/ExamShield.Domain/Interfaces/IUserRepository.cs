@@ -10,4 +10,5 @@ public interface IUserRepository
     Task<User?> FindByEmailAsync(Email email, CancellationToken ct = default);
     Task<User?> GetByIdAsync(UserId id, CancellationToken ct = default);
     Task<IReadOnlyList<User>> ListAllAsync(CancellationToken ct = default);
+    Task<(IReadOnlyList<User> Items, int TotalCount)> ListPagedAsync(int page, int pageSize, CancellationToken ct = default);
 }

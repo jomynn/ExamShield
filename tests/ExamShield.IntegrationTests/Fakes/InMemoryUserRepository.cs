@@ -42,4 +42,12 @@ public sealed class InMemoryUserRepository : IUserRepository
 
     public Task<IReadOnlyList<User>> ListAllAsync(CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<User>>(_byEmail.Values.ToList());
+
+    public Task<(IReadOnlyList<User> Items, int TotalCount)> ListPagedAsync(
+        int page, int pageSize, CancellationToken ct = default)
+    {
+        var all = _byEmail.Values.OrderBy(u => u.Email.Value).ToList();
+        var items = all.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        return Task.FromResult<(IReadOnlyList<User>, int)>((items, all.Count));
+    }
 }

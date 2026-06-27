@@ -28,7 +28,7 @@ public sealed class OcrEndpointsTests : IClassFixture<TestWebApplicationFactory>
         var device = await deviceResponse.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
 
         var captureResponse = await _client.PostAsJsonAsync("/capture", new RegisterCaptureRequest(
-            ExamId: Guid.NewGuid(), StudentId: Guid.NewGuid(),
+            ExamId: _factory.ActiveExamId, StudentId: Guid.NewGuid(),
             DeviceId: device!.DeviceId, PageNumber: 1,
             HashHex: HashHex,
             SignatureBytes: _ecdsa.SignHash(Convert.FromHexString(HashHex))));

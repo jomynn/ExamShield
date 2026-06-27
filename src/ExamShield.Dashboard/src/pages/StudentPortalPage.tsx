@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { api } from '../api/client'
 
 function pctColor(p: number) {
@@ -11,6 +11,19 @@ function pctColor(p: number) {
 export default function StudentPortalPage() {
   const [inputId, setInputId] = useState('')
   const [studentId, setStudentId] = useState<string | null>(null)
+  const [disputeCaptureId, setDisputeCaptureId] = useState('')
+  const [disputeReason, setDisputeReason] = useState('')
+  const [disputeSuccess, setDisputeSuccess] = useState(false)
+
+  const submitReview = useMutation({
+    mutationFn: ({ captureId, reason }: { captureId: string; reason: string }) =>
+      api.submitReviewRequest(studentId!, captureId, reason),
+    onSuccess: () => {
+      setDisputeSuccess(true)
+      setDisputeCaptureId('')
+      setDisputeReason('')
+    },
+  })
 
   const { data, isFetching } = useQuery({
     queryKey: ['student-results', studentId],
@@ -47,6 +60,39 @@ export default function StudentPortalPage() {
           {isFetching ? 'Looking up…' : 'Look Up'}
         </button>
       </div>
+
+      {/* Dispute / Review Request */}
+      {studentId && (
+        <div className="rounded-lg border border-border p-4 space-y-3 max-w-lg">
+          <h2 className="font-semibold text-sm">Submit a Review Request</h2>
+          {disputeSuccess && (
+            <p className="text-xs text-green-500">
+              Review request submitted successfully.
+            </p>
+          )}
+          <input
+            type="text"
+            placeholder="Capture ID (UUID)"
+            value={disputeCaptureId}
+            onChange={e => { setDisputeCaptureId(e.target.value); setDisputeSuccess(false) }}
+            className="w-full rounded border border-border bg-background px-3 py-2 text-sm"
+          />
+          <textarea
+            placeholder="Reason for dispute (e.g. OCR misread question 5)"
+            value={disputeReason}
+            onChange={e => setDisputeReason(e.target.value)}
+            rows={3}
+            className="w-full rounded border border-border bg-background px-3 py-2 text-sm resize-none"
+          />
+          <button
+            onClick={() => submitReview.mutate({ captureId: disputeCaptureId, reason: disputeReason })}
+            disabled={submitReview.isPending || !disputeCaptureId || !disputeReason}
+            className="px-4 py-2 text-sm rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            {submitReview.isPending ? 'Submitting…' : 'Submit Request'}
+          </button>
+        </div>
+      )}
 
       {/* Results */}
       {data && (

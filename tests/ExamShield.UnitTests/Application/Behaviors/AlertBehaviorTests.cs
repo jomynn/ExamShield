@@ -12,10 +12,11 @@ namespace ExamShield.UnitTests.Application.Behaviors;
 public sealed class AlertBehaviorTests
 {
     private readonly IAlertService _alertService = Substitute.For<IAlertService>();
+    private readonly IRealtimeNotificationService _realtime = Substitute.For<IRealtimeNotificationService>();
     private readonly AlertBehavior<TestCommand, Unit> _sut;
 
     public AlertBehaviorTests() =>
-        _sut = new AlertBehavior<TestCommand, Unit>(_alertService);
+        _sut = new AlertBehavior<TestCommand, Unit>(_alertService, _realtime);
 
     // MediatR 14: RequestHandlerDelegate<T> = Func<CancellationToken, Task<T>>
     private static RequestHandlerDelegate<Unit> Throwing(Exception ex) =>

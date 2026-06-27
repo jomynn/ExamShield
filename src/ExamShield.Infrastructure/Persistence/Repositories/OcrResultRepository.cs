@@ -26,4 +26,11 @@ public sealed class OcrResultRepository : IOcrResultRepository
 
     public async Task<IReadOnlyList<OcrResult>> ListCompletedAsync(CancellationToken ct = default) =>
         await _context.OcrResults.Where(r => r.Status == OcrStatus.Completed).ToListAsync(ct);
+
+    public async Task<IReadOnlyList<OcrResult>> ListByCaptureIdsAsync(
+        IReadOnlyList<CaptureId> captureIds, CancellationToken ct = default)
+    {
+        var ids = new HashSet<Guid>(captureIds.Select(c => c.Value));
+        return await _context.OcrResults.Where(o => ids.Contains(o.CaptureId.Value)).ToListAsync(ct);
+    }
 }

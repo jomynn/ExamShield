@@ -2,8 +2,16 @@ namespace ExamShield.Api.Contracts;
 
 public sealed record CreateExamRequest(string Name, string? Description, int TotalQuestions);
 
+public sealed record SetAnswerKeyRequest(IReadOnlyDictionary<int, string> Answers);
+public sealed record AnswerKeyResponse(Guid ExamId, IReadOnlyDictionary<string, string> Answers, DateTimeOffset CreatedAt);
+
 public sealed record ExamResponse(
     Guid ExamId, string Name, string? Description,
     string Status, int TotalQuestions, DateTimeOffset CreatedAt);
 
-public sealed record ExamListResponse(IReadOnlyList<ExamResponse> Exams);
+public sealed record ExamListResponse(
+    IReadOnlyList<ExamResponse> Exams,
+    int TotalCount,
+    int Page,
+    int PageSize,
+    int TotalPages);

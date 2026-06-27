@@ -50,4 +50,15 @@ public sealed class InMemoryAuditLogRepository(IServerSigningService signer) : I
             .ToList();
         return Task.FromResult<IReadOnlyList<AuditLog>>(chain);
     }
+
+    public Task<IReadOnlyList<AuditLog>> ExportAsync(
+        CaptureId? captureId, DateTimeOffset? from, DateTimeOffset? to, CancellationToken ct = default)
+    {
+        var query = _entries.AsEnumerable();
+        if (captureId is not null) query = query.Where(e => e.CaptureId == captureId);
+        if (from is not null) query = query.Where(e => e.OccurredAt >= from.Value);
+        if (to is not null) query = query.Where(e => e.OccurredAt <= to.Value);
+        return Task.FromResult<IReadOnlyList<AuditLog>>(
+            query.OrderBy(e => e.OccurredAt).ToList());
+    }
 }

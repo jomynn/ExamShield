@@ -8,11 +8,11 @@ public sealed class GetUsersQueryHandler(IUserRepository users)
 {
     public async Task<GetUsersResult> Handle(GetUsersQuery request, CancellationToken ct)
     {
-        var all = await users.ListAllAsync(ct);
-        var dtos = all
+        var (items, total) = await users.ListPagedAsync(request.Page, request.PageSize, ct);
+        var dtos = items
             .OrderBy(u => u.Email.Value)
             .Select(u => new UserDto(u.Id.Value, u.Email.Value, u.Role.ToString(), u.IsActive, u.CreatedAt))
             .ToList();
-        return new GetUsersResult(dtos);
+        return new GetUsersResult(dtos, total, request.Page, request.PageSize);
     }
 }

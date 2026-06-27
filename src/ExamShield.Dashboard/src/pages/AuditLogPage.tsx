@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAuditLog } from '../hooks/useAuditLog'
 import VerificationBadge from '../components/ui/VerificationBadge'
 import type { AuditEntry } from '../api/client'
+import { api } from '../api/client'
 
 const PAGE_SIZE = 20
 
@@ -45,8 +46,19 @@ function AuditTable({ entries }: { entries: AuditEntry[] }) {
   )
 }
 
+async function downloadAuditCsv(captureId?: string) {
+  const blob = await api.exportAuditLog(captureId ? { captureId } : undefined)
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `audit-export.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export default function AuditLogPage() {
   const [page, setPage] = useState(1)
+  const [filterCaptureId, setFilterCaptureId] = useState('')
   const { data, isLoading, isError } = useAuditLog(page, PAGE_SIZE)
   const totalPages = data ? Math.max(1, Math.ceil(data.totalCount / PAGE_SIZE)) : 1
 
@@ -54,7 +66,25 @@ export default function AuditLogPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">Audit Log</h1>
-        {data && <span className="text-sm text-muted-foreground">{data.totalCount} entries</span>}
+        <div className="flex items-center gap-2">
+          {data && <span className="text-sm text-muted-foreground">{data.totalCount} entries</span>}
+          <button
+            onClick={() => downloadAuditCsv(filterCaptureId || undefined)}
+            className="px-3 py-1.5 text-xs rounded border border-border text-muted-foreground hover:bg-muted"
+          >
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      <div className="flex gap-2 max-w-sm">
+        <input
+          type="text"
+          placeholder="Filter by Capture ID"
+          value={filterCaptureId}
+          onChange={e => setFilterCaptureId(e.target.value)}
+          className="flex-1 rounded border border-border bg-background px-3 py-1.5 text-sm"
+        />
       </div>
 
       {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}

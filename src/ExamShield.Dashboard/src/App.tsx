@@ -22,6 +22,8 @@ import MfaPage from './pages/MfaPage'
 import AnswerSheetsPage from './pages/AnswerSheetsPage'
 import AppLayout from './components/layout/AppLayout'
 import { useDashboardStats } from './hooks/useDashboardStats'
+import { useNotifications } from './hooks/useNotifications'
+import NotificationToast from './components/ui/NotificationToast'
 import './index.css'
 
 const queryClient = new QueryClient()
@@ -46,6 +48,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />
 }
 
+function NotificationsOverlay() {
+  const { notifications, dismiss } = useNotifications()
+  return <NotificationToast notifications={notifications} onDismiss={dismiss} />
+}
+
 export default function App() {
   const { isAuthenticated, login, completeMfaLogin, requiresMfa, auth } = useAuth()
 
@@ -62,6 +69,7 @@ export default function App() {
             path="/*"
             element={
               <ProtectedRoute>
+                <NotificationsOverlay />
                 <AppLayout userName={auth.role ?? 'User'}>
                   <Routes>
                     <Route path="/" element={<LiveDashboard />} />

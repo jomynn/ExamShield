@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
 
-export function useUsers() {
+export function useUsers(page = 1, pageSize = 50) {
   return useQuery({
-    queryKey: ['users'],
-    queryFn: () => api.getUsers(),
+    queryKey: ['users', page, pageSize],
+    queryFn: () => api.getUsers(page, pageSize),
   })
 }
 

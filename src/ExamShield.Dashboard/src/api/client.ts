@@ -116,12 +116,14 @@ export const api = {
   publicVerify: (captureId: string) =>
     request<PublicVerifyResponse>(`/public/verify?captureId=${encodeURIComponent(captureId)}`),
 
-  getCaptures: () => request<CaptureListResponse>('/captures'),
+  getCaptures: (page = 1, pageSize = 50) =>
+    request<CaptureListResponse>(`/captures?page=${page}&pageSize=${pageSize}`),
 
   verifyCapture: (captureId: string) =>
     request<VerifyCaptureResponse>(`/public/verify?captureId=${encodeURIComponent(captureId)}`),
 
-  getUsers: () => request<UserListResponse>('/users/'),
+  getUsers: (page = 1, pageSize = 50) =>
+    request<UserListResponse>(`/users/?page=${page}&pageSize=${pageSize}`),
 
   updateUserRole: (userId: string, role: string) =>
     request<void>(`/users/${userId}/role`, {
@@ -132,13 +134,26 @@ export const api = {
   deactivateUser: (userId: string) =>
     request<void>(`/users/${userId}/deactivate`, { method: 'PUT' }),
 
-  getExams: () => request<ExamListResponse>('/exams/'),
+  getExams: (page = 1, pageSize = 50) =>
+    request<ExamListResponse>(`/exams/?page=${page}&pageSize=${pageSize}`),
 
   createExam: (payload: CreateExamPayload) =>
     request<ExamItem>('/exams/', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  submitReviewRequest: (studentId: string, captureId: string, reason: string) =>
+    request<{ reviewRequestId: string }>('/student/review-request', {
+      method: 'POST',
+      body: JSON.stringify({ captureId, studentId, reason }),
+    }),
+
+  activateExam: (examId: string) =>
+    request<void>(`/exams/${examId}/activate`, { method: 'PUT' }),
+
+  closeExam: (examId: string) =>
+    request<void>(`/exams/${examId}/close`, { method: 'PUT' }),
 
   getScoringQueue: () => request<ScoringQueueResponse>('/score/queue'),
 
@@ -157,6 +172,25 @@ export const api = {
     request<SettingsResponse>('/settings/', { method: 'PUT', body: JSON.stringify(payload) }),
 
   getReportSummary: () => request<ReportSummaryResponse>('/reports/summary'),
+
+  exportAuditLog: (params?: { captureId?: string; from?: string; to?: string }) => {
+    const qs = new URLSearchParams()
+    if (params?.captureId) qs.set('captureId', params.captureId)
+    if (params?.from) qs.set('from', params.from)
+    if (params?.to) qs.set('to', params.to)
+    const query = qs.toString() ? `?${qs}` : ''
+    return fetch(`${BASE_URL}/audit/export${query}`, {
+      headers: { ...authHeaders() },
+    }).then(r => r.blob())
+  },
+
+  getExamReport: (examId: string) =>
+    request<ExamReportResponse>(`/reports/exam/${examId}`),
+
+  exportExamReportCsv: (examId: string) =>
+    fetch(`${BASE_URL}/reports/exam/${examId}/export`, {
+      headers: { ...authHeaders() },
+    }).then(r => r.blob()),
 
   getRoles: () => request<RoleListResponse>('/roles'),
 
@@ -212,7 +246,13 @@ export interface CaptureItem {
   capturedAt: string
   storageKey: string | null
 }
-export interface CaptureListResponse { captures: CaptureItem[] }
+export interface CaptureListResponse {
+  captures: CaptureItem[]
+  totalCount: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
 
 export interface VerifyCaptureResponse {
   isValid: boolean
@@ -227,7 +267,13 @@ export interface UserItem {
   isActive: boolean
   createdAt: string
 }
-export interface UserListResponse { users: UserItem[] }
+export interface UserListResponse {
+  users: UserItem[]
+  totalCount: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
 
 export interface ExamItem {
   examId: string
@@ -237,7 +283,13 @@ export interface ExamItem {
   totalQuestions: number
   createdAt: string
 }
-export interface ExamListResponse { exams: ExamItem[] }
+export interface ExamListResponse {
+  exams: ExamItem[]
+  totalCount: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
 
 export interface CreateExamPayload {
   name: string
@@ -355,6 +407,26 @@ export interface ReportSummaryResponse {
   ocr: { totalProcessed: number; averageConfidence: number }
   scores: { totalScored: number; averagePercentage: number; highestPercentage: number; lowestPercentage: number }
   security: { totalEvents: number; criticalEvents: number }
+}
+
+export interface ExamReportResponse {
+  examId: string
+  examName: string
+  examStatus: string
+  totalQuestions: number
+  generatedAt: string
+  totalCaptures: number
+  uploadedCaptures: number
+  verifiedCaptures: number
+  tamperedCaptures: number
+  totalOcrProcessed: number
+  ocrAverageConfidence: number
+  lowConfidenceCount: number
+  totalScored: number
+  averageScorePercentage: number
+  highestScorePercentage: number
+  lowestScorePercentage: number
+  totalReviewRequests: number
 }
 
 export interface RoleItem {

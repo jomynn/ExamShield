@@ -9,6 +9,12 @@ public sealed class InMemoryExamRepository : IExamRepository
 {
     private readonly ConcurrentDictionary<ExamId, Exam> _store = new();
 
+    public InMemoryExamRepository(IEnumerable<Exam>? seed = null)
+    {
+        foreach (var exam in seed ?? [])
+            _store[exam.Id] = exam;
+    }
+
     public Task AddAsync(Exam exam, CancellationToken ct = default)
     {
         _store[exam.Id] = exam;
@@ -26,4 +32,12 @@ public sealed class InMemoryExamRepository : IExamRepository
 
     public Task<IReadOnlyList<Exam>> ListAllAsync(CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<Exam>>(_store.Values.ToList());
+
+    public Task<(IReadOnlyList<Exam> Items, int TotalCount)> ListPagedAsync(
+        int page, int pageSize, CancellationToken ct = default)
+    {
+        var all = _store.Values.OrderByDescending(e => e.CreatedAt).ToList();
+        var items = all.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        return Task.FromResult<(IReadOnlyList<Exam>, int)>((items, all.Count));
+    }
 }

@@ -25,4 +25,9 @@ public sealed class InMemoryOcrResultRepository : IOcrResultRepository
     public Task<IReadOnlyList<OcrResult>> ListCompletedAsync(CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<OcrResult>>(
             _store.Values.Where(r => r.Status == OcrStatus.Completed).ToList());
+
+    public Task<IReadOnlyList<OcrResult>> ListByCaptureIdsAsync(
+        IReadOnlyList<CaptureId> captureIds, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<OcrResult>>(
+            _store.Values.Where(r => captureIds.Contains(r.CaptureId)).ToList());
 }

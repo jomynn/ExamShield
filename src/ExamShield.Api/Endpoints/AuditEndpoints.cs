@@ -1,4 +1,6 @@
+using System.Text;
 using ExamShield.Api.Contracts;
+using ExamShield.Application.Queries.ExportAuditLog;
 using ExamShield.Application.Queries.GetAuditLog;
 using ExamShield.Application.Queries.VerifyAuditChain;
 using MediatR;
@@ -14,6 +16,12 @@ public static class AuditEndpoints
             .WithTags("Audit")
             .RequireAuthorization("Auditor")
             .Produces<AuditLogResponse>();
+
+        app.MapGet("/audit/export", ExportAuditLogAsync)
+            .WithName("ExportAuditLog")
+            .WithTags("Audit")
+            .RequireAuthorization("Auditor")
+            .Produces<byte[]>();
 
         app.MapGet("/audit/verify/{captureId:guid}", VerifyAuditChainAsync)
             .WithName("VerifyAuditChain")
@@ -41,6 +49,18 @@ public static class AuditEndpoints
             result.TotalCount);
 
         return Results.Ok(response);
+    }
+
+    private static async Task<IResult> ExportAuditLogAsync(
+        ISender sender,
+        Guid? captureId = null,
+        DateTimeOffset? from = null,
+        DateTimeOffset? to = null,
+        CancellationToken ct = default)
+    {
+        var result = await sender.Send(new ExportAuditLogQuery(captureId, from, to), ct);
+        var bytes = Encoding.UTF8.GetBytes(result.Csv);
+        return Results.File(bytes, "text/csv", result.Filename);
     }
 
     private static async Task<IResult> VerifyAuditChainAsync(

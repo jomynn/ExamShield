@@ -15,16 +15,21 @@ public sealed class RegisterCaptureCommandHandlerTests
     private readonly IDeviceRepository _devices = Substitute.For<IDeviceRepository>();
     private readonly ISignatureVerificationService _sigService = Substitute.For<ISignatureVerificationService>();
     private readonly IAuditLogRepository _auditLog = Substitute.For<IAuditLogRepository>();
+    private readonly IExamRepository _exams = Substitute.For<IExamRepository>();
     private readonly RegisterCaptureCommandHandler _sut;
 
     public RegisterCaptureCommandHandlerTests()
     {
-        // Default: valid device + valid signature
+        // Default: valid device + valid signature + active exam
         var device = Device.Register("Test Device", new PublicKey(new byte[] { 0x04 }));
         _devices.GetByIdAsync(Arg.Any<DeviceId>(), Arg.Any<CancellationToken>()).Returns(device);
         _sigService.Verify(Arg.Any<Hash>(), Arg.Any<Signature>(), Arg.Any<PublicKey>()).Returns(true);
 
-        _sut = new RegisterCaptureCommandHandler(_repository, _devices, _sigService, _auditLog);
+        var activeExam = Exam.Create("Test Exam", null, 10);
+        activeExam.Activate();
+        _exams.GetByIdAsync(Arg.Any<ExamId>(), Arg.Any<CancellationToken>()).Returns(activeExam);
+
+        _sut = new RegisterCaptureCommandHandler(_repository, _devices, _sigService, _auditLog, _exams);
     }
 
     private static RegisterCaptureCommand ValidCommand() => new(
@@ -128,5 +133,39 @@ public sealed class RegisterCaptureCommandHandlerTests
         var act = () => _sut.Handle(ValidCommand() with { SignatureBytes = Array.Empty<byte>() }, CancellationToken.None);
 
         await act.Should().ThrowAsync<ArgumentException>();
+    }
+
+    [Fact]
+    public async Task Handle_WhenExamIsInDraft_ThrowsExamNotActiveException()
+    {
+        var draftExam = Exam.Create("Draft Exam", null, 10);
+        _exams.GetByIdAsync(Arg.Any<ExamId>(), Arg.Any<CancellationToken>()).Returns(draftExam);
+
+        var act = () => _sut.Handle(ValidCommand(), CancellationToken.None);
+
+        await act.Should().ThrowAsync<ExamNotActiveException>();
+    }
+
+    [Fact]
+    public async Task Handle_WhenExamIsClosed_ThrowsExamNotActiveException()
+    {
+        var closedExam = Exam.Create("Closed Exam", null, 10);
+        closedExam.Activate();
+        closedExam.Close();
+        _exams.GetByIdAsync(Arg.Any<ExamId>(), Arg.Any<CancellationToken>()).Returns(closedExam);
+
+        var act = () => _sut.Handle(ValidCommand(), CancellationToken.None);
+
+        await act.Should().ThrowAsync<ExamNotActiveException>();
+    }
+
+    [Fact]
+    public async Task Handle_WhenExamNotFound_ThrowsKeyNotFoundException()
+    {
+        _exams.GetByIdAsync(Arg.Any<ExamId>(), Arg.Any<CancellationToken>()).Returns((Exam?)null);
+
+        var act = () => _sut.Handle(ValidCommand(), CancellationToken.None);
+
+        await act.Should().ThrowAsync<KeyNotFoundException>();
     }
 }

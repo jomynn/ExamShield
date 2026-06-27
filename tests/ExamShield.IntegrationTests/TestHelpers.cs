@@ -1,0 +1,25 @@
+using System.Net.Http.Json;
+using System.Security.Cryptography;
+using ExamShield.Api.Contracts;
+
+namespace ExamShield.IntegrationTests;
+
+public static class TestHelpers
+{
+    public static async Task<Guid> RegisterCaptureAsync(HttpClient client, Guid examId)
+    {
+        using var ecdsa = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var devRes = await client.PostAsJsonAsync("/devices",
+            new RegisterDeviceRequest("Helper Device", ecdsa.ExportSubjectPublicKeyInfo()));
+        var device = await devRes.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
+
+        var hashHex = new string('a', 64);
+        var capRes = await client.PostAsJsonAsync("/capture",
+            new RegisterCaptureRequest(
+                examId, Guid.NewGuid(), device!.DeviceId, 1, hashHex,
+                ecdsa.SignHash(Convert.FromHexString(hashHex))));
+
+        var capture = await capRes.Content.ReadFromJsonAsync<RegisterCaptureResponse>();
+        return capture!.CaptureId;
+    }
+}

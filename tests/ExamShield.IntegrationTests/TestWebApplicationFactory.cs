@@ -5,6 +5,7 @@ using ExamShield.Domain.Entities;
 using ExamShield.Domain.Enums;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.ValueObjects;
+using ExamShield.Infrastructure.Realtime;
 using ExamShield.IntegrationTests.Fakes;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -26,7 +27,16 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         BCrypt.Net.BCrypt.HashPassword(AdminPassword, workFactor: 4),
         UserRole.Administrator);
 
+    private readonly Exam _activeExam;
+    public Guid ActiveExamId => _activeExam.Id.Value;
+
     private string? _cachedToken;
+
+    public TestWebApplicationFactory()
+    {
+        _activeExam = Exam.Create("Integration Test Exam", null, 50);
+        _activeExam.Activate();
+    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -52,6 +62,10 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<IAlertService>();
             services.AddSingleton<IAlertService, NullAlertService>();
 
+            // Replace SignalR notification service (requires hub context) with a no-op for tests.
+            services.RemoveAll<IRealtimeNotificationService>();
+            services.AddSingleton<IRealtimeNotificationService, NullRealtimeNotificationService>();
+
             services.RemoveAll<IOcrResultRepository>();
             services.AddSingleton<IOcrResultRepository, InMemoryOcrResultRepository>();
 
@@ -65,7 +79,10 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.AddSingleton<ISecurityEventRepository, InMemorySecurityEventRepository>();
 
             services.RemoveAll<IExamRepository>();
-            services.AddSingleton<IExamRepository, InMemoryExamRepository>();
+            services.AddSingleton<IExamRepository>(new InMemoryExamRepository(seed: [_activeExam]));
+
+            services.RemoveAll<IReviewRequestRepository>();
+            services.AddSingleton<IReviewRequestRepository, InMemoryReviewRequestRepository>();
 
             services.RemoveAll<ISystemSettingsRepository>();
             services.AddSingleton<ISystemSettingsRepository, InMemorySystemSettingsRepository>();

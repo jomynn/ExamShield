@@ -53,4 +53,14 @@ public sealed class AuditLogRepository(ExamShieldDbContext context, IServerSigni
             .Where(e => e.CaptureId == captureId)
             .OrderBy(e => e.OccurredAt)
             .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<AuditLog>> ExportAsync(
+        CaptureId? captureId, DateTimeOffset? from, DateTimeOffset? to, CancellationToken ct = default)
+    {
+        var query = context.AuditLogs.AsQueryable();
+        if (captureId is not null) query = query.Where(e => e.CaptureId == captureId);
+        if (from is not null) query = query.Where(e => e.OccurredAt >= from.Value);
+        if (to is not null) query = query.Where(e => e.OccurredAt <= to.Value);
+        return await query.OrderBy(e => e.OccurredAt).ToListAsync(ct);
+    }
 }

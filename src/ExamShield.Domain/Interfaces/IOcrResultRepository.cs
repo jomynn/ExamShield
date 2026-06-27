@@ -9,4 +9,5 @@ public interface IOcrResultRepository
     Task<OcrResult?> GetByCaptureIdAsync(CaptureId captureId, CancellationToken ct = default);
     Task<OcrResult?> GetByIdAsync(OcrResultId id, CancellationToken ct = default);
     Task<IReadOnlyList<OcrResult>> ListCompletedAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<OcrResult>> ListByCaptureIdsAsync(IReadOnlyList<CaptureId> captureIds, CancellationToken ct = default);
 }

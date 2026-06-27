@@ -39,7 +39,7 @@ public sealed class VerifyEndpointsTests : IClassFixture<TestWebApplicationFacto
 
         var captureResp = await _client.PostAsJsonAsync("/capture",
             new RegisterCaptureRequest(
-                Guid.NewGuid(), Guid.NewGuid(), _deviceId, 1, hashHex,
+                _factory.ActiveExamId, Guid.NewGuid(), _deviceId, 1, hashHex,
                 _ecdsa.SignHash(Convert.FromHexString(hashHex))));
 
         var captureBody = await captureResp.Content.ReadFromJsonAsync<RegisterCaptureResponse>();
@@ -54,7 +54,7 @@ public sealed class VerifyEndpointsTests : IClassFixture<TestWebApplicationFacto
         var hashHex = new string('c', 64);
         var captureResp = await _client.PostAsJsonAsync("/capture",
             new RegisterCaptureRequest(
-                Guid.NewGuid(), Guid.NewGuid(), _deviceId, 1, hashHex,
+                _factory.ActiveExamId, Guid.NewGuid(), _deviceId, 1, hashHex,
                 _ecdsa.SignHash(Convert.FromHexString(hashHex))));
 
         var body = await captureResp.Content.ReadFromJsonAsync<RegisterCaptureResponse>();

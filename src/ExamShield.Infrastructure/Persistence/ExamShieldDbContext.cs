@@ -18,6 +18,7 @@ public class ExamShieldDbContext : DbContext
     public DbSet<Exam> Exams => Set<Exam>();
     public DbSet<SystemSettings> SystemSettings => Set<SystemSettings>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<ReviewRequest> ReviewRequests => Set<ReviewRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ExamShieldDbContext).Assembly);

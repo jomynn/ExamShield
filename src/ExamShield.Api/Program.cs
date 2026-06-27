@@ -1,10 +1,12 @@
 using System.Text;
 using ExamShield.Api.Endpoints;
+using ExamShield.Api.Hubs;
 using ExamShield.Api.RateLimiting;
 using ExamShield.Application.Behaviors;
 using ExamShield.Application.Queries.GetOcrResult;
 using ExamShield.Application.Commands.RegisterCapture;
 using ExamShield.Domain.Exceptions;
+using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.Services;
 using ExamShield.Infrastructure;
 using ExamShield.Infrastructure.Persistence;
@@ -21,6 +23,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExamShieldRateLimiting(builder.Configuration);
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<IRealtimeNotificationService, SignalRNotificationService>();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddSingleton<HashVerificationService>();
 builder.Services.AddMediatR(cfg =>
@@ -85,11 +89,14 @@ app.UseExceptionHandler(exceptionApp => exceptionApp.Run(async ctx =>
         HashMismatchException        => (400, ex.Message),
         InvalidSignatureException    => (400, ex.Message),
         CaptureNotUploadedException  => (400, ex.Message),
+        ExamNotActiveException       => (422, ex.Message),
         OcrResultNotFoundException      => (404, ex.Message),
         ManualReviewNotFoundException   => (404, ex.Message),
         InvalidCredentialsException  => (401, ex.Message),
         UserAlreadyExistsException   => (409, ex.Message),
         UserNotFoundException        => (404, ex.Message),
+        KeyNotFoundException e        => (404, e.Message),
+        InvalidOperationException e  => (422, e.Message),
         ArgumentException e          => (400, e.Message),
         _                            => (500, "An unexpected error occurred.")
     };
@@ -145,6 +152,7 @@ app.MapReportEndpoints();
 app.MapSettingsEndpoints();
 app.MapStudentEndpoints();
 app.MapMfaEndpoints();
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();
 

@@ -31,4 +31,13 @@ public sealed class UserRepository : IUserRepository
 
     public async Task<IReadOnlyList<User>> ListAllAsync(CancellationToken ct = default) =>
         await _context.Users.ToListAsync(ct);
+
+    public async Task<(IReadOnlyList<User> Items, int TotalCount)> ListPagedAsync(
+        int page, int pageSize, CancellationToken ct = default)
+    {
+        var query = _context.Users.OrderBy(u => u.Email);
+        var total = await query.CountAsync(ct);
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
+        return (items, total);
+    }
 }

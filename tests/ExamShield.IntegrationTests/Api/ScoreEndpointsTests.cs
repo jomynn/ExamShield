@@ -28,7 +28,14 @@ public sealed class ScoreEndpointsTests : IClassFixture<TestWebApplicationFactor
             new RegisterDeviceRequest("Score-Test Device", _ecdsa.ExportSubjectPublicKeyInfo()));
         var device = await deviceResponse.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
 
-        _examId = Guid.NewGuid();
+        // Create and activate a dedicated exam for this test class to avoid cross-test pollution
+        // when one test publishes results and another asserts results are not yet published.
+        var examRes = await _client.PostAsJsonAsync("/exams/",
+            new CreateExamRequest("Score Test Exam", null, 50));
+        var exam = await examRes.Content.ReadFromJsonAsync<ExamResponse>();
+        _examId = exam!.ExamId;
+        await _client.PutAsync($"/exams/{_examId}/activate", null);
+
         var captureResponse = await _client.PostAsJsonAsync("/capture", new RegisterCaptureRequest(
             ExamId: _examId, StudentId: Guid.NewGuid(),
             DeviceId: device!.DeviceId, PageNumber: 1,

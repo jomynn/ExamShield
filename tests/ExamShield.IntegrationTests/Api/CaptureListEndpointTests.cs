@@ -54,4 +54,42 @@ public sealed class CaptureListEndpointTests : IClassFixture<TestWebApplicationF
         var response = await _factory.CreateClient().GetAsync("/captures");
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
+
+    [Fact]
+    public async Task GetCaptures_WithPageSize1_ReturnsSingleItemAndCorrectPagination()
+    {
+        // Seed two captures
+        using var scope = _factory.Services.CreateScope();
+        var repo = scope.ServiceProvider.GetRequiredService<ICaptureRepository>();
+        await repo.AddAsync(Capture.Create(
+            new ExamId(Guid.NewGuid()), new StudentId(Guid.NewGuid()),
+            new DeviceId(Guid.NewGuid()), new PageNumber(1),
+            Hash.FromBytes(new byte[32]), new Signature(new byte[64])));
+        await repo.AddAsync(Capture.Create(
+            new ExamId(Guid.NewGuid()), new StudentId(Guid.NewGuid()),
+            new DeviceId(Guid.NewGuid()), new PageNumber(1),
+            Hash.FromBytes(new byte[32]), new Signature(new byte[64])));
+
+        var client = await _factory.CreateAuthenticatedClientAsync();
+        var response = await client.GetAsync("/captures?page=1&pageSize=1");
+        var body = await response.Content.ReadFromJsonAsync<CaptureListResponse>();
+
+        body!.Captures.Should().HaveCount(1);
+        body.PageSize.Should().Be(1);
+        body.Page.Should().Be(1);
+        body.TotalCount.Should().BeGreaterThanOrEqualTo(2);
+        body.TotalPages.Should().BeGreaterThanOrEqualTo(2);
+    }
+
+    [Fact]
+    public async Task GetCaptures_DefaultPageSize_ReturnsPaginationMetadata()
+    {
+        var client = await _factory.CreateAuthenticatedClientAsync();
+        var response = await client.GetAsync("/captures");
+        var body = await response.Content.ReadFromJsonAsync<CaptureListResponse>();
+
+        body!.Page.Should().Be(1);
+        body.PageSize.Should().Be(50);
+        body.TotalCount.Should().BeGreaterThanOrEqualTo(0);
+    }
 }

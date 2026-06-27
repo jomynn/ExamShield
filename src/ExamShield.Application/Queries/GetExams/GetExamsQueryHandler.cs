@@ -8,11 +8,11 @@ public sealed class GetExamsQueryHandler(IExamRepository exams)
 {
     public async Task<GetExamsResult> Handle(GetExamsQuery request, CancellationToken ct)
     {
-        var all = await exams.ListAllAsync(ct);
-        var dtos = all
+        var (items, total) = await exams.ListPagedAsync(request.Page, request.PageSize, ct);
+        var dtos = items
             .OrderByDescending(e => e.CreatedAt)
             .Select(e => new ExamDto(e.Id.Value, e.Name, e.Description, e.Status.ToString(), e.TotalQuestions, e.CreatedAt))
             .ToList();
-        return new GetExamsResult(dtos);
+        return new GetExamsResult(dtos, total, request.Page, request.PageSize);
     }
 }

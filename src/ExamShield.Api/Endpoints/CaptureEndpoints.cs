@@ -16,15 +16,15 @@ public static class CaptureEndpoints
         var group = app.MapGroup("/capture").WithTags("Capture");
 
         // GET /captures — list all captures (outside /capture group to keep plural consistent)
-        app.MapGet("/captures", async (IMediator mediator, CancellationToken ct) =>
+        app.MapGet("/captures", async (IMediator mediator, CancellationToken ct, int page = 1, int pageSize = 50) =>
         {
-            var result = await mediator.Send(new GetCapturesQuery(), ct);
+            var result = await mediator.Send(new GetCapturesQuery(page, pageSize), ct);
             var items = result.Captures
                 .Select(c => new CaptureListItem(
                     c.CaptureId, c.ExamId, c.StudentId, c.DeviceId,
                     c.Status, c.CapturedAt, c.StorageKey))
                 .ToList();
-            return Results.Ok(new CaptureListResponse(items));
+            return Results.Ok(new CaptureListResponse(items, result.TotalCount, result.Page, result.PageSize, result.TotalPages));
         })
         .WithName("GetCaptures")
         .WithTags("Capture")

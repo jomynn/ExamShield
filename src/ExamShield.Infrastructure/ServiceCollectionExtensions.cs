@@ -73,6 +73,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IScoreRepository, ScoreRepository>();
         services.AddScoped<ISecurityEventRepository, SecurityEventRepository>();
         services.AddScoped<IExamRepository, ExamRepository>();
+        services.AddScoped<IReviewRequestRepository, ReviewRequestRepository>();
         services.AddScoped<ISystemSettingsRepository, SystemSettingsRepository>();
         services.AddSingleton<IAnswerKeyRepository, StubAnswerKeyRepository>();
         var wmOptions = configuration.GetSection(WatermarkOptions.Section).Get<WatermarkOptions>() ?? new WatermarkOptions();
