@@ -392,6 +392,8 @@ export interface ExamItem {
   status: string
   totalQuestions: number
   createdAt: string
+  scheduledAt: string | null
+  endsAt: string | null
 }
 export interface ExamListResponse {
   exams: ExamItem[]
@@ -405,6 +407,8 @@ export interface CreateExamPayload {
   name: string
   description: string
   totalQuestions: number
+  scheduledAt?: string | null
+  endsAt?: string | null
 }
 
 export interface OcrQueueItem {

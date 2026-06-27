@@ -32,6 +32,8 @@ export default function ExaminationsPage() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [totalQuestions, setTotalQuestions] = useState(50)
+  const [scheduledAt, setScheduledAt] = useState('')
+  const [endsAt, setEndsAt] = useState('')
 
   const [keyExamId, setKeyExamId] = useState<string | null>(null)
   const [keyExamTotalQ, setKeyExamTotalQ] = useState(0)
@@ -52,13 +54,19 @@ export default function ExaminationsPage() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     create.mutate(
-      { name, description, totalQuestions },
+      {
+        name, description, totalQuestions,
+        scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
+        endsAt:      endsAt      ? new Date(endsAt).toISOString()      : null,
+      },
       {
         onSuccess: () => {
           setShowForm(false)
           setName('')
           setDescription('')
           setTotalQuestions(50)
+          setScheduledAt('')
+          setEndsAt('')
         },
       }
     )
@@ -155,6 +163,22 @@ export default function ExaminationsPage() {
               className="w-full rounded border px-3 py-2 text-sm"
             />
           </div>
+          <div className="space-y-1">
+            <label htmlFor="scheduled-at" className="text-sm font-medium">Scheduled Start <span className="text-muted-foreground">(optional)</span></label>
+            <input
+              id="scheduled-at" type="datetime-local"
+              value={scheduledAt} onChange={e => setScheduledAt(e.target.value)}
+              className="w-full rounded border px-3 py-2 text-sm"
+            />
+          </div>
+          <div className="space-y-1">
+            <label htmlFor="ends-at" className="text-sm font-medium">Scheduled End <span className="text-muted-foreground">(optional)</span></label>
+            <input
+              id="ends-at" type="datetime-local"
+              value={endsAt} onChange={e => setEndsAt(e.target.value)}
+              className="w-full rounded border px-3 py-2 text-sm"
+            />
+          </div>
           <button
             type="submit" disabled={create.isPending}
             className="px-4 py-2 rounded bg-primary text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50"
@@ -174,6 +198,7 @@ export default function ExaminationsPage() {
                 <th className="py-2 px-4">Name</th>
                 <th className="py-2 px-4">Status</th>
                 <th className="py-2 px-4">Questions</th>
+                <th className="py-2 px-4">Schedule</th>
                 <th className="py-2 px-4">Created</th>
                 <th className="py-2 px-4">Actions</th>
               </tr>
@@ -186,6 +211,15 @@ export default function ExaminationsPage() {
                     <StatusChip variant={STATUS_VARIANT[exam.status] ?? 'muted'} label={exam.status} />
                   </td>
                   <td className="py-2 px-4">{exam.totalQuestions}</td>
+                  <td className="py-2 px-4 text-muted-foreground text-xs">
+                    {exam.scheduledAt
+                      ? <>
+                          {new Date(exam.scheduledAt).toLocaleString()}
+                          {exam.endsAt && <> → {new Date(exam.endsAt).toLocaleString()}</>}
+                        </>
+                      : <span className="text-muted-foreground/50">—</span>
+                    }
+                  </td>
                   <td className="py-2 px-4 text-muted-foreground">
                     {new Date(exam.createdAt).toLocaleDateString()}
                   </td>

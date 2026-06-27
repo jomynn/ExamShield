@@ -26,6 +26,16 @@ internal sealed class ExamConfiguration : IEntityTypeConfiguration<Exam>
                 dt => dt.UtcTicks,
                 v => new DateTimeOffset(v, TimeSpan.Zero));
 
+        builder.Property(e => e.ScheduledAt)
+            .HasConversion(
+                dt => dt.HasValue ? (long?)dt.Value.UtcTicks : null,
+                v => v.HasValue ? (DateTimeOffset?)new DateTimeOffset(v.Value, TimeSpan.Zero) : null);
+
+        builder.Property(e => e.EndsAt)
+            .HasConversion(
+                dt => dt.HasValue ? (long?)dt.Value.UtcTicks : null,
+                v => v.HasValue ? (DateTimeOffset?)new DateTimeOffset(v.Value, TimeSpan.Zero) : null);
+
         builder.Ignore(e => e.DomainEvents);
     }
 }

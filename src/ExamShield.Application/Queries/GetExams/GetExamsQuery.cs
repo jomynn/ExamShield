@@ -5,7 +5,8 @@ namespace ExamShield.Application.Queries.GetExams;
 
 public sealed record ExamDto(
     Guid ExamId, string Name, string? Description,
-    string Status, int TotalQuestions, DateTimeOffset CreatedAt);
+    string Status, int TotalQuestions, DateTimeOffset CreatedAt,
+    DateTimeOffset? ScheduledAt, DateTimeOffset? EndsAt);
 
 public sealed record GetExamsResult(
     IReadOnlyList<ExamDto> Exams,

@@ -12,23 +12,28 @@ public sealed class Exam : AggregateRoot
     public ExamStatus Status { get; private set; }
     public int TotalQuestions { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset? ScheduledAt { get; private set; }
+    public DateTimeOffset? EndsAt { get; private set; }
 
     private Exam() { }
 
-    private Exam(ExamId id, string name, string? description, int totalQuestions, DateTimeOffset createdAt)
-    {
-        Id = id; Name = name; Description = description;
-        TotalQuestions = totalQuestions; CreatedAt = createdAt;
-        Status = ExamStatus.Draft;
-    }
-
-    public static Exam Create(string name, string? description, int totalQuestions)
+    public static Exam Create(
+        string name, string? description, int totalQuestions,
+        DateTimeOffset? scheduledAt = null, DateTimeOffset? endsAt = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
         if (totalQuestions <= 0)
             throw new ArgumentOutOfRangeException(nameof(totalQuestions), "Must be greater than zero.");
+        if (scheduledAt.HasValue && endsAt.HasValue && endsAt <= scheduledAt)
+            throw new ArgumentException("EndsAt must be after ScheduledAt.", nameof(endsAt));
 
-        return new Exam(ExamId.New(), name, description, totalQuestions, DateTimeOffset.UtcNow);
+        return new Exam
+        {
+            Id = ExamId.New(), Name = name, Description = description,
+            TotalQuestions = totalQuestions, CreatedAt = DateTimeOffset.UtcNow,
+            Status = ExamStatus.Draft,
+            ScheduledAt = scheduledAt, EndsAt = endsAt
+        };
     }
 
     public void Activate()

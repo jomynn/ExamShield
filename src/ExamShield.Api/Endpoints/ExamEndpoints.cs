@@ -29,7 +29,7 @@ public static class ExamEndpoints
         {
             var result = await mediator.Send(new GetExamsQuery(page, pageSize, search, status), ct);
             var items = result.Exams
-                .Select(e => new ExamResponse(e.ExamId, e.Name, e.Description, e.Status, e.TotalQuestions, e.CreatedAt))
+                .Select(e => new ExamResponse(e.ExamId, e.Name, e.Description, e.Status, e.TotalQuestions, e.CreatedAt, e.ScheduledAt, e.EndsAt))
                 .ToList();
             return Results.Ok(new ExamListResponse(items, result.TotalCount, result.Page, result.PageSize, result.TotalPages));
         })
@@ -40,10 +40,11 @@ public static class ExamEndpoints
         group.MapPost("/", async (CreateExamRequest request, IMediator mediator, CancellationToken ct) =>
         {
             var result = await mediator.Send(
-                new CreateExamCommand(request.Name, request.Description, request.TotalQuestions), ct);
+                new CreateExamCommand(request.Name, request.Description, request.TotalQuestions, request.ScheduledAt, request.EndsAt), ct);
             var response = new ExamResponse(
                 result.ExamId, result.Name, result.Description,
-                result.Status, result.TotalQuestions, result.CreatedAt);
+                result.Status, result.TotalQuestions, result.CreatedAt,
+                result.ScheduledAt, result.EndsAt);
             return Results.Created($"/exams/{result.ExamId}", response);
         })
         .WithName("CreateExam")
