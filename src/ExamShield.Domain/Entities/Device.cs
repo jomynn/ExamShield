@@ -10,6 +10,7 @@ public sealed class Device : AggregateRoot
     public PublicKey PublicKey { get; private set; } = null!;
     public DateTimeOffset RegisteredAt { get; private set; }
     public bool IsActive { get; private set; }
+    public DateTimeOffset? LastSeenAt { get; private set; }
 
     private Device() { } // EF Core
 
@@ -33,4 +34,11 @@ public sealed class Device : AggregateRoot
 
     public void Disable() => IsActive = false;
     public void Enable()  => IsActive = true;
+
+    public void RecordHeartbeat()
+    {
+        if (!IsActive)
+            throw new InvalidOperationException($"Device {Id.Value} is disabled and cannot send heartbeats.");
+        LastSeenAt = DateTimeOffset.UtcNow;
+    }
 }

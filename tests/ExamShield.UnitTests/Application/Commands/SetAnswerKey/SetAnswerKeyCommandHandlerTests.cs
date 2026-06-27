@@ -21,7 +21,7 @@ public sealed class SetAnswerKeyCommandHandlerTests
         _exam = Exam.Create("Test Exam", null, 3);
         _exams.GetByIdAsync(Arg.Any<ExamId>(), Arg.Any<CancellationToken>())
             .Returns(_exam);
-        _answerKeys.GetByExamIdAsync(Arg.Any<ExamId>(), Arg.Any<CancellationToken>())
+        _answerKeys.GetEntityByExamIdAsync(Arg.Any<ExamId>(), Arg.Any<CancellationToken>())
             .Returns((ExamAnswerKey?)null);
 
         _sut = new SetAnswerKeyCommandHandler(_exams, _answerKeys, _auditLog);
@@ -41,15 +41,15 @@ public sealed class SetAnswerKeyCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenKeyAlreadySet_ThrowsInvalidOperationException()
+    public async Task Handle_WhenKeyAlreadySet_ThrowsAnswerKeyAlreadySetException()
     {
         var existing = ExamAnswerKey.Create(_exam.Id, new Dictionary<int, string> { [1] = "A" });
-        _answerKeys.GetByExamIdAsync(Arg.Any<ExamId>(), Arg.Any<CancellationToken>())
+        _answerKeys.GetEntityByExamIdAsync(Arg.Any<ExamId>(), Arg.Any<CancellationToken>())
             .Returns(existing);
 
         var command = new SetAnswerKeyCommand(_exam.Id.Value, new Dictionary<int, string> { [1] = "B" });
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.Handle(command, default));
+        await Assert.ThrowsAsync<AnswerKeyAlreadySetException>(() => _sut.Handle(command, default));
     }
 
     [Fact]

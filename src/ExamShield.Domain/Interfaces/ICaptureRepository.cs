@@ -9,7 +9,10 @@ public interface ICaptureRepository
     Task UpdateAsync(Capture capture, CancellationToken ct = default);
     Task<Capture?> GetByIdAsync(CaptureId id, CancellationToken ct = default);
     Task<IReadOnlyList<Capture>> ListAllAsync(CancellationToken ct = default);
-    Task<(IReadOnlyList<Capture> Items, int TotalCount)> ListPagedAsync(int page, int pageSize, CancellationToken ct = default);
+    Task<(IReadOnlyList<Capture> Items, int TotalCount)> ListPagedAsync(
+        int page, int pageSize,
+        ExamId? examId = null, CaptureStatus? status = null,
+        CancellationToken ct = default);
     Task<IReadOnlyList<Capture>> ListByStatusAsync(CaptureStatus status, CancellationToken ct = default);
     Task<IReadOnlyList<Capture>> ListByStudentIdAsync(StudentId studentId, CancellationToken ct = default);
     Task<IReadOnlyList<Capture>> ListByExamIdAsync(ExamId examId, CancellationToken ct = default);

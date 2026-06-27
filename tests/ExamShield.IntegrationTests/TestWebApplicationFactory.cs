@@ -84,6 +84,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<IReviewRequestRepository>();
             services.AddSingleton<IReviewRequestRepository, InMemoryReviewRequestRepository>();
 
+            services.RemoveAll<IAnswerKeyRepository>();
+            services.AddSingleton<IAnswerKeyRepository, InMemoryAnswerKeyRepository>();
+
             services.RemoveAll<ISystemSettingsRepository>();
             services.AddSingleton<ISystemSettingsRepository, InMemorySystemSettingsRepository>();
 

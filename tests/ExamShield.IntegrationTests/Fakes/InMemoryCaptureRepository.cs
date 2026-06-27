@@ -37,11 +37,17 @@ public sealed class InMemoryCaptureRepository : ICaptureRepository
             _store.Values.Where(c => c.StudentId == studentId).OrderByDescending(c => c.CapturedAt).ToList());
 
     public Task<(IReadOnlyList<Capture> Items, int TotalCount)> ListPagedAsync(
-        int page, int pageSize, CancellationToken ct = default)
+        int page, int pageSize,
+        ExamId? examId = null, CaptureStatus? status = null,
+        CancellationToken ct = default)
     {
-        var all = _store.Values.OrderByDescending(c => c.CapturedAt).ToList();
-        var items = all.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-        return Task.FromResult<(IReadOnlyList<Capture>, int)>((items, all.Count));
+        var filtered = _store.Values
+            .Where(c => examId is null || c.ExamId == examId)
+            .Where(c => status is null  || c.Status == status)
+            .OrderByDescending(c => c.CapturedAt)
+            .ToList();
+        var items = filtered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        return Task.FromResult<(IReadOnlyList<Capture>, int)>((items, filtered.Count));
     }
 
     public Task<int> CountAsync(CancellationToken ct = default) =>

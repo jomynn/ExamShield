@@ -23,4 +23,7 @@ public sealed class InMemoryDeviceRepository : IDeviceRepository
 
     public Task SaveAsync(Device device, CancellationToken ct = default) =>
         Task.CompletedTask; // EF change tracking not needed; mutations are in-place
+
+    public Task UpdateAsync(Device device, CancellationToken ct = default) =>
+        Task.CompletedTask; // In-memory: mutations are in-place via the stored reference
 }

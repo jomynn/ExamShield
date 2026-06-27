@@ -25,4 +25,7 @@ public sealed class DeviceRepository : IDeviceRepository
 
     public async Task SaveAsync(Device device, CancellationToken ct = default) =>
         await _context.SaveChangesAsync(ct);
+
+    public async Task UpdateAsync(Device device, CancellationToken ct = default) =>
+        await _context.SaveChangesAsync(ct);
 }

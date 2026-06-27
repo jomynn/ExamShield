@@ -31,3 +31,21 @@ export function useCloseExam() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['exams'] }),
   })
 }
+
+export function useAnswerKey(examId: string | null) {
+  return useQuery({
+    queryKey: ['answer-key', examId],
+    queryFn: () => api.getAnswerKey(examId!),
+    enabled: !!examId,
+    retry: false,
+  })
+}
+
+export function useSetAnswerKey() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ examId, answers }: { examId: string; answers: Record<number, string> }) =>
+      api.setAnswerKey(examId, answers),
+    onSuccess: (_data, vars) => qc.invalidateQueries({ queryKey: ['answer-key', vars.examId] }),
+  })
+}

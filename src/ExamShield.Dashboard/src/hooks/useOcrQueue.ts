@@ -16,3 +16,11 @@ export function useTriggerOcr() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['ocr-queue'] }),
   })
 }
+
+export function useBatchOcr() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (examId: string) => api.triggerBatchOcr(examId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['ocr-queue'] }),
+  })
+}

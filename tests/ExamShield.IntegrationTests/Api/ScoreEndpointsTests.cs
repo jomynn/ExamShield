@@ -36,6 +36,10 @@ public sealed class ScoreEndpointsTests : IClassFixture<TestWebApplicationFactor
         _examId = exam!.ExamId;
         await _client.PutAsync($"/exams/{_examId}/activate", null);
 
+        // Set answer key — StubOcrService returns Q1=A, Q2=B, Q3=C
+        await _client.PostAsJsonAsync($"/exams/{_examId}/answer-key",
+            new SetAnswerKeyRequest(new Dictionary<int, string> { [1] = "A", [2] = "B", [3] = "C" }));
+
         var captureResponse = await _client.PostAsJsonAsync("/capture", new RegisterCaptureRequest(
             ExamId: _examId, StudentId: Guid.NewGuid(),
             DeviceId: device!.DeviceId, PageNumber: 1,

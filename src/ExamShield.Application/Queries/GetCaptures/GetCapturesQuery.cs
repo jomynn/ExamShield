@@ -1,3 +1,4 @@
+using ExamShield.Domain.Entities;
 using MediatR;
 
 namespace ExamShield.Application.Queries.GetCaptures;
@@ -15,4 +16,8 @@ public sealed record GetCapturesResult(
     public int TotalPages => PageSize > 0 ? (int)Math.Ceiling((double)TotalCount / PageSize) : 0;
 }
 
-public sealed record GetCapturesQuery(int Page = 1, int PageSize = 50) : IRequest<GetCapturesResult>;
+public sealed record GetCapturesQuery(
+    int Page = 1,
+    int PageSize = 50,
+    Guid? ExamId = null,
+    CaptureStatus? Status = null) : IRequest<GetCapturesResult>;

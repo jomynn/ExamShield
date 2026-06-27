@@ -10,7 +10,7 @@ public sealed class GetDevicesQueryHandler(IDeviceRepository devices)
     {
         var all = await devices.ListAllAsync(ct);
         var dtos = all
-            .Select(d => new DeviceDto(d.Id.Value, d.Name, d.IsActive, d.RegisteredAt))
+            .Select(d => new DeviceDto(d.Id.Value, d.Name, d.IsActive, d.RegisteredAt, d.LastSeenAt))
             .ToList();
         return new GetDevicesResult(dtos);
     }

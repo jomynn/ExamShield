@@ -1,4 +1,5 @@
 using ExamShield.Api.Contracts;
+using ExamShield.Application.Commands.TriggerBatchOcr;
 using ExamShield.Application.Messages;
 using ExamShield.Application.Queries.GetOcrQueue;
 using ExamShield.Application.Queries.GetOcrResult;
@@ -20,6 +21,16 @@ public static class OcrEndpoints
             return Results.Accepted();
         })
         .RequireAuthorization("Operator");
+
+        app.MapPost("/ocr/batch", async (BatchOcrRequest request, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(new TriggerBatchOcrCommand(request.ExamId), ct);
+            return Results.Ok(new BatchOcrResponse(request.ExamId, result.Queued, result.Skipped));
+        })
+        .WithName("BatchOcr")
+        .RequireAuthorization("Operator")
+        .Produces<BatchOcrResponse>()
+        .ProducesProblem(StatusCodes.Status404NotFound);
 
         app.MapGet("/ocr/queue", async (
             IMediator mediator,

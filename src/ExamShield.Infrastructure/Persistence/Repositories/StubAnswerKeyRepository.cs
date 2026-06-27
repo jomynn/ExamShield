@@ -1,3 +1,4 @@
+using ExamShield.Domain.Entities;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.ValueObjects;
 
@@ -16,4 +17,9 @@ public sealed class StubAnswerKeyRepository : IAnswerKeyRepository
         });
         return Task.FromResult<AnswerKey?>(key);
     }
+
+    public Task<ExamAnswerKey?> GetEntityByExamIdAsync(ExamId examId, CancellationToken ct = default) =>
+        Task.FromResult<ExamAnswerKey?>(null);
+
+    public Task SaveAsync(ExamAnswerKey key, CancellationToken ct = default) => Task.CompletedTask;
 }

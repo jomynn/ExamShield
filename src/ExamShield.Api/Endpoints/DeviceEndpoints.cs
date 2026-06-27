@@ -1,4 +1,5 @@
 using ExamShield.Api.Contracts;
+using ExamShield.Application.Commands.DeviceHeartbeat;
 using ExamShield.Application.Commands.DisableDevice;
 using ExamShield.Application.Commands.EnableDevice;
 using ExamShield.Application.Commands.RegisterDevice;
@@ -38,6 +39,14 @@ public static class DeviceEndpoints
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
+        app.MapPost("/devices/{id:guid}/heartbeat", HeartbeatAsync)
+            .WithName("DeviceHeartbeat")
+            .WithTags("Device")
+            .RequireAuthorization("Operator")
+            .Produces<DeviceHeartbeatResponse>()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
         return app;
     }
 
@@ -53,7 +62,8 @@ public static class DeviceEndpoints
     {
         var result = await sender.Send(new GetDevicesQuery(), ct);
         var response = new DeviceListResponse(
-            result.Devices.Select(d => new DeviceResponse(d.DeviceId, d.Name, d.IsActive, d.RegisteredAt)).ToList());
+            result.Devices.Select(d =>
+                new DeviceResponse(d.DeviceId, d.Name, d.IsActive, d.RegisteredAt, d.LastSeenAt)).ToList());
         return Results.Ok(response);
     }
 
@@ -67,5 +77,11 @@ public static class DeviceEndpoints
     {
         await sender.Send(new EnableDeviceCommand(id), ct);
         return Results.NoContent();
+    }
+
+    private static async Task<IResult> HeartbeatAsync(Guid id, ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(new DeviceHeartbeatCommand(id), ct);
+        return Results.Ok(new DeviceHeartbeatResponse(result.DeviceId, result.LastSeenAt));
     }
 }

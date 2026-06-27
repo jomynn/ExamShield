@@ -23,3 +23,11 @@ export function useEnableDevice() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['devices'] }),
   })
 }
+
+export function useDeviceHeartbeat() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.deviceHeartbeat(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['devices'] }),
+  })
+}

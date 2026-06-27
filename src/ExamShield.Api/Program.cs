@@ -7,6 +7,7 @@ using ExamShield.Application.Queries.GetOcrResult;
 using ExamShield.Application.Commands.RegisterCapture;
 using ExamShield.Domain.Exceptions;
 using ExamShield.Domain.Interfaces;
+using ExamShield.Domain.Enums;
 using ExamShield.Domain.Services;
 using ExamShield.Infrastructure;
 using ExamShield.Infrastructure.Persistence;
@@ -86,6 +87,7 @@ app.UseExceptionHandler(exceptionApp => exceptionApp.Run(async ctx =>
         CaptureNotFoundException     => (404, ex.Message),
         DeviceNotFoundException      => (404, ex.Message),
         DuplicateUploadException     => (409, ex.Message),
+        AnswerKeyAlreadySetException => (409, ex.Message),
         HashMismatchException        => (400, ex.Message),
         InvalidSignatureException    => (400, ex.Message),
         CaptureNotUploadedException  => (400, ex.Message),

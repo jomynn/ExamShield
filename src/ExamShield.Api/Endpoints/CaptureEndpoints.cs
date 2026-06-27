@@ -2,6 +2,7 @@ using ExamShield.Api.Contracts;
 using ExamShield.Application.Commands.RegisterCapture;
 using ExamShield.Application.Commands.VerifyIntegrity;
 using ExamShield.Application.Queries.GetCaptures;
+using ExamShield.Domain.Entities;
 using ExamShield.Domain.Exceptions;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.ValueObjects;
@@ -15,10 +16,21 @@ public static class CaptureEndpoints
     {
         var group = app.MapGroup("/capture").WithTags("Capture");
 
-        // GET /captures — list all captures (outside /capture group to keep plural consistent)
-        app.MapGet("/captures", async (IMediator mediator, CancellationToken ct, int page = 1, int pageSize = 50) =>
+        // GET /captures — list captures with optional examId/status filters
+        app.MapGet("/captures", async (
+            IMediator mediator, CancellationToken ct,
+            int page = 1, int pageSize = 50,
+            Guid? examId = null, string? status = null) =>
         {
-            var result = await mediator.Send(new GetCapturesQuery(page, pageSize), ct);
+            CaptureStatus? parsedStatus = null;
+            if (status is not null)
+            {
+                if (!Enum.TryParse<CaptureStatus>(status, ignoreCase: true, out var s))
+                    return Results.BadRequest(new { title = $"Unknown status '{status}'.", status = 400 });
+                parsedStatus = s;
+            }
+
+            var result = await mediator.Send(new GetCapturesQuery(page, pageSize, examId, parsedStatus), ct);
             var items = result.Captures
                 .Select(c => new CaptureListItem(
                     c.CaptureId, c.ExamId, c.StudentId, c.DeviceId,
@@ -29,7 +41,8 @@ public static class CaptureEndpoints
         .WithName("GetCaptures")
         .WithTags("Capture")
         .RequireAuthorization("Operator")
-        .Produces<CaptureListResponse>();
+        .Produces<CaptureListResponse>()
+        .ProducesProblem(StatusCodes.Status400BadRequest);
 
         group.MapPost("/", RegisterCaptureAsync)
             .WithName("RegisterCapture")

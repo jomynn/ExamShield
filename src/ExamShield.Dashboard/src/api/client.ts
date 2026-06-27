@@ -42,6 +42,7 @@ export interface DeviceEntry {
   name: string
   isActive: boolean
   registeredAt: string
+  lastSeenAt: string | null
 }
 export interface DeviceListResponse { devices: DeviceEntry[] }
 
@@ -107,6 +108,9 @@ export const api = {
   enableDevice: (id: string) =>
     request<void>(`/devices/${id}/enable`, { method: 'PUT' }),
 
+  deviceHeartbeat: (id: string) =>
+    request<{ deviceId: string; lastSeenAt: string }>(`/devices/${id}/heartbeat`, { method: 'POST' }),
+
   getSecurityEvents: (limit = 100) =>
     request<SecurityEventListResponse>(`/security/events?limit=${limit}`),
 
@@ -116,8 +120,12 @@ export const api = {
   publicVerify: (captureId: string) =>
     request<PublicVerifyResponse>(`/public/verify?captureId=${encodeURIComponent(captureId)}`),
 
-  getCaptures: (page = 1, pageSize = 50) =>
-    request<CaptureListResponse>(`/captures?page=${page}&pageSize=${pageSize}`),
+  getCaptures: (page = 1, pageSize = 50, examId?: string, status?: string) => {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+    if (examId) params.set('examId', examId)
+    if (status) params.set('status', status)
+    return request<CaptureListResponse>(`/captures?${params}`)
+  },
 
   verifyCapture: (captureId: string) =>
     request<VerifyCaptureResponse>(`/public/verify?captureId=${encodeURIComponent(captureId)}`),
@@ -154,6 +162,17 @@ export const api = {
 
   closeExam: (examId: string) =>
     request<void>(`/exams/${examId}/close`, { method: 'PUT' }),
+
+  setAnswerKey: (examId: string, answers: Record<number, string>) =>
+    request<void>(`/exams/${examId}/answer-key`, {
+      method: 'POST',
+      body: JSON.stringify({ answers }),
+    }),
+
+  getAnswerKey: (examId: string) =>
+    request<{ examId: string; answers: Record<string, string>; createdAt: string }>(
+      `/exams/${examId}/answer-key`
+    ),
 
   getScoringQueue: () => request<ScoringQueueResponse>('/score/queue'),
 
@@ -209,6 +228,12 @@ export const api = {
 
   triggerOcr: (captureId: string) =>
     request<void>(`/ocr/${captureId}`, { method: 'POST' }),
+
+  triggerBatchOcr: (examId: string) =>
+    request<{ examId: string; queued: number; skipped: number }>('/ocr/batch', {
+      method: 'POST',
+      body: JSON.stringify({ examId }),
+    }),
 
   getPendingReviews: () => request<PendingReviewsResponse>('/reviews'),
 
