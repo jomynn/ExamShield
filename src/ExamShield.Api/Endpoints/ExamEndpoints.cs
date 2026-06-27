@@ -29,9 +29,11 @@ public static class ExamEndpoints
         group.MapGet("/", async (
             IMediator mediator, CancellationToken ct,
             int page = 1, int pageSize = 50,
-            string? search = null, ExamStatus? status = null) =>
+            string? search = null, ExamStatus? status = null,
+            DateTimeOffset? scheduledFrom = null, DateTimeOffset? scheduledTo = null) =>
         {
-            var result = await mediator.Send(new GetExamsQuery(page, pageSize, search, status), ct);
+            var result = await mediator.Send(
+                new GetExamsQuery(page, pageSize, search, status, scheduledFrom, scheduledTo), ct);
             var items = result.Exams
                 .Select(e => new ExamResponse(e.ExamId, e.Name, e.Description, e.Status, e.TotalQuestions, e.CreatedAt, e.ScheduledAt, e.EndsAt))
                 .ToList();

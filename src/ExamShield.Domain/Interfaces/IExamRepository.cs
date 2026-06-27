@@ -12,5 +12,6 @@ public interface IExamRepository
     Task<(IReadOnlyList<Exam> Items, int TotalCount)> ListPagedAsync(
         int page, int pageSize,
         string? search = null, ExamStatus? status = null,
+        DateTimeOffset? scheduledFrom = null, DateTimeOffset? scheduledTo = null,
         CancellationToken ct = default);
 }

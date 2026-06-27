@@ -219,10 +219,13 @@ export const api = {
   activateUser: (userId: string) =>
     request<void>(`/users/${userId}/activate`, { method: 'PUT' }),
 
-  getExams: (page = 1, pageSize = 50, search?: string, status?: string) => {
+  getExams: (page = 1, pageSize = 50, search?: string, status?: string,
+             scheduledFrom?: string, scheduledTo?: string) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
-    if (search) params.append('search', search)
-    if (status) params.append('status', status)
+    if (search)        params.append('search', search)
+    if (status)        params.append('status', status)
+    if (scheduledFrom) params.append('scheduledFrom', scheduledFrom)
+    if (scheduledTo)   params.append('scheduledTo', scheduledTo)
     return request<ExamListResponse>(`/exams/?${params}`)
   },
 

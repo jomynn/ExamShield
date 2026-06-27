@@ -22,7 +22,13 @@ export default function ExaminationsPage() {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
-  const { data, isLoading } = useExams(page, PAGE_SIZE, search || undefined, statusFilter || undefined)
+  const [scheduledFrom, setScheduledFrom] = useState('')
+  const [scheduledTo, setScheduledTo]     = useState('')
+  const { data, isLoading } = useExams(
+    page, PAGE_SIZE,
+    search || undefined, statusFilter || undefined,
+    scheduledFrom || undefined, scheduledTo || undefined
+  )
   const create   = useCreateExam()
   const remove   = useDeleteExam()
   const update   = useUpdateExam()
@@ -140,6 +146,20 @@ export default function ExaminationsPage() {
             <option key={s} value={s}>{s || 'All statuses'}</option>
           ))}
         </select>
+        <input
+          type="datetime-local"
+          title="Scheduled from"
+          value={scheduledFrom}
+          onChange={e => { setScheduledFrom(e.target.value); setPage(1) }}
+          className="rounded border border-[#30363D] bg-[#161B22] px-3 py-1.5 text-sm text-white"
+        />
+        <input
+          type="datetime-local"
+          title="Scheduled to"
+          value={scheduledTo}
+          onChange={e => { setScheduledTo(e.target.value); setPage(1) }}
+          className="rounded border border-[#30363D] bg-[#161B22] px-3 py-1.5 text-sm text-white"
+        />
         <button
           onClick={() => api.exportExams(search || undefined, statusFilter || undefined).then(blob => {
             const url = URL.createObjectURL(blob)

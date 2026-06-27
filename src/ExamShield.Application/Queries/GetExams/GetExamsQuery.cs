@@ -19,5 +19,6 @@ public sealed record GetExamsResult(
 
 public sealed record GetExamsQuery(
     int Page = 1, int PageSize = 50,
-    string? Search = null, ExamStatus? Status = null)
+    string? Search = null, ExamStatus? Status = null,
+    DateTimeOffset? ScheduledFrom = null, DateTimeOffset? ScheduledTo = null)
     : IRequest<GetExamsResult>;
