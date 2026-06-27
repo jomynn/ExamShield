@@ -3,6 +3,7 @@ using ExamShield.Application.Commands.ActivateExam;
 using ExamShield.Application.Commands.CloseExam;
 using ExamShield.Application.Commands.CreateExam;
 using ExamShield.Application.Commands.EnrollStudent;
+using ExamShield.Application.Commands.UnenrollStudent;
 using ExamShield.Application.Commands.SetAnswerKey;
 using ExamShield.Application.Queries.GetAnswerKey;
 using ExamShield.Application.Queries.GetExamCandidates;
@@ -115,6 +116,18 @@ public static class ExamEndpoints
         .WithName("GetExamCandidates")
         .RequireAuthorization("Operator")
         .Produces<ExamCandidatesResponse>();
+
+        group.MapDelete("/{id:guid}/students/{studentId:guid}",
+            async (Guid id, Guid studentId, IMediator mediator, CancellationToken ct) =>
+            {
+                await mediator.Send(new UnenrollStudentCommand(id, studentId), ct);
+                return Results.NoContent();
+            })
+        .WithName("UnenrollStudent")
+        .RequireAuthorization("Operator")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status409Conflict);
 
         group.MapGet("/{id:guid}/submission-status", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {

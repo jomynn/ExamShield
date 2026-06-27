@@ -193,6 +193,9 @@ export const api = {
   getExamCandidates: (examId: string) =>
     request<ExamCandidatesResponse>(`/exams/${examId}/students`),
 
+  unenrollStudent: (examId: string, studentId: string) =>
+    request<void>(`/exams/${examId}/students/${studentId}`, { method: 'DELETE' }),
+
   getExamSubmissionStatus: (examId: string) =>
     request<ExamSubmissionStatusResponse>(`/exams/${examId}/submission-status`),
 

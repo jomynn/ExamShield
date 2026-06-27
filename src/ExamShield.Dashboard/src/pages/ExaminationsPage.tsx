@@ -2,7 +2,7 @@ import { useState } from 'react'
 import {
   useExams, useCreateExam, useActivateExam, useCloseExam,
   useAnswerKey, useSetAnswerKey, useExamCandidates, useEnrollStudent,
-  useExamSubmissionStatus,
+  useUnenrollStudent, useExamSubmissionStatus,
 } from '../hooks/useExams'
 import StatusChip from '../components/ui/StatusChip'
 import Pagination from '../components/Pagination'
@@ -37,7 +37,8 @@ export default function ExaminationsPage() {
   const [newStudentId, setNewStudentId] = useState('')
   const { data: candidatesData } = useExamCandidates(enrollExamId)
   const { data: statusData }    = useExamSubmissionStatus(enrollExamId)
-  const enroll = useEnrollStudent()
+  const enroll   = useEnrollStudent()
+  const unenroll = useUnenrollStudent()
 
   if (isLoading) return <p>Loading...</p>
 
@@ -311,6 +312,16 @@ export default function ExaminationsPage() {
                       <span className={`text-xs px-1.5 py-0.5 rounded ${sub?.hasSubmitted ? 'bg-green-900/40 text-green-400' : 'bg-amber-900/40 text-amber-400'}`}>
                         {sub?.hasSubmitted ? (sub.captureStatus ?? 'Submitted') : 'Missing'}
                       </span>
+                      {!sub?.hasSubmitted && (
+                        <button
+                          onClick={() => unenroll.mutate({ examId: enrollExamId!, studentId: c.studentId })}
+                          disabled={unenroll.isPending}
+                          className="text-xs text-red-400 hover:text-red-300 disabled:opacity-40"
+                          title="Remove from exam"
+                        >
+                          ✕
+                        </button>
+                      )}
                     </div>
                   )
                 })

@@ -75,3 +75,15 @@ export function useEnrollStudent() {
     onSuccess: (_data, vars) => qc.invalidateQueries({ queryKey: ['exam-candidates', vars.examId] }),
   })
 }
+
+export function useUnenrollStudent() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ examId, studentId }: { examId: string; studentId: string }) =>
+      api.unenrollStudent(examId, studentId),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['exam-candidates', vars.examId] })
+      qc.invalidateQueries({ queryKey: ['submission-status', vars.examId] })
+    },
+  })
+}

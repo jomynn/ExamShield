@@ -17,5 +17,6 @@ public enum AuditAction
     ResultsPublished,
     ReviewRequestSubmitted,
     AnswerKeySet,
-    StudentEnrolled
+    StudentEnrolled,
+    StudentUnenrolled
 }
