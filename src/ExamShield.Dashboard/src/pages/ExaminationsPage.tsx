@@ -2,6 +2,7 @@ import { useState } from 'react'
 import {
   useExams, useCreateExam, useActivateExam, useCloseExam,
   useAnswerKey, useSetAnswerKey, useExamCandidates, useEnrollStudent,
+  useExamSubmissionStatus,
 } from '../hooks/useExams'
 import StatusChip from '../components/ui/StatusChip'
 import Pagination from '../components/Pagination'
@@ -35,6 +36,7 @@ export default function ExaminationsPage() {
   const [enrollExamId, setEnrollExamId] = useState<string | null>(null)
   const [newStudentId, setNewStudentId] = useState('')
   const { data: candidatesData } = useExamCandidates(enrollExamId)
+  const { data: statusData }    = useExamSubmissionStatus(enrollExamId)
   const enroll = useEnrollStudent()
 
   if (isLoading) return <p>Loading...</p>
@@ -251,6 +253,24 @@ export default function ExaminationsPage() {
           <div className="bg-background rounded-xl border p-6 w-full max-w-md space-y-4 max-h-[80vh] overflow-y-auto">
             <h2 className="text-lg font-semibold">Enrolled Students</h2>
 
+            {statusData && statusData.totalEnrolled > 0 && (
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Submissions</span>
+                  <span>{statusData.submitted} / {statusData.totalEnrolled}</span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-2 rounded-full bg-green-500 transition-all"
+                    style={{ width: `${(statusData.submitted / statusData.totalEnrolled) * 100}%` }}
+                  />
+                </div>
+                {statusData.missing > 0 && (
+                  <p className="text-xs text-amber-400">{statusData.missing} student(s) have not submitted yet.</p>
+                )}
+              </div>
+            )}
+
             <form
               onSubmit={e => {
                 e.preventDefault()
@@ -283,12 +303,17 @@ export default function ExaminationsPage() {
             <div className="space-y-1 max-h-64 overflow-y-auto">
               {(candidatesData?.candidates ?? []).length === 0
                 ? <p className="text-sm text-muted-foreground">No students enrolled yet.</p>
-                : (candidatesData?.candidates ?? []).map(c => (
-                  <div key={c.studentId} className="flex items-center justify-between text-sm py-1 border-b">
-                    <span className="font-mono text-xs">{c.studentId}</span>
-                    <span className="text-xs text-muted-foreground">{new Date(c.enrolledAt).toLocaleDateString()}</span>
-                  </div>
-                ))
+                : (candidatesData?.candidates ?? []).map(c => {
+                  const sub = statusData?.students.find(s => s.studentId === c.studentId)
+                  return (
+                    <div key={c.studentId} className="flex items-center justify-between text-sm py-1 border-b gap-2">
+                      <span className="font-mono text-xs flex-1 truncate">{c.studentId}</span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded ${sub?.hasSubmitted ? 'bg-green-900/40 text-green-400' : 'bg-amber-900/40 text-amber-400'}`}>
+                        {sub?.hasSubmitted ? (sub.captureStatus ?? 'Submitted') : 'Missing'}
+                      </span>
+                    </div>
+                  )
+                })
               }
             </div>
 

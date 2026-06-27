@@ -58,6 +58,15 @@ export function useExamCandidates(examId: string | null) {
   })
 }
 
+export function useExamSubmissionStatus(examId: string | null) {
+  return useQuery({
+    queryKey: ['exam-submission-status', examId],
+    queryFn: () => api.getExamSubmissionStatus(examId!),
+    enabled: !!examId,
+    refetchInterval: 30_000,
+  })
+}
+
 export function useEnrollStudent() {
   const qc = useQueryClient()
   return useMutation({

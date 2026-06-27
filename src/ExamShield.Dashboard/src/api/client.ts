@@ -193,6 +193,9 @@ export const api = {
   getExamCandidates: (examId: string) =>
     request<ExamCandidatesResponse>(`/exams/${examId}/students`),
 
+  getExamSubmissionStatus: (examId: string) =>
+    request<ExamSubmissionStatusResponse>(`/exams/${examId}/submission-status`),
+
   getScoringQueue: () => request<ScoringQueueResponse>('/score/queue'),
 
   scoreCapture: (captureId: string) =>
@@ -481,6 +484,15 @@ export interface ExamReportResponse {
 
 export interface ExamCandidateItem { studentId: string; enrolledAt: string }
 export interface ExamCandidatesResponse { examId: string; candidates: ExamCandidateItem[] }
+
+export interface StudentSubmissionItem { studentId: string; hasSubmitted: boolean; captureStatus: string | null }
+export interface ExamSubmissionStatusResponse {
+  examId: string
+  totalEnrolled: number
+  submitted: number
+  missing: number
+  students: StudentSubmissionItem[]
+}
 
 export interface RoleItem {
   roleName: string

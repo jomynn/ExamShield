@@ -10,6 +10,11 @@ public sealed record ExamResponse(
     string Status, int TotalQuestions, DateTimeOffset CreatedAt);
 
 public sealed record EnrollStudentRequest(Guid StudentId);
+
+public sealed record StudentSubmissionItem(Guid StudentId, bool HasSubmitted, string? CaptureStatus);
+public sealed record ExamSubmissionStatusResponse(
+    Guid ExamId, int TotalEnrolled, int Submitted, int Missing,
+    IReadOnlyList<StudentSubmissionItem> Students);
 public sealed record ExamCandidateItem(Guid StudentId, DateTimeOffset EnrolledAt);
 public sealed record ExamCandidatesResponse(Guid ExamId, IReadOnlyList<ExamCandidateItem> Candidates);
 

@@ -6,6 +6,7 @@ using ExamShield.Application.Commands.EnrollStudent;
 using ExamShield.Application.Commands.SetAnswerKey;
 using ExamShield.Application.Queries.GetAnswerKey;
 using ExamShield.Application.Queries.GetExamCandidates;
+using ExamShield.Application.Queries.GetExamSubmissionStatus;
 using ExamShield.Application.Queries.GetExams;
 using ExamShield.Domain.Exceptions;
 using MediatR;
@@ -114,6 +115,19 @@ public static class ExamEndpoints
         .WithName("GetExamCandidates")
         .RequireAuthorization("Operator")
         .Produces<ExamCandidatesResponse>();
+
+        group.MapGet("/{id:guid}/submission-status", async (Guid id, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(new GetExamSubmissionStatusQuery(id), ct);
+            var students = result.Students
+                .Select(s => new StudentSubmissionItem(s.StudentId, s.HasSubmitted, s.CaptureStatus))
+                .ToList();
+            return Results.Ok(new ExamSubmissionStatusResponse(
+                result.ExamId, result.TotalEnrolled, result.Submitted, result.Missing, students));
+        })
+        .WithName("GetExamSubmissionStatus")
+        .RequireAuthorization("Operator")
+        .Produces<ExamSubmissionStatusResponse>();
 
         return app;
     }
