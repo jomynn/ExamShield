@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  useExams, useCreateExam, useActivateExam, useCloseExam,
+  useExams, useCreateExam, useUpdateExam, useActivateExam, useCloseExam,
   useAnswerKey, useSetAnswerKey, useExamCandidates, useEnrollStudent,
   useUnenrollStudent, useExamSubmissionStatus,
 } from '../hooks/useExams'
@@ -23,9 +23,16 @@ export default function ExaminationsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const { data, isLoading } = useExams(page, PAGE_SIZE, search || undefined, statusFilter || undefined)
-  const create = useCreateExam()
+  const create   = useCreateExam()
+  const update   = useUpdateExam()
   const activate = useActivateExam()
-  const close = useCloseExam()
+  const close    = useCloseExam()
+
+  const [editExamId, setEditExamId]     = useState<string | null>(null)
+  const [editName, setEditName]         = useState('')
+  const [editDesc, setEditDesc]         = useState('')
+  const [editScheduled, setEditScheduled] = useState('')
+  const [editEnds, setEditEnds]         = useState('')
   const setKey = useSetAnswerKey()
 
   const [showForm, setShowForm] = useState(false)
@@ -243,13 +250,27 @@ export default function ExaminationsPage() {
                   <td className="py-2 px-4">
                     <div className="flex gap-2">
                       {exam.status === 'Draft' && (
-                        <button
-                          onClick={() => activate.mutate(exam.examId)}
-                          disabled={activate.isPending}
-                          className="px-3 py-1 rounded text-xs bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
-                        >
-                          Activate
-                        </button>
+                        <>
+                          <button
+                            onClick={() => {
+                              setEditExamId(exam.examId)
+                              setEditName(exam.name)
+                              setEditDesc(exam.description ?? '')
+                              setEditScheduled(exam.scheduledAt ? exam.scheduledAt.slice(0, 16) : '')
+                              setEditEnds(exam.endsAt ? exam.endsAt.slice(0, 16) : '')
+                            }}
+                            className="px-3 py-1 rounded text-xs border border-border hover:bg-muted"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => activate.mutate(exam.examId)}
+                            disabled={activate.isPending}
+                            className="px-3 py-1 rounded text-xs bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                          >
+                            Activate
+                          </button>
+                        </>
                       )}
                       {exam.status === 'Active' && (
                         <>
@@ -454,6 +475,66 @@ export default function ExaminationsPage() {
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {editExamId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg p-6 w-full max-w-md space-y-3">
+            <h2 className="text-lg font-semibold">Edit Exam</h2>
+            <input
+              value={editName}
+              onChange={e => setEditName(e.target.value)}
+              className="w-full rounded border px-3 py-1.5 text-sm bg-background"
+              placeholder="Exam name"
+            />
+            <input
+              value={editDesc}
+              onChange={e => setEditDesc(e.target.value)}
+              className="w-full rounded border px-3 py-1.5 text-sm bg-background"
+              placeholder="Description (optional)"
+            />
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="text-xs text-muted-foreground">Scheduled at</label>
+                <input type="datetime-local" value={editScheduled}
+                  onChange={e => setEditScheduled(e.target.value)}
+                  className="w-full rounded border px-3 py-1.5 text-sm bg-background" />
+              </div>
+              <div className="flex-1">
+                <label className="text-xs text-muted-foreground">Ends at</label>
+                <input type="datetime-local" value={editEnds}
+                  onChange={e => setEditEnds(e.target.value)}
+                  className="w-full rounded border px-3 py-1.5 text-sm bg-background" />
+              </div>
+            </div>
+            {update.isError && (
+              <p className="text-sm text-red-400">{String(update.error)}</p>
+            )}
+            <div className="flex gap-2 justify-end pt-1">
+              <button
+                onClick={() => setEditExamId(null)}
+                className="px-4 py-1.5 rounded border border-border text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={update.isPending || !editName.trim()}
+                onClick={() => update.mutate({
+                  examId: editExamId,
+                  payload: {
+                    name: editName.trim(),
+                    description: editDesc || undefined,
+                    scheduledAt: editScheduled ? new Date(editScheduled).toISOString() : null,
+                    endsAt: editEnds ? new Date(editEnds).toISOString() : null,
+                  },
+                }, { onSuccess: () => setEditExamId(null) })}
+                className="px-4 py-1.5 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
+              >
+                {update.isPending ? 'Saving…' : 'Save'}
+              </button>
+            </div>
           </div>
         </div>
       )}

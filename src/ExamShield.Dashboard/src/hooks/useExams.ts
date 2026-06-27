@@ -16,6 +16,17 @@ export function useCreateExam() {
   })
 }
 
+export function useUpdateExam() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ examId, payload }: {
+      examId: string
+      payload: { name: string; description?: string; scheduledAt?: string | null; endsAt?: string | null }
+    }) => api.updateExam(examId, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['exams'] }),
+  })
+}
+
 export function useActivateExam() {
   const qc = useQueryClient()
   return useMutation({

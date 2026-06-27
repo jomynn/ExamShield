@@ -36,6 +36,22 @@ public sealed class Exam : AggregateRoot
         };
     }
 
+    public void Update(
+        string name, string? description,
+        DateTimeOffset? scheduledAt, DateTimeOffset? endsAt)
+    {
+        if (Status != ExamStatus.Draft)
+            throw new InvalidOperationException("Only Draft exams can be updated.");
+        ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+        if (scheduledAt.HasValue && endsAt.HasValue && endsAt <= scheduledAt)
+            throw new ArgumentException("EndsAt must be after ScheduledAt.", nameof(endsAt));
+
+        Name        = name.Trim();
+        Description = description;
+        ScheduledAt = scheduledAt;
+        EndsAt      = endsAt;
+    }
+
     public void Activate()
     {
         if (Status != ExamStatus.Draft)

@@ -4,6 +4,7 @@ using ExamShield.Application.Commands.CloseExam;
 using ExamShield.Application.Commands.CreateExam;
 using ExamShield.Application.Commands.BulkEnrollStudents;
 using ExamShield.Application.Commands.EnrollStudent;
+using ExamShield.Application.Commands.UpdateExam;
 using ExamShield.Application.Commands.UnenrollStudent;
 using ExamShield.Application.Commands.SetAnswerKey;
 using ExamShield.Application.Queries.GetAnswerKey;
@@ -52,6 +53,32 @@ public static class ExamEndpoints
         .RequireAuthorization("Administrator")
         .Produces<ExamResponse>(StatusCodes.Status201Created)
         .ProducesProblem(StatusCodes.Status400BadRequest);
+
+        group.MapPut("/{id:guid}", async (
+            Guid id, UpdateExamRequest request, IMediator mediator, CancellationToken ct) =>
+        {
+            try
+            {
+                await mediator.Send(
+                    new UpdateExamCommand(id, request.Name, request.Description,
+                        request.ScheduledAt, request.EndsAt), ct);
+                return Results.NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return Results.NotFound();
+            }
+            catch (InvalidOperationException e)
+            {
+                return Results.UnprocessableEntity(new { error = e.Message });
+            }
+        })
+        .WithName("UpdateExam")
+        .RequireAuthorization("Administrator")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
 
         group.MapPut("/{id:guid}/activate", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {

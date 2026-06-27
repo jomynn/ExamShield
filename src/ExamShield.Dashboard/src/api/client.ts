@@ -208,6 +208,15 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
+  updateExam: (examId: string, payload: {
+    name: string; description?: string;
+    scheduledAt?: string | null; endsAt?: string | null;
+  }) =>
+    request<void>(`/exams/${examId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
   submitReviewRequest: (studentId: string, captureId: string, reason: string) =>
     request<{ reviewRequestId: string }>('/student/review-request', {
       method: 'POST',

@@ -12,6 +12,10 @@ public sealed record ExamResponse(
     string Status, int TotalQuestions, DateTimeOffset CreatedAt,
     DateTimeOffset? ScheduledAt, DateTimeOffset? EndsAt);
 
+public sealed record UpdateExamRequest(
+    string Name, string? Description,
+    DateTimeOffset? ScheduledAt, DateTimeOffset? EndsAt);
+
 public sealed record EnrollStudentRequest(Guid StudentId);
 public sealed record BulkEnrollRequest(IReadOnlyList<Guid> StudentIds);
 public sealed record BulkEnrollResponse(int Enrolled, int AlreadyEnrolled, int Total);
