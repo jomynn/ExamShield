@@ -8,6 +8,8 @@ public sealed class GetUsersQueryHandler(IUserRepository users)
 {
     public async Task<GetUsersResult> Handle(GetUsersQuery request, CancellationToken ct)
     {
+        PaginationGuard.Validate(request.Page, request.PageSize);
+
         var (items, total) = await users.ListPagedAsync(
             request.Page, request.PageSize, request.Search, request.Role, request.IsActive, ct);
         var dtos = items

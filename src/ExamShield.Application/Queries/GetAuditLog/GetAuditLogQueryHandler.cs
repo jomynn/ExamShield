@@ -14,6 +14,8 @@ public sealed class GetAuditLogQueryHandler : IRequestHandler<GetAuditLogQuery, 
 
     public async Task<GetAuditLogResult> Handle(GetAuditLogQuery query, CancellationToken ct)
     {
+        PaginationGuard.Validate(query.Page, query.PageSize);
+
         var captureId = query.CaptureId.HasValue ? new CaptureId(query.CaptureId.Value) : null;
         AuditAction? action = query.Action is not null &&
             Enum.TryParse<AuditAction>(query.Action, ignoreCase: true, out var parsed)
