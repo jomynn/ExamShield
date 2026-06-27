@@ -3,6 +3,7 @@ using ExamShield.Application.Commands.FlagCaptureAsTampered;
 using ExamShield.Application.Commands.RegisterCapture;
 using ExamShield.Application.Commands.VerifyIntegrity;
 using ExamShield.Application.Queries.ExportCaptures;
+using ExamShield.Application.Queries.GetCaptureById;
 using ExamShield.Application.Queries.GetCaptures;
 using ExamShield.Application.Queries.GetChainOfCustody;
 using ExamShield.Domain.Entities;
@@ -83,6 +84,21 @@ public static class CaptureEndpoints
             .RequireAuthorization("Operator")
             .Produces<VerifyIntegrityResponse>()
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        app.MapGet("/captures/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetCaptureByIdQuery(id), ct);
+            if (result is null) return Results.NotFound();
+            return Results.Ok(new CaptureDetailResponse(
+                result.CaptureId, result.ExamId, result.StudentId, result.DeviceId,
+                result.PageNumber, result.Hash, result.Signature,
+                result.Status, result.CapturedAt, result.StorageKey));
+        })
+        .WithName("GetCaptureById")
+        .WithTags("Capture")
+        .RequireAuthorization("Operator")
+        .Produces<CaptureDetailResponse>()
+        .ProducesProblem(StatusCodes.Status404NotFound);
 
         app.MapGet("/captures/{id:guid}/chain-of-custody",
             async (Guid id, ISender sender, CancellationToken ct) =>

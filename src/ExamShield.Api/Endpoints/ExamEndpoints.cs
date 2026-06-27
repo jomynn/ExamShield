@@ -11,6 +11,7 @@ using ExamShield.Application.Queries.GetAnswerKey;
 using ExamShield.Application.Queries.GetExamCandidates;
 using ExamShield.Application.Queries.GetExamSubmissionStatus;
 using ExamShield.Application.Queries.ExportExams;
+using ExamShield.Application.Queries.GetExamById;
 using ExamShield.Application.Queries.GetExams;
 using ExamShield.Domain.Entities;
 using ExamShield.Domain.Exceptions;
@@ -38,6 +39,20 @@ public static class ExamEndpoints
         .WithName("GetExams")
         .RequireAuthorization("Operator")
         .Produces<ExamListResponse>();
+
+        group.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(new GetExamByIdQuery(id), ct);
+            if (result is null) return Results.NotFound();
+            return Results.Ok(new ExamResponse(
+                result.ExamId, result.Name, result.Description,
+                result.Status, result.TotalQuestions, result.CreatedAt,
+                result.ScheduledAt, result.EndsAt));
+        })
+        .WithName("GetExamById")
+        .RequireAuthorization("Operator")
+        .Produces<ExamResponse>()
+        .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapPost("/", async (CreateExamRequest request, IMediator mediator, CancellationToken ct) =>
         {
