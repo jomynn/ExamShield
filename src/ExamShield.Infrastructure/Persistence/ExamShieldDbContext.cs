@@ -17,6 +17,7 @@ public class ExamShieldDbContext : DbContext
     public DbSet<SecurityEvent> SecurityEvents => Set<SecurityEvent>();
     public DbSet<Exam> Exams => Set<Exam>();
     public DbSet<SystemSettings> SystemSettings => Set<SystemSettings>();
+    public DbSet<NotificationChannelSettings> NotificationChannelSettings => Set<NotificationChannelSettings>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<ReviewRequest> ReviewRequests => Set<ReviewRequest>();
 

@@ -268,6 +268,15 @@ export const api = {
   testAlert: () =>
     request<{ sent: boolean; error: string | null }>('/settings/alert/test', { method: 'POST' }),
 
+  getNotificationChannelSettings: () =>
+    request<NotificationChannelSettingsResponse>('/settings/notifications'),
+
+  updateNotificationChannelSettings: (payload: NotificationChannelSettingsPayload) =>
+    request<NotificationChannelSettingsResponse>('/settings/notifications', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
   getReportSummary: () => request<ReportSummaryResponse>('/reports/summary'),
 
   exportAuditLog: (params?: { captureId?: string; from?: string; to?: string }) => {
@@ -557,6 +566,19 @@ export interface SettingsResponse {
   refreshTokenExpiryDays: number
 }
 export type UpdateSettingsPayload = SettingsResponse
+
+export interface NotificationChannelSettingsResponse {
+  emailEnabled: boolean
+  emailRecipients: string | null
+  slackEnabled: boolean
+  slackWebhookUrl: string | null
+  lineEnabled: boolean
+  lineNotifyToken: string | null
+  webhookEnabled: boolean
+  webhookUrl: string | null
+  updatedAt: string
+}
+export type NotificationChannelSettingsPayload = Omit<NotificationChannelSettingsResponse, 'updatedAt'>
 
 export interface ReportSummaryResponse {
   generatedAt: string

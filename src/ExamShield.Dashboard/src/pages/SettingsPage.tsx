@@ -1,7 +1,164 @@
 import { useState, useEffect } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSettings, useUpdateSettings, useTestAlert } from '../hooks/useSettings'
+import { api, type NotificationChannelSettingsPayload } from '../api/client'
 
 const SEVERITY_OPTIONS = ['Info', 'Warning', 'High', 'Critical']
+
+const DEFAULT_CHANNELS: NotificationChannelSettingsPayload = {
+  emailEnabled: false,   emailRecipients: null,
+  slackEnabled: false,   slackWebhookUrl: null,
+  lineEnabled: false,    lineNotifyToken: null,
+  webhookEnabled: false, webhookUrl: null,
+}
+
+function ChannelRow({ label, enabled, onToggle, children }: {
+  label: string
+  enabled: boolean
+  onToggle: (v: boolean) => void
+  children?: React.ReactNode
+}) {
+  return (
+    <div className="rounded-lg border border-border p-4 space-y-3">
+      <label className="flex items-center gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={e => onToggle(e.target.checked)}
+          className="h-4 w-4 rounded"
+        />
+        <span className="text-sm font-medium text-foreground">{label}</span>
+      </label>
+      {enabled && children}
+    </div>
+  )
+}
+
+function Field({ label, value, onChange, placeholder, type = 'text' }: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+  type?: string
+}) {
+  return (
+    <label className="block space-y-1">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <input
+        type={type}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+      />
+    </label>
+  )
+}
+
+function NotificationChannelSection() {
+  const qc = useQueryClient()
+  const { data, isLoading } = useQuery({
+    queryKey: ['notification-channel-settings'],
+    queryFn: api.getNotificationChannelSettings,
+  })
+
+  const [channels, setChannels] = useState<NotificationChannelSettingsPayload>(DEFAULT_CHANNELS)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (data) setChannels({
+      emailEnabled:   data.emailEnabled,   emailRecipients:  data.emailRecipients,
+      slackEnabled:   data.slackEnabled,   slackWebhookUrl:  data.slackWebhookUrl,
+      lineEnabled:    data.lineEnabled,    lineNotifyToken:  data.lineNotifyToken,
+      webhookEnabled: data.webhookEnabled, webhookUrl:       data.webhookUrl,
+    })
+  }, [data])
+
+  const { mutate: save, isPending } = useMutation({
+    mutationFn: (p: NotificationChannelSettingsPayload) => api.updateNotificationChannelSettings(p),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notification-channel-settings'] })
+      setSaved(true)
+      setError('')
+      setTimeout(() => setSaved(false), 3000)
+    },
+    onError: async (err: unknown) => {
+      const res = err instanceof Response ? await res?.json?.() : null
+      setError(res?.title ?? 'Failed to save notification settings.')
+    },
+  })
+
+  const set = <K extends keyof NotificationChannelSettingsPayload>(
+    key: K, value: NotificationChannelSettingsPayload[K]
+  ) => setChannels(prev => ({ ...prev, [key]: value }))
+
+  if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>
+
+  return (
+    <section className="space-y-4 border-t pt-6">
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+          Alert Channels
+        </h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Configure where security alerts and tamper notifications are sent.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <ChannelRow label="Email" enabled={channels.emailEnabled} onToggle={v => set('emailEnabled', v)}>
+          <Field
+            label="Recipients (comma-separated)"
+            value={channels.emailRecipients ?? ''}
+            onChange={v => set('emailRecipients', v || null)}
+            placeholder="ops@example.com, security@example.com"
+          />
+        </ChannelRow>
+
+        <ChannelRow label="Slack" enabled={channels.slackEnabled} onToggle={v => set('slackEnabled', v)}>
+          <Field
+            label="Webhook URL"
+            value={channels.slackWebhookUrl ?? ''}
+            onChange={v => set('slackWebhookUrl', v || null)}
+            placeholder="https://hooks.slack.com/services/T.../B.../..."
+          />
+        </ChannelRow>
+
+        <ChannelRow label="LINE Notify" enabled={channels.lineEnabled} onToggle={v => set('lineEnabled', v)}>
+          <Field
+            label="Access Token"
+            value={channels.lineNotifyToken ?? ''}
+            onChange={v => set('lineNotifyToken', v || null)}
+            placeholder="LINE Notify access token"
+            type="password"
+          />
+        </ChannelRow>
+
+        <ChannelRow label="Generic Webhook" enabled={channels.webhookEnabled} onToggle={v => set('webhookEnabled', v)}>
+          <Field
+            label="Webhook URL"
+            value={channels.webhookUrl ?? ''}
+            onChange={v => set('webhookUrl', v || null)}
+            placeholder="https://your-service.example.com/notify"
+          />
+        </ChannelRow>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => save(channels)}
+          disabled={isPending}
+          className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-50"
+        >
+          {isPending ? 'Saving…' : 'Save Channels'}
+        </button>
+        {saved && <span className="text-sm text-green-500">Channel settings saved.</span>}
+        {error && <span className="text-sm text-red-400">{error}</span>}
+      </div>
+    </section>
+  )
+}
 
 export default function SettingsPage() {
   const { data, isLoading } = useSettings()
@@ -143,10 +300,16 @@ export default function SettingsPage() {
         )}
       </div>
 
+      {/* Alert channel configuration */}
+      <NotificationChannelSection />
+
+      {/* Test alert */}
       <section className="space-y-3 border-t pt-6">
-        <h2 className="text-base font-semibold">Alert Channels</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+          Test Alert
+        </h2>
         <p className="text-sm text-muted-foreground">
-          Send a test notification to all configured alert channels (Slack, Teams, Email, LINE Notify, Webhook).
+          Send a test notification to all configured alert channels.
         </p>
         <div className="flex items-center gap-4">
           <button

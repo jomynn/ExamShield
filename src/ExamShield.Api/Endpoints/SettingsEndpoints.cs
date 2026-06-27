@@ -1,6 +1,8 @@
 using ExamShield.Api.Contracts;
 using ExamShield.Application.Commands.TestAlert;
+using ExamShield.Application.Commands.UpdateNotificationSettings;
 using ExamShield.Application.Commands.UpdateSettings;
+using ExamShield.Application.Queries.GetNotificationSettings;
 using ExamShield.Application.Queries.GetSettings;
 using MediatR;
 
@@ -45,8 +47,41 @@ public static class SettingsEndpoints
         .RequireAuthorization("Administrator")
         .Produces<AlertTestResponse>();
 
+        group.MapGet("/notifications", async (ISender sender, CancellationToken ct) =>
+        {
+            var dto = await sender.Send(new GetNotificationSettingsQuery(), ct);
+            return Results.Ok(ToNotificationResponse(dto));
+        })
+        .WithName("GetNotificationSettings")
+        .RequireAuthorization("Administrator")
+        .Produces<NotificationChannelSettingsResponse>();
+
+        group.MapPut("/notifications", async (UpdateNotificationChannelSettingsRequest request, ISender sender, CancellationToken ct) =>
+        {
+            try
+            {
+                var dto = await sender.Send(new UpdateNotificationSettingsCommand(
+                    request.EmailEnabled,   request.EmailRecipients,
+                    request.SlackEnabled,   request.SlackWebhookUrl,
+                    request.LineEnabled,    request.LineNotifyToken,
+                    request.WebhookEnabled, request.WebhookUrl), ct);
+                return Results.Ok(ToNotificationResponse(dto));
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { title = ex.Message, status = 400 });
+            }
+        })
+        .WithName("UpdateNotificationSettings")
+        .RequireAuthorization("Administrator")
+        .Produces<NotificationChannelSettingsResponse>();
+
         return app;
     }
+
+    private static NotificationChannelSettingsResponse ToNotificationResponse(NotificationSettingsDto dto) =>
+        new(dto.EmailEnabled, dto.EmailRecipients, dto.SlackEnabled, dto.SlackWebhookUrl,
+            dto.LineEnabled, dto.LineNotifyToken, dto.WebhookEnabled, dto.WebhookUrl, dto.UpdatedAt);
 
     private static SettingsResponse ToResponse(SettingsDto dto) =>
         new(dto.OcrConfidenceThreshold, dto.NotificationsEnabled,

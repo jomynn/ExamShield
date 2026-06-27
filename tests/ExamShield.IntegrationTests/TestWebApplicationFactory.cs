@@ -93,6 +93,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<ISystemSettingsRepository>();
             services.AddSingleton<ISystemSettingsRepository, InMemorySystemSettingsRepository>();
 
+            services.RemoveAll<INotificationChannelSettingsRepository>();
+            services.AddSingleton<INotificationChannelSettingsRepository, InMemoryNotificationChannelSettingsRepository>();
+
             services.RemoveAll<IRefreshTokenRepository>();
             services.AddSingleton<IRefreshTokenRepository, InMemoryRefreshTokenRepository>();
 

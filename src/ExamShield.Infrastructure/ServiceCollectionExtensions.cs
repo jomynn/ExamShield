@@ -75,6 +75,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IExamRepository, ExamRepository>();
         services.AddScoped<IReviewRequestRepository, ReviewRequestRepository>();
         services.AddScoped<ISystemSettingsRepository, SystemSettingsRepository>();
+        services.AddScoped<INotificationChannelSettingsRepository, NotificationChannelSettingsRepository>();
         services.AddSingleton<IAnswerKeyRepository, StubAnswerKeyRepository>();
         services.AddSingleton<IExamCandidateRepository, StubExamCandidateRepository>();
         var wmOptions = configuration.GetSection(WatermarkOptions.Section).Get<WatermarkOptions>() ?? new WatermarkOptions();
