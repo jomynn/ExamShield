@@ -19,6 +19,7 @@ public sealed class TriggerOcrCommandHandlerTests
     private readonly IManualReviewRepository _manualReviews = Substitute.For<IManualReviewRepository>();
     private readonly IAuditLogRepository _auditLog = Substitute.For<IAuditLogRepository>();
     private readonly ISystemSettingsRepository _settings = Substitute.For<ISystemSettingsRepository>();
+    private readonly ISecurityEventRepository _secEvents = Substitute.For<ISecurityEventRepository>();
     private readonly TriggerOcrCommandHandler _sut;
 
     private static readonly byte[] ImageBytes = "exam-image"u8.ToArray();
@@ -32,7 +33,7 @@ public sealed class TriggerOcrCommandHandlerTests
         _settings.GetAsync(Arg.Any<CancellationToken>()).Returns(SystemSettings.CreateDefault());
 
         _sut = new TriggerOcrCommandHandler(
-            _captures, _imageStorage, _watermark, _ocrService, _ocrResults, _manualReviews, _auditLog, _settings);
+            _captures, _imageStorage, _watermark, _ocrService, _ocrResults, _manualReviews, _auditLog, _settings, _secEvents);
     }
 
     private static Capture UploadedCapture()
@@ -174,18 +175,18 @@ public sealed class TriggerOcrCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenWatermarkExtractionFails_PassesFullBytesToOcr()
+    public async Task Handle_WhenWatermarkExtractionFails_ThrowsAndFlagsCaptureTampered()
     {
         _watermark.Extract(Arg.Any<byte[]>()).Returns(WatermarkExtractionResult.Failure());
 
         var capture = UploadedCapture();
         _captures.GetByIdAsync(capture.Id, Arg.Any<CancellationToken>()).Returns(capture);
         _imageStorage.RetrieveAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(ImageBytes);
-        _ocrService.ExtractAsync(Arg.Any<byte[]>(), Arg.Any<CancellationToken>())
-            .Returns(HighConfidenceExtraction());
 
-        await _sut.Handle(new TriggerOcrCommand(capture.Id.Value), default);
+        await _sut.Invoking(s => s.Handle(new TriggerOcrCommand(capture.Id.Value), default))
+                  .Should().ThrowAsync<InvalidOperationException>();
 
-        await _ocrService.Received(1).ExtractAsync(ImageBytes, Arg.Any<CancellationToken>());
+        capture.Status.Should().Be(CaptureStatus.Tampered);
+        await _ocrService.DidNotReceive().ExtractAsync(Arg.Any<byte[]>(), Arg.Any<CancellationToken>());
     }
 }

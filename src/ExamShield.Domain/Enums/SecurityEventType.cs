@@ -10,4 +10,5 @@ public enum SecurityEventType
     DeviceBlacklisted,
     LoginSuccess,
     LoginFailed,
+    WatermarkTampered,
 }

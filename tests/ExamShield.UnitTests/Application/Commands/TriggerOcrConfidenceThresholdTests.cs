@@ -17,10 +17,11 @@ public sealed class TriggerOcrConfidenceThresholdTests
     private readonly IOcrResultRepository _ocrResults    = Substitute.For<IOcrResultRepository>();
     private readonly IManualReviewRepository _reviews    = Substitute.For<IManualReviewRepository>();
     private readonly IAuditLogRepository  _audit         = Substitute.For<IAuditLogRepository>();
-    private readonly ISystemSettingsRepository _settings = Substitute.For<ISystemSettingsRepository>();
+    private readonly ISystemSettingsRepository _settings  = Substitute.For<ISystemSettingsRepository>();
+    private readonly ISecurityEventRepository  _secEvents = Substitute.For<ISecurityEventRepository>();
 
     private TriggerOcrCommandHandler BuildSut() => new(
-        _captures, _storage, _watermark, _ocrService, _ocrResults, _reviews, _audit, _settings);
+        _captures, _storage, _watermark, _ocrService, _ocrResults, _reviews, _audit, _settings, _secEvents);
 
     private void SetupCapture(out CaptureId captureId)
     {
@@ -30,10 +31,12 @@ public sealed class TriggerOcrConfidenceThresholdTests
         capture.RecordUpload("storage/key");
         captureId = capture.Id;
         _captures.GetByIdAsync(captureId, Arg.Any<CancellationToken>()).Returns(capture);
+        var imageBytes = new byte[200];
         _storage.RetrieveAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new byte[100]);
-        _watermark.Extract(Arg.Any<byte[]>())
-            .Returns(WatermarkExtractionResult.Failure());
+            .Returns(imageBytes);
+        _watermark.Extract(imageBytes)
+            .Returns(WatermarkExtractionResult.Success(
+                new WatermarkPayload { CaptureId = captureId.Value, ExamId = Guid.NewGuid() }, 100));
     }
 
     [Fact]

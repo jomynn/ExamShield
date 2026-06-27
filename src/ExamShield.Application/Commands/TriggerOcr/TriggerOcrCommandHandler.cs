@@ -17,12 +17,14 @@ public sealed class TriggerOcrCommandHandler : IRequestHandler<TriggerOcrCommand
     private readonly IManualReviewRepository _manualReviews;
     private readonly IAuditLogRepository _auditLog;
     private readonly ISystemSettingsRepository _systemSettings;
+    private readonly ISecurityEventRepository _securityEvents;
 
     public TriggerOcrCommandHandler(
         ICaptureRepository captures, IImageStorage imageStorage,
         IWatermarkService watermark, IOcrService ocrService,
         IOcrResultRepository ocrResults, IManualReviewRepository manualReviews,
-        IAuditLogRepository auditLog, ISystemSettingsRepository systemSettings)
+        IAuditLogRepository auditLog, ISystemSettingsRepository systemSettings,
+        ISecurityEventRepository securityEvents)
     {
         _captures = captures;
         _imageStorage = imageStorage;
@@ -32,6 +34,7 @@ public sealed class TriggerOcrCommandHandler : IRequestHandler<TriggerOcrCommand
         _manualReviews = manualReviews;
         _auditLog = auditLog;
         _systemSettings = systemSettings;
+        _securityEvents = securityEvents;
     }
 
     public async Task<TriggerOcrResult> Handle(TriggerOcrCommand command, CancellationToken ct)
@@ -42,11 +45,25 @@ public sealed class TriggerOcrCommandHandler : IRequestHandler<TriggerOcrCommand
         if (capture.StorageKey is null)
             throw new CaptureNotUploadedException(command.CaptureId);
 
-        var settings      = await _systemSettings.GetAsync(ct);
-        var storedBytes   = await _imageStorage.RetrieveAsync(capture.StorageKey, ct);
-        var wm            = _watermark.Extract(storedBytes);
-        var imageBytes    = wm.IsValid ? storedBytes[..wm.OriginalImageLength] : storedBytes;
+        var settings    = await _systemSettings.GetAsync(ct);
+        var storedBytes = await _imageStorage.RetrieveAsync(capture.StorageKey, ct);
+        var wm          = _watermark.Extract(storedBytes);
 
+        if (!wm.IsValid)
+        {
+            capture.FlagAsTampered("Watermark validation failed during OCR");
+            await _captures.UpdateAsync(capture, ct);
+            await _securityEvents.AddAsync(
+                SecurityEvent.Create(SecurityEventType.WatermarkTampered, SecuritySeverity.Critical,
+                    $"Watermark invalid for capture {capture.Id.Value}",
+                    captureId: capture.Id.Value), ct);
+            await _auditLog.AppendAsync(
+                AuditLog.Record(AuditAction.TamperingDetected, captureId: capture.Id), ct);
+            throw new InvalidOperationException(
+                $"Capture {capture.Id.Value} watermark validation failed — tampering detected.");
+        }
+
+        var imageBytes = storedBytes[..wm.OriginalImageLength];
         var extraction = await _ocrService.ExtractAsync(imageBytes, ct);
         var ocrResult  = OcrResult.Create(capture.Id, extraction.Answers, settings.OcrConfidenceThreshold);
 
