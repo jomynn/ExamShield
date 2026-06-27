@@ -6,7 +6,9 @@ using MediatR;
 
 namespace ExamShield.Application.Commands.UpdateUserRole;
 
-public sealed class UpdateUserRoleCommandHandler(IUserRepository users)
+public sealed class UpdateUserRoleCommandHandler(
+    IUserRepository users,
+    IRefreshTokenRepository refreshTokens)
     : IRequestHandler<UpdateUserRoleCommand>
 {
     public async Task Handle(UpdateUserRoleCommand request, CancellationToken ct)
@@ -19,5 +21,6 @@ public sealed class UpdateUserRoleCommandHandler(IUserRepository users)
 
         user.ChangeRole(role);
         await users.SaveAsync(user, ct);
+        await refreshTokens.RevokeAllForUserAsync(user.Id, ct);
     }
 }
