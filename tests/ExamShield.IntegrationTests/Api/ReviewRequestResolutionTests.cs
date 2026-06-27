@@ -9,11 +9,12 @@ public sealed class ReviewRequestResolutionTests(TestWebApplicationFactory facto
 {
     private HttpClient _client = null!;
     private Guid _captureId;
+    private Guid _studentId;
 
     public async Task InitializeAsync()
     {
         _client = await factory.CreateAuthenticatedClientAsync();
-        _captureId = await TestHelpers.RegisterCaptureAsync(_client, factory.ActiveExamId);
+        (_captureId, _studentId) = await TestHelpers.RegisterCaptureAsync(_client, factory.ActiveExamId);
     }
 
     public Task DisposeAsync() { _client.Dispose(); return Task.CompletedTask; }
@@ -21,7 +22,7 @@ public sealed class ReviewRequestResolutionTests(TestWebApplicationFactory facto
     private async Task<Guid> SubmitRequestAsync()
     {
         var res = await _client.PostAsJsonAsync("/student/review-request",
-            new SubmitReviewRequestBody(_captureId, Guid.NewGuid(), "My answer was marked wrong."));
+            new SubmitReviewRequestBody(_captureId, _studentId, "My answer was marked wrong."));
         var body = await res.Content.ReadFromJsonAsync<SubmitReviewRequestResponse>();
         return body!.ReviewRequestId;
     }

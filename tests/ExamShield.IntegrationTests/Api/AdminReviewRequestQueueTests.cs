@@ -24,9 +24,9 @@ public sealed class AdminReviewRequestQueueTests(TestWebApplicationFactory facto
     [Fact]
     public async Task GetAllReviewRequests_ContainsSubmittedRequest()
     {
-        var captureId = await TestHelpers.RegisterCaptureAsync(_client, factory.ActiveExamId);
+        var (captureId, studentId) = await TestHelpers.RegisterCaptureAsync(_client, factory.ActiveExamId);
         await _client.PostAsJsonAsync("/student/review-request",
-            new SubmitReviewRequestBody(captureId, Guid.NewGuid(), "OCR misread Q3."));
+            new SubmitReviewRequestBody(captureId, studentId, "OCR misread Q3."));
 
         var res  = await _client.GetAsync("/admin/review-requests?status=Pending");
         var body = await res.Content.ReadFromJsonAsync<AllReviewRequestsResponse>();
@@ -38,9 +38,9 @@ public sealed class AdminReviewRequestQueueTests(TestWebApplicationFactory facto
     [Fact]
     public async Task GetAllReviewRequests_StatusFilter_ExcludesOtherStatuses()
     {
-        var captureId = await TestHelpers.RegisterCaptureAsync(_client, factory.ActiveExamId);
+        var (captureId, studentId2) = await TestHelpers.RegisterCaptureAsync(_client, factory.ActiveExamId);
         var submitRes = await _client.PostAsJsonAsync("/student/review-request",
-            new SubmitReviewRequestBody(captureId, Guid.NewGuid(), "Question 7 was marked wrong."));
+            new SubmitReviewRequestBody(captureId, studentId2, "Question 7 was marked wrong."));
         var submitBody = await submitRes.Content.ReadFromJsonAsync<SubmitReviewRequestResponse>();
 
         await _client.PutAsJsonAsync(

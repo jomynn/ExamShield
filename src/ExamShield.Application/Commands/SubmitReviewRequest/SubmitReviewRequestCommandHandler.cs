@@ -24,6 +24,10 @@ public sealed class SubmitReviewRequestCommandHandler(
         var capture = await captures.GetByIdAsync(captureId, ct)
             ?? throw new KeyNotFoundException($"Capture '{command.CaptureId}' not found.");
 
+        if (capture.StudentId != studentId)
+            throw new UnauthorizedAccessException(
+                $"Student '{command.StudentId}' does not own capture '{command.CaptureId}'.");
+
         var request = ReviewRequest.Submit(studentId, captureId, command.Reason);
 
         await reviewRequests.AddAsync(request, ct);

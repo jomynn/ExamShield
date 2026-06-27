@@ -111,6 +111,7 @@ app.UseExceptionHandler(exceptionApp => exceptionApp.Run(async ctx =>
         DuplicateScoreException      => (409, ex.Message),
         DuplicateOcrException        => (409, ex.Message),
         UserNotFoundException        => (404, ex.Message),
+        UnauthorizedAccessException e => (403, e.Message),
         KeyNotFoundException e        => (404, e.Message),
         InvalidOperationException e  => (422, e.Message),
         ArgumentException e          => (400, e.Message),

@@ -15,7 +15,7 @@ public sealed class AuditExportEndpointTests(TestWebApplicationFactory factory)
     public async Task InitializeAsync()
     {
         _client = await factory.CreateAuthenticatedClientAsync();
-        _captureId = await TestHelpers.RegisterCaptureAsync(_client, factory.ActiveExamId);
+        (_captureId, _) = await TestHelpers.RegisterCaptureAsync(_client, factory.ActiveExamId);
     }
 
     public Task DisposeAsync() { _client.Dispose(); return Task.CompletedTask; }

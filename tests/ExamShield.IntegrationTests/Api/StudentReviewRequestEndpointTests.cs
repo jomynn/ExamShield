@@ -11,11 +11,12 @@ public sealed class StudentReviewRequestEndpointTests(TestWebApplicationFactory 
 {
     private HttpClient _client = null!;
     private Guid _captureId;
+    private Guid _studentId;
 
     public async Task InitializeAsync()
     {
         _client = await factory.CreateAuthenticatedClientAsync();
-        _captureId = await TestHelpers.RegisterCaptureAsync(_client, factory.ActiveExamId);
+        (_captureId, _studentId) = await TestHelpers.RegisterCaptureAsync(_client, factory.ActiveExamId);
     }
 
     public Task DisposeAsync() { _client.Dispose(); return Task.CompletedTask; }
@@ -24,7 +25,7 @@ public sealed class StudentReviewRequestEndpointTests(TestWebApplicationFactory 
     public async Task PostReviewRequest_WithValidBody_Returns201()
     {
         var response = await _client.PostAsJsonAsync("/student/review-request",
-            new SubmitReviewRequestBody(_captureId, Guid.NewGuid(), "OCR misread question 5"));
+            new SubmitReviewRequestBody(_captureId, _studentId, "OCR misread question 5"));
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
     }
@@ -33,7 +34,7 @@ public sealed class StudentReviewRequestEndpointTests(TestWebApplicationFactory 
     public async Task PostReviewRequest_WithValidBody_ReturnsReviewRequestId()
     {
         var response = await _client.PostAsJsonAsync("/student/review-request",
-            new SubmitReviewRequestBody(_captureId, Guid.NewGuid(), "Ink smudge caused wrong answer"));
+            new SubmitReviewRequestBody(_captureId, _studentId, "Ink smudge caused wrong answer"));
 
         var body = await response.Content.ReadFromJsonAsync<SubmitReviewRequestResponse>();
         body!.ReviewRequestId.Should().NotBe(Guid.Empty);
@@ -43,7 +44,7 @@ public sealed class StudentReviewRequestEndpointTests(TestWebApplicationFactory 
     public async Task PostReviewRequest_WithUnknownCapture_Returns404()
     {
         var response = await _client.PostAsJsonAsync("/student/review-request",
-            new SubmitReviewRequestBody(Guid.NewGuid(), Guid.NewGuid(), "Unknown capture"));
+            new SubmitReviewRequestBody(Guid.NewGuid(), _studentId, "Unknown capture"));
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -52,7 +53,7 @@ public sealed class StudentReviewRequestEndpointTests(TestWebApplicationFactory 
     public async Task PostReviewRequest_WithEmptyReason_Returns400()
     {
         var response = await _client.PostAsJsonAsync("/student/review-request",
-            new SubmitReviewRequestBody(_captureId, Guid.NewGuid(), ""));
+            new SubmitReviewRequestBody(_captureId, _studentId, ""));
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -62,21 +63,29 @@ public sealed class StudentReviewRequestEndpointTests(TestWebApplicationFactory 
     {
         using var anon = factory.CreateClient();
         var response = await anon.PostAsJsonAsync("/student/review-request",
-            new SubmitReviewRequestBody(_captureId, Guid.NewGuid(), "some reason"));
+            new SubmitReviewRequestBody(_captureId, _studentId, "some reason"));
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
+    public async Task PostReviewRequest_WithWrongStudentId_Returns403()
+    {
+        var response = await _client.PostAsJsonAsync("/student/review-request",
+            new SubmitReviewRequestBody(_captureId, Guid.NewGuid(), "Trying to claim someone else's capture"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
     public async Task GetReviewRequests_ReturnsPreviouslySubmittedRequest()
     {
-        var studentId = Guid.NewGuid();
         await _client.PostAsJsonAsync("/student/review-request",
-            new SubmitReviewRequestBody(_captureId, studentId, "Paper was wet, ink ran"));
+            new SubmitReviewRequestBody(_captureId, _studentId, "Paper was wet, ink ran"));
 
-        var response = await _client.GetAsync($"/student/review-requests?studentId={studentId}");
+        var response = await _client.GetAsync($"/student/review-requests?studentId={_studentId}");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<ReviewRequestListResponse>();
-        body!.Items.Should().ContainSingle(r => r.StudentId == studentId);
+        body!.Items.Should().ContainSingle(r => r.StudentId == _studentId);
     }
 }

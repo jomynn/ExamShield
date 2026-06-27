@@ -15,11 +15,13 @@ public sealed class SubmitReviewRequestCommandHandlerTests
     private readonly IAuditLogRepository _auditLog = Substitute.For<IAuditLogRepository>();
     private readonly SubmitReviewRequestCommandHandler _sut;
     private readonly CaptureId _captureId;
+    private readonly StudentId _studentId;
 
     public SubmitReviewRequestCommandHandlerTests()
     {
+        _studentId = StudentId.New();
         var capture = Capture.Create(
-            ExamId.New(), StudentId.New(), DeviceId.New(),
+            ExamId.New(), _studentId, DeviceId.New(),
             new PageNumber(1), Hash.FromHex(new string('a', 64)),
             new Signature(new byte[64]));
         _captureId = capture.Id;
@@ -33,7 +35,7 @@ public sealed class SubmitReviewRequestCommandHandlerTests
     public async Task Handle_WithValidRequest_ReturnNonEmptyId()
     {
         var result = await _sut.Handle(
-            new SubmitReviewRequestCommand(_captureId.Value, Guid.NewGuid(), "Answers misread by OCR"), default);
+            new SubmitReviewRequestCommand(_captureId.Value, _studentId.Value, "Answers misread by OCR"), default);
 
         result.ReviewRequestId.Should().NotBe(Guid.Empty);
     }
@@ -42,7 +44,7 @@ public sealed class SubmitReviewRequestCommandHandlerTests
     public async Task Handle_WithValidRequest_PersistsReviewRequest()
     {
         await _sut.Handle(
-            new SubmitReviewRequestCommand(_captureId.Value, Guid.NewGuid(), "Ink smudge on question 3"), default);
+            new SubmitReviewRequestCommand(_captureId.Value, _studentId.Value, "Ink smudge on question 3"), default);
 
         await _reviewRequests.Received(1).AddAsync(
             Arg.Is<ReviewRequest>(rr => rr.Status == ReviewRequestStatus.Pending),
@@ -53,7 +55,7 @@ public sealed class SubmitReviewRequestCommandHandlerTests
     public async Task Handle_WithValidRequest_AppendsAuditEntry()
     {
         await _sut.Handle(
-            new SubmitReviewRequestCommand(_captureId.Value, Guid.NewGuid(), "Wrong answer recorded"), default);
+            new SubmitReviewRequestCommand(_captureId.Value, _studentId.Value, "Wrong answer recorded"), default);
 
         await _auditLog.Received(1).AppendAsync(
             Arg.Is<AuditLog>(e => e.Action == AuditAction.ReviewRequestSubmitted),
@@ -73,6 +75,6 @@ public sealed class SubmitReviewRequestCommandHandlerTests
     {
         await Assert.ThrowsAsync<ArgumentException>(() =>
             _sut.Handle(
-                new SubmitReviewRequestCommand(_captureId.Value, Guid.NewGuid(), ""), default));
+                new SubmitReviewRequestCommand(_captureId.Value, _studentId.Value, ""), default));
     }
 }
