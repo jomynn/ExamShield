@@ -10,13 +10,14 @@ namespace ExamShield.UnitTests.Application.Commands.ResetPassword;
 
 public sealed class ResetPasswordComplexityTests
 {
-    private readonly IPasswordResetTokenRepository _tokens  = Substitute.For<IPasswordResetTokenRepository>();
-    private readonly IUserRepository               _users   = Substitute.For<IUserRepository>();
-    private readonly IPasswordHasher               _hasher  = Substitute.For<IPasswordHasher>();
+    private readonly IPasswordResetTokenRepository _tokens        = Substitute.For<IPasswordResetTokenRepository>();
+    private readonly IUserRepository               _users         = Substitute.For<IUserRepository>();
+    private readonly IPasswordHasher               _hasher        = Substitute.For<IPasswordHasher>();
+    private readonly IRefreshTokenRepository       _refreshTokens = Substitute.For<IRefreshTokenRepository>();
     private readonly ResetPasswordCommandHandler   _sut;
 
     public ResetPasswordComplexityTests() =>
-        _sut = new ResetPasswordCommandHandler(_tokens, _users, _hasher);
+        _sut = new ResetPasswordCommandHandler(_tokens, _users, _hasher, _refreshTokens);
 
     private void SetupValidToken(string email = "user@test.com")
     {

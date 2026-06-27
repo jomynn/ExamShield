@@ -11,7 +11,8 @@ public sealed record ResetPasswordCommand(string Token, string NewPassword) : IR
 public sealed class ResetPasswordCommandHandler(
     IPasswordResetTokenRepository tokens,
     IUserRepository users,
-    IPasswordHasher hasher)
+    IPasswordHasher hasher,
+    IRefreshTokenRepository refreshTokens)
     : IRequestHandler<ResetPasswordCommand>
 {
     public async Task Handle(ResetPasswordCommand command, CancellationToken ct)
@@ -31,5 +32,6 @@ public sealed class ResetPasswordCommandHandler(
 
         await users.SaveAsync(user, ct);
         await tokens.UpdateAsync(token, ct);
+        await refreshTokens.RevokeAllForUserAsync(user.Id, ct);
     }
 }
