@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   LayoutDashboard, FileText, Shield, Monitor, ChevronLeft, Bell, User, Menu,
   ClipboardList, ScanLine, Eye, Star, BarChart2, Users, Settings, Search, ShieldCheck,
-  BookOpen, KeyRound, FileImage, Trophy,
+  BookOpen, KeyRound, FileImage, Trophy, MonitorSmartphone,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
@@ -26,6 +26,7 @@ const NAV_ITEMS = [
   { label: 'Reports',         href: '/reports',    icon: BookOpen        },
   { label: 'Public Verify',    href: '/public/verify', icon: Search       },
   { label: 'MFA',              href: '/mfa',         icon: KeyRound        },
+  { label: 'Sessions',         href: '/sessions',   icon: MonitorSmartphone },
   { label: 'Settings',         href: '/settings',   icon: Settings        },
 ]
 
