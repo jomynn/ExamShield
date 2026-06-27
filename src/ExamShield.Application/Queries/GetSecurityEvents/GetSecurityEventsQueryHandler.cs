@@ -1,3 +1,4 @@
+using ExamShield.Domain.Enums;
 using ExamShield.Domain.Interfaces;
 using MediatR;
 
@@ -8,7 +9,18 @@ public sealed class GetSecurityEventsQueryHandler(ISecurityEventRepository repo)
 {
     public async Task<GetSecurityEventsResult> Handle(GetSecurityEventsQuery request, CancellationToken ct)
     {
-        var events = await repo.ListRecentAsync(request.Limit, ct);
+        IReadOnlyList<Domain.Entities.SecurityEvent> events;
+
+        if (request.Severity is not null &&
+            Enum.TryParse<SecuritySeverity>(request.Severity, ignoreCase: true, out var sev))
+        {
+            events = await repo.ListBySeverityAsync(sev, request.Limit, ct);
+        }
+        else
+        {
+            events = await repo.ListRecentAsync(request.Limit, ct);
+        }
+
         var dtos = events.Select(e => new SecurityEventDto(
             e.Id, e.EventType.ToString(), e.Severity.ToString(),
             e.Message, e.UserId, e.IpAddress, e.CaptureId, e.OccurredAt

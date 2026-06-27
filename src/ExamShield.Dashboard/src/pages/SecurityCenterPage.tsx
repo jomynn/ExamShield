@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api, type SecurityEventEntry, type AllSessionEntry } from '../api/client'
 import StatusChip from '../components/ui/StatusChip'
@@ -44,10 +45,14 @@ function SessionRow({ session }: { session: AllSessionEntry }) {
   )
 }
 
+const SEVERITIES = ['', 'Info', 'Warning', 'High', 'Critical']
+
 export default function SecurityCenterPage() {
+  const [severity, setSeverity] = useState('')
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['security-events'],
-    queryFn: () => api.getSecurityEvents(),
+    queryKey: ['security-events', severity],
+    queryFn: () => api.getSecurityEvents(100, severity || undefined),
     refetchInterval: 30_000,
   })
 
@@ -66,11 +71,22 @@ export default function SecurityCenterPage() {
           <ShieldAlert className="h-6 w-6 text-red-500" />
           <h1 className="text-2xl font-bold text-foreground">Security Center</h1>
         </div>
-        {data && criticalCount > 0 && (
-          <span className="inline-flex items-center rounded-full bg-red-500/15 px-3 py-1 text-sm font-semibold text-red-500">
-            {criticalCount} critical
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {data && criticalCount > 0 && (
+            <span className="inline-flex items-center rounded-full bg-red-500/15 px-3 py-1 text-sm font-semibold text-red-500">
+              {criticalCount} critical
+            </span>
+          )}
+          <select
+            value={severity}
+            onChange={e => setSeverity(e.target.value)}
+            className="rounded border border-border px-2 py-1 text-xs bg-background text-foreground"
+          >
+            {SEVERITIES.map(s => (
+              <option key={s} value={s}>{s || 'All Severities'}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}

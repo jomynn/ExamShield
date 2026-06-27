@@ -2,7 +2,7 @@ using MediatR;
 
 namespace ExamShield.Application.Queries.GetSecurityEvents;
 
-public sealed record GetSecurityEventsQuery(int Limit = 100) : IRequest<GetSecurityEventsResult>;
+public sealed record GetSecurityEventsQuery(int Limit = 100, string? Severity = null) : IRequest<GetSecurityEventsResult>;
 
 public sealed record SecurityEventDto(
     Guid Id,

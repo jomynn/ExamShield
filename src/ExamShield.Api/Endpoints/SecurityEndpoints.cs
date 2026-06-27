@@ -39,10 +39,15 @@ public static class SecurityEndpoints
         return app;
     }
 
+    private static readonly string[] ValidSeverities = ["Info", "Warning", "High", "Critical"];
+
     private static async Task<IResult> ListSecurityEventsAsync(
-        ISender sender, int limit = 100, CancellationToken ct = default)
+        ISender sender, int limit = 100, string? severity = null, CancellationToken ct = default)
     {
-        var result = await sender.Send(new GetSecurityEventsQuery(limit), ct);
+        if (severity is not null && !ValidSeverities.Contains(severity, StringComparer.OrdinalIgnoreCase))
+            return Results.BadRequest(new { error = $"Invalid severity '{severity}'. Valid values: {string.Join(", ", ValidSeverities)}." });
+
+        var result = await sender.Send(new GetSecurityEventsQuery(limit, severity), ct);
         var response = new SecurityEventListResponse(
             result.Events.Select(e => new SecurityEventResponse(
                 e.Id, e.EventType, e.Severity, e.Message,

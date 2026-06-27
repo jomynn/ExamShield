@@ -19,6 +19,12 @@ public sealed class InMemorySecurityEventRepository : ISecurityEventRepository
         Task.FromResult<IReadOnlyList<SecurityEvent>>(
             _store.OrderByDescending(e => e.OccurredAt).Take(limit).ToList());
 
+    public Task<IReadOnlyList<SecurityEvent>> ListBySeverityAsync(
+        SecuritySeverity severity, int limit, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<SecurityEvent>>(
+            _store.Where(e => e.Severity == severity)
+                  .OrderByDescending(e => e.OccurredAt).Take(limit).ToList());
+
     public Task<IReadOnlyList<SecurityEvent>> ListByTypesAsync(
         IEnumerable<SecurityEventType> types, int limit, CancellationToken ct = default)
     {

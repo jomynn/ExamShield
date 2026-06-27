@@ -130,8 +130,11 @@ export const api = {
   deviceHeartbeat: (id: string) =>
     request<{ deviceId: string; lastSeenAt: string }>(`/devices/${id}/heartbeat`, { method: 'POST' }),
 
-  getSecurityEvents: (limit = 100) =>
-    request<SecurityEventListResponse>(`/security/events?limit=${limit}`),
+  getSecurityEvents: (limit = 100, severity?: string) => {
+    const params = new URLSearchParams({ limit: String(limit) })
+    if (severity) params.set('severity', severity)
+    return request<SecurityEventListResponse>(`/security/events?${params}`)
+  },
 
   getAllActiveSessions: (userId?: string) => {
     const query = userId ? `?userId=${userId}` : ''
