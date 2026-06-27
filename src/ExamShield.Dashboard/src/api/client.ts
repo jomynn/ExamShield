@@ -151,11 +151,13 @@ export const api = {
   publicVerifyByHash: (hashHex: string) =>
     request<PublicVerifyResponse>(`/public/verify?hashHex=${encodeURIComponent(hashHex)}`),
 
-  getCaptures: (page = 1, pageSize = 50, examId?: string, status?: string, deviceId?: string) => {
+  getCaptures: (page = 1, pageSize = 50, examId?: string, status?: string,
+                deviceId?: string, studentId?: string) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
-    if (examId)   params.set('examId', examId)
-    if (status)   params.set('status', status)
-    if (deviceId) params.set('deviceId', deviceId)
+    if (examId)    params.set('examId', examId)
+    if (status)    params.set('status', status)
+    if (deviceId)  params.set('deviceId', deviceId)
+    if (studentId) params.set('studentId', studentId)
     return request<CaptureListResponse>(`/captures?${params}`)
   },
 

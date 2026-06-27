@@ -3,11 +3,12 @@ import { api } from '../api/client'
 
 export function useCaptures(
   page = 1, pageSize = 50,
-  examId?: string, status?: string, deviceId?: string
+  examId?: string, status?: string,
+  deviceId?: string, studentId?: string
 ) {
   return useQuery({
-    queryKey: ['captures', page, pageSize, examId, status, deviceId],
-    queryFn: () => api.getCaptures(page, pageSize, examId, status, deviceId),
+    queryKey: ['captures', page, pageSize, examId, status, deviceId, studentId],
+    queryFn: () => api.getCaptures(page, pageSize, examId, status, deviceId, studentId),
     refetchInterval: 30_000,
   })
 }

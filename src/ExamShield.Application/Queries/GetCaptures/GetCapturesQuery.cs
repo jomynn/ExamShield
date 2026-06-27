@@ -21,4 +21,5 @@ public sealed record GetCapturesQuery(
     int PageSize = 50,
     Guid? ExamId = null,
     CaptureStatus? Status = null,
-    Guid? DeviceId = null) : IRequest<GetCapturesResult>;
+    Guid? DeviceId = null,
+    Guid? StudentId = null) : IRequest<GetCapturesResult>;

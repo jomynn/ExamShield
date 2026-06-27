@@ -18,18 +18,20 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AnswerSheetsPage() {
   const [page, setPage] = useState(1)
-  const [examIdFilter, setExamIdFilter]     = useState('')
-  const [statusFilter, setStatusFilter]     = useState('')
-  const [deviceIdFilter, setDeviceIdFilter] = useState('')
+  const [examIdFilter, setExamIdFilter]       = useState('')
+  const [statusFilter, setStatusFilter]       = useState('')
+  const [deviceIdFilter, setDeviceIdFilter]   = useState('')
+  const [studentIdFilter, setStudentIdFilter] = useState('')
   const PAGE_SIZE = 20
 
   const { data, isLoading } = useQuery({
-    queryKey: ['answer-sheets', page, examIdFilter, statusFilter, deviceIdFilter],
+    queryKey: ['answer-sheets', page, examIdFilter, statusFilter, deviceIdFilter, studentIdFilter],
     queryFn: () => api.getCaptures(
       page, PAGE_SIZE,
-      examIdFilter  || undefined,
-      statusFilter  || undefined,
-      deviceIdFilter || undefined
+      examIdFilter   || undefined,
+      statusFilter   || undefined,
+      deviceIdFilter || undefined,
+      studentIdFilter || undefined
     ),
   })
 
@@ -76,11 +78,17 @@ export default function AnswerSheetsPage() {
           value={deviceIdFilter}
           onChange={e => { setDeviceIdFilter(e.target.value); handleFilterChange() }}
           placeholder="Filter by Device ID (UUID)"
-          className="rounded border border-[#30363D] bg-[#161B22] px-3 py-1.5 text-sm text-white placeholder-[#8B949E] w-72"
+          className="rounded border border-[#30363D] bg-[#161B22] px-3 py-1.5 text-sm text-white placeholder-[#8B949E] w-64"
         />
-        {(examIdFilter || statusFilter || deviceIdFilter) && (
+        <input
+          value={studentIdFilter}
+          onChange={e => { setStudentIdFilter(e.target.value); handleFilterChange() }}
+          placeholder="Filter by Student ID (UUID)"
+          className="rounded border border-[#30363D] bg-[#161B22] px-3 py-1.5 text-sm text-white placeholder-[#8B949E] w-64"
+        />
+        {(examIdFilter || statusFilter || deviceIdFilter || studentIdFilter) && (
           <button
-            onClick={() => { setExamIdFilter(''); setStatusFilter(''); setDeviceIdFilter(''); setPage(1) }}
+            onClick={() => { setExamIdFilter(''); setStatusFilter(''); setDeviceIdFilter(''); setStudentIdFilter(''); setPage(1) }}
             className="text-sm text-[#8B949E] hover:text-white px-2"
           >
             Clear

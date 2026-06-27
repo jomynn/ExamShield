@@ -24,7 +24,7 @@ public sealed class PaginatedCapturesQueryHandlerTests
     public async Task Handle_ReturnsPagedSlice_WhenMultipleCapturesExist()
     {
         var all = Enumerable.Range(0, 5).Select(_ => MakeCapture()).ToList();
-        _repo.ListPagedAsync(2, 2, null, null, null, Arg.Any<CancellationToken>())
+        _repo.ListPagedAsync(2, 2, null, null, null, null, Arg.Any<CancellationToken>())
             .Returns((all.Skip(2).Take(2).ToList().AsReadOnly() as IReadOnlyList<Capture>, 5));
 
         var result = await _sut.Handle(new GetCapturesQuery(Page: 2, PageSize: 2), CancellationToken.None);
@@ -38,7 +38,7 @@ public sealed class PaginatedCapturesQueryHandlerTests
     [Fact]
     public async Task Handle_TotalPagesCalculatedCorrectly()
     {
-        _repo.ListPagedAsync(1, 3, null, null, null, Arg.Any<CancellationToken>())
+        _repo.ListPagedAsync(1, 3, null, null, null, null, Arg.Any<CancellationToken>())
             .Returns((new List<Capture>().AsReadOnly() as IReadOnlyList<Capture>, 7));
 
         var result = await _sut.Handle(new GetCapturesQuery(Page: 1, PageSize: 3), CancellationToken.None);
@@ -50,7 +50,7 @@ public sealed class PaginatedCapturesQueryHandlerTests
     public async Task Handle_WithPageSize1_ReturnsSingleItem()
     {
         var capture = MakeCapture();
-        _repo.ListPagedAsync(1, 1, null, null, null, Arg.Any<CancellationToken>())
+        _repo.ListPagedAsync(1, 1, null, null, null, null, Arg.Any<CancellationToken>())
             .Returns((new List<Capture> { capture }.AsReadOnly() as IReadOnlyList<Capture>, 10));
 
         var result = await _sut.Handle(new GetCapturesQuery(Page: 1, PageSize: 1), CancellationToken.None);

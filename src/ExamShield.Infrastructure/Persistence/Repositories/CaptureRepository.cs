@@ -39,13 +39,14 @@ public sealed class CaptureRepository : ICaptureRepository
     public async Task<(IReadOnlyList<Capture> Items, int TotalCount)> ListPagedAsync(
         int page, int pageSize,
         ExamId? examId = null, CaptureStatus? status = null,
-        DeviceId? deviceId = null,
+        DeviceId? deviceId = null, StudentId? studentId = null,
         CancellationToken ct = default)
     {
         var query = _context.Captures.AsQueryable();
-        if (examId   is not null) query = query.Where(c => c.ExamId   == examId);
-        if (status   is not null) query = query.Where(c => c.Status   == status);
-        if (deviceId is not null) query = query.Where(c => c.DeviceId == deviceId);
+        if (examId    is not null) query = query.Where(c => c.ExamId    == examId);
+        if (status    is not null) query = query.Where(c => c.Status    == status);
+        if (deviceId  is not null) query = query.Where(c => c.DeviceId  == deviceId);
+        if (studentId is not null) query = query.Where(c => c.StudentId == studentId);
         query = query.OrderByDescending(c => c.CapturedAt);
         var total = await query.CountAsync(ct);
         var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);

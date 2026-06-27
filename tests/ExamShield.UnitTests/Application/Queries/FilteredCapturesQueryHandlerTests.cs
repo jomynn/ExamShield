@@ -23,7 +23,7 @@ public sealed class FilteredCapturesQueryHandlerTests
     {
         var examId = ExamId.New();
         var capture = MakeCapture(examId);
-        _repo.ListPagedAsync(1, 50, examId, null, null, Arg.Any<CancellationToken>())
+        _repo.ListPagedAsync(1, 50, examId, null, null, null, Arg.Any<CancellationToken>())
             .Returns(((IReadOnlyList<Capture>)new[] { capture }, 1));
 
         var result = await _sut.Handle(
@@ -38,7 +38,7 @@ public sealed class FilteredCapturesQueryHandlerTests
     public async Task Handle_WithStatusFilter_PassesStatusToRepository()
     {
         var capture = MakeCapture();
-        _repo.ListPagedAsync(1, 50, null, CaptureStatus.Verified, null, Arg.Any<CancellationToken>())
+        _repo.ListPagedAsync(1, 50, null, CaptureStatus.Verified, null, null, Arg.Any<CancellationToken>())
             .Returns(((IReadOnlyList<Capture>)new[] { capture }, 1));
 
         var result = await _sut.Handle(
@@ -51,7 +51,7 @@ public sealed class FilteredCapturesQueryHandlerTests
     [Fact]
     public async Task Handle_WithNoFilters_PassesNullsToRepository()
     {
-        _repo.ListPagedAsync(1, 50, null, null, null, Arg.Any<CancellationToken>())
+        _repo.ListPagedAsync(1, 50, null, null, null, null, Arg.Any<CancellationToken>())
             .Returns(((IReadOnlyList<Capture>)Array.Empty<Capture>(), 0));
 
         var result = await _sut.Handle(
@@ -66,7 +66,7 @@ public sealed class FilteredCapturesQueryHandlerTests
     {
         var examId = ExamId.New();
         var capture = MakeCapture(examId);
-        _repo.ListPagedAsync(1, 50, examId, null, null, Arg.Any<CancellationToken>())
+        _repo.ListPagedAsync(1, 50, examId, null, null, null, Arg.Any<CancellationToken>())
             .Returns(((IReadOnlyList<Capture>)new[] { capture }, 1));
 
         var result = await _sut.Handle(

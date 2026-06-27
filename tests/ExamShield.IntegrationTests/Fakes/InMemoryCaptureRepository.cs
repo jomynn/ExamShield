@@ -39,13 +39,14 @@ public sealed class InMemoryCaptureRepository : ICaptureRepository
     public Task<(IReadOnlyList<Capture> Items, int TotalCount)> ListPagedAsync(
         int page, int pageSize,
         ExamId? examId = null, CaptureStatus? status = null,
-        DeviceId? deviceId = null,
+        DeviceId? deviceId = null, StudentId? studentId = null,
         CancellationToken ct = default)
     {
         var filtered = _store.Values
-            .Where(c => examId   is null || c.ExamId   == examId)
-            .Where(c => status   is null || c.Status   == status)
-            .Where(c => deviceId is null || c.DeviceId == deviceId)
+            .Where(c => examId    is null || c.ExamId    == examId)
+            .Where(c => status    is null || c.Status    == status)
+            .Where(c => deviceId  is null || c.DeviceId  == deviceId)
+            .Where(c => studentId is null || c.StudentId == studentId)
             .OrderByDescending(c => c.CapturedAt)
             .ToList();
         var items = filtered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
