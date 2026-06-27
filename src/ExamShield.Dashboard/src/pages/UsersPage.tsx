@@ -17,7 +17,13 @@ export default function UsersPage() {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
-  const { data, isLoading } = useUsers(page, PAGE_SIZE, search || undefined, roleFilter || undefined)
+  const [activeFilter, setActiveFilter] = useState<'' | 'true' | 'false'>('')
+  const isActiveParam = activeFilter === '' ? undefined : activeFilter === 'true'
+  const { data, isLoading } = useUsers(
+    page, PAGE_SIZE,
+    search || undefined, roleFilter || undefined,
+    isActiveParam
+  )
   const updateRole    = useUpdateUserRole()
   const deactivate    = useDeactivateUser()
   const activate      = useActivateUser()
@@ -53,6 +59,15 @@ export default function UsersPage() {
             <option key={r} value={r}>{r || 'All roles'}</option>
           ))}
         </select>
+        <select
+          value={activeFilter}
+          onChange={e => { setActiveFilter(e.target.value as '' | 'true' | 'false'); setPage(1) }}
+          className="rounded border border-[#30363D] bg-[#161B22] px-3 py-1.5 text-sm text-white"
+        >
+          <option value="">All statuses</option>
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select>
         <button
           onClick={() => api.exportUsers(search || undefined, roleFilter || undefined).then(blob => {
             const url = URL.createObjectURL(blob)
@@ -66,9 +81,9 @@ export default function UsersPage() {
         >
           Export CSV
         </button>
-        {(search || roleFilter) && (
+        {(search || roleFilter || activeFilter) && (
           <button
-            onClick={() => { setSearch(''); setRoleFilter(''); setPage(1) }}
+            onClick={() => { setSearch(''); setRoleFilter(''); setActiveFilter(''); setPage(1) }}
             className="text-sm text-[#8B949E] hover:text-white px-2"
           >
             Clear

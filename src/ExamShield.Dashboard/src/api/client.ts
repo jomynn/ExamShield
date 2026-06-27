@@ -183,10 +183,11 @@ export const api = {
     }).then(r => r.blob())
   },
 
-  getUsers: (page = 1, pageSize = 50, search?: string, role?: string) => {
+  getUsers: (page = 1, pageSize = 50, search?: string, role?: string, isActive?: boolean) => {
     const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
     if (search) params.append('search', search)
-    if (role) params.append('role', role)
+    if (role)   params.append('role', role)
+    if (isActive !== undefined) params.append('isActive', String(isActive))
     return request<UserListResponse>(`/users/?${params}`)
   },
 

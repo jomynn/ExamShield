@@ -20,9 +20,10 @@ public static class UserEndpoints
         group.MapGet("/", async (
             IMediator mediator, CancellationToken ct,
             int page = 1, int pageSize = 50,
-            string? search = null, string? role = null) =>
+            string? search = null, string? role = null,
+            bool? isActive = null) =>
         {
-            var result = await mediator.Send(new GetUsersQuery(page, pageSize, search, role), ct);
+            var result = await mediator.Send(new GetUsersQuery(page, pageSize, search, role, isActive), ct);
             var items = result.Users
                 .Select(u => new UserResponse(u.UserId, u.Email, u.Role, u.IsActive, u.CreatedAt))
                 .ToList();

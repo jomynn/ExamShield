@@ -16,5 +16,6 @@ public sealed record GetUsersResult(
 
 public sealed record GetUsersQuery(
     int Page = 1, int PageSize = 50,
-    string? Search = null, string? Role = null)
+    string? Search = null, string? Role = null,
+    bool? IsActive = null)
     : IRequest<GetUsersResult>;

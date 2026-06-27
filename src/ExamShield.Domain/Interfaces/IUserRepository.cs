@@ -13,5 +13,6 @@ public interface IUserRepository
     Task<(IReadOnlyList<User> Items, int TotalCount)> ListPagedAsync(
         int page, int pageSize,
         string? search = null, string? role = null,
+        bool? isActive = null,
         CancellationToken ct = default);
 }

@@ -16,39 +16,39 @@ public sealed class GetUsersQueryHandlerFilterTests
     [Fact]
     public async Task Handle_SearchFilter_PassedToRepository()
     {
-        _repo.ListPagedAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+        _repo.ListPagedAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<bool?>(), Arg.Any<CancellationToken>())
             .Returns((new List<User>(), 0));
 
         await _sut.Handle(new GetUsersQuery(Search: "alice"), default);
 
         await _repo.Received(1).ListPagedAsync(
             Arg.Any<int>(), Arg.Any<int>(),
-            "alice", Arg.Any<string?>(), Arg.Any<CancellationToken>());
+            "alice", Arg.Any<string?>(), Arg.Any<bool?>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Handle_RoleFilter_PassedToRepository()
     {
-        _repo.ListPagedAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+        _repo.ListPagedAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<bool?>(), Arg.Any<CancellationToken>())
             .Returns((new List<User>(), 0));
 
         await _sut.Handle(new GetUsersQuery(Role: "Auditor"), default);
 
         await _repo.Received(1).ListPagedAsync(
             Arg.Any<int>(), Arg.Any<int>(),
-            Arg.Any<string?>(), "Auditor", Arg.Any<CancellationToken>());
+            Arg.Any<string?>(), "Auditor", null, Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Handle_NoFilter_PassesNullFilters()
     {
-        _repo.ListPagedAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+        _repo.ListPagedAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<bool?>(), Arg.Any<CancellationToken>())
             .Returns((new List<User>(), 0));
 
         await _sut.Handle(new GetUsersQuery(), default);
 
         await _repo.Received(1).ListPagedAsync(
             Arg.Any<int>(), Arg.Any<int>(),
-            null, null, Arg.Any<CancellationToken>());
+            null, null, null, Arg.Any<CancellationToken>());
     }
 }

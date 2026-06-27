@@ -36,6 +36,7 @@ public sealed class UserRepository : IUserRepository
     public async Task<(IReadOnlyList<User> Items, int TotalCount)> ListPagedAsync(
         int page, int pageSize,
         string? search = null, string? role = null,
+        bool? isActive = null,
         CancellationToken ct = default)
     {
         var query = _context.Users.AsQueryable();
@@ -47,6 +48,8 @@ public sealed class UserRepository : IUserRepository
                 return ([], 0);
             query = query.Where(u => u.Role == parsedRole);
         }
+        if (isActive is not null)
+            query = query.Where(u => u.IsActive == isActive);
         query = query.OrderBy(u => u.Email);
         var total = await query.CountAsync(ct);
         var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
