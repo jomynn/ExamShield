@@ -16,13 +16,14 @@ public sealed class PreventDuplicateScoringTests
     private readonly IAnswerKeyRepository  _answerKeys = Substitute.For<IAnswerKeyRepository>();
     private readonly IScoreRepository      _scores     = Substitute.For<IScoreRepository>();
     private readonly IAuditLogRepository   _auditLog   = Substitute.For<IAuditLogRepository>();
-    private readonly ICacheService         _cache      = Substitute.For<ICacheService>();
+    private readonly ICacheService           _cache   = Substitute.For<ICacheService>();
+    private readonly IManualReviewRepository _reviews = Substitute.For<IManualReviewRepository>();
     private readonly ScoreCaptureCommandHandler _sut;
 
     public PreventDuplicateScoringTests()
     {
         _sut = new ScoreCaptureCommandHandler(
-            _captures, _ocrResults, _answerKeys, _scores, _auditLog, _cache);
+            _captures, _ocrResults, _answerKeys, _scores, _auditLog, _cache, _reviews);
     }
 
     private static Capture MakeCapture()

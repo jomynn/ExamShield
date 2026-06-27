@@ -23,6 +23,9 @@ public sealed class InMemoryManualReviewRepository : IManualReviewRepository
     public Task<ManualReview?> GetByIdAsync(ManualReviewId id, CancellationToken ct = default) =>
         Task.FromResult(_store.TryGetValue(id.Value, out var review) ? review : null);
 
+    public Task<ManualReview?> GetByCaptureIdAsync(CaptureId captureId, CancellationToken ct = default) =>
+        Task.FromResult(_store.Values.FirstOrDefault(r => r.CaptureId == captureId));
+
     public Task UpdateAsync(ManualReview review, CancellationToken ct = default)
     {
         _store[review.Id.Value] = review;

@@ -9,24 +9,27 @@ namespace ExamShield.Application.Commands.ScoreCapture;
 
 public sealed class ScoreCaptureCommandHandler : IRequestHandler<ScoreCaptureCommand, ScoreCaptureResult>
 {
-    private readonly ICaptureRepository _captures;
-    private readonly IOcrResultRepository _ocrResults;
-    private readonly IAnswerKeyRepository _answerKeys;
-    private readonly IScoreRepository _scores;
-    private readonly IAuditLogRepository _auditLog;
-    private readonly ICacheService _cache;
+    private readonly ICaptureRepository      _captures;
+    private readonly IOcrResultRepository    _ocrResults;
+    private readonly IAnswerKeyRepository    _answerKeys;
+    private readonly IScoreRepository        _scores;
+    private readonly IAuditLogRepository     _auditLog;
+    private readonly ICacheService           _cache;
+    private readonly IManualReviewRepository _reviews;
 
     public ScoreCaptureCommandHandler(
         ICaptureRepository captures, IOcrResultRepository ocrResults,
         IAnswerKeyRepository answerKeys, IScoreRepository scores,
-        IAuditLogRepository auditLog, ICacheService cache)
+        IAuditLogRepository auditLog, ICacheService cache,
+        IManualReviewRepository reviews)
     {
-        _captures = captures;
+        _captures   = captures;
         _ocrResults = ocrResults;
         _answerKeys = answerKeys;
-        _scores = scores;
-        _auditLog = auditLog;
-        _cache = cache;
+        _scores     = scores;
+        _auditLog   = auditLog;
+        _cache      = cache;
+        _reviews    = reviews;
     }
 
     public async Task<ScoreCaptureResult> Handle(ScoreCaptureCommand command, CancellationToken ct)
@@ -40,10 +43,17 @@ public sealed class ScoreCaptureCommandHandler : IRequestHandler<ScoreCaptureCom
         var ocrResult = await _ocrResults.GetByCaptureIdAsync(capture.Id, ct)
             ?? throw new OcrResultNotFoundException(command.CaptureId);
 
+        var review    = await _reviews.GetByCaptureIdAsync(capture.Id, ct);
+        var answers   = review is { Status: ManualReviewStatus.Completed or ManualReviewStatus.Approved }
+            ? review.ReviewedAnswers
+                .Select(a => new ExtractedAnswer(a.QuestionNumber, a.Text, new OcrConfidence(1.0)))
+                .ToList<ExtractedAnswer>()
+            : (IReadOnlyList<ExtractedAnswer>)ocrResult.Answers;
+
         var answerKey = await _answerKeys.GetByExamIdAsync(capture.ExamId, ct)
             ?? new AnswerKey(new Dictionary<int, string>());
 
-        var score = Score.Create(capture.Id, capture.ExamId, capture.StudentId, ocrResult.Answers, answerKey);
+        var score = Score.Create(capture.Id, capture.ExamId, capture.StudentId, answers, answerKey);
 
         await _scores.AddAsync(score, ct);
         await _auditLog.AppendAsync(

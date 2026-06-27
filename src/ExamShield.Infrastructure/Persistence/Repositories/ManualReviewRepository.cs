@@ -28,6 +28,10 @@ public sealed class ManualReviewRepository : IManualReviewRepository
         _context.ManualReviews
             .FirstOrDefaultAsync(r => r.Id == id, ct);
 
+    public Task<ManualReview?> GetByCaptureIdAsync(CaptureId captureId, CancellationToken ct = default) =>
+        _context.ManualReviews
+            .FirstOrDefaultAsync(r => r.CaptureId == captureId, ct);
+
     public async Task UpdateAsync(ManualReview review, CancellationToken ct = default)
     {
         _context.ManualReviews.Update(review);
