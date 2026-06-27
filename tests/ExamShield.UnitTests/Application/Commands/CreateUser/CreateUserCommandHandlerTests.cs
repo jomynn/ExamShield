@@ -11,6 +11,8 @@ namespace ExamShield.UnitTests.Application.Commands.CreateUser;
 
 public sealed class CreateUserCommandHandlerTests
 {
+    private const string ValidPassword = "Str0ng!Password";
+
     private readonly IUserRepository _users = Substitute.For<IUserRepository>();
     private readonly IPasswordHasher _hasher = Substitute.For<IPasswordHasher>();
     private readonly IAuditLogRepository _auditLog = Substitute.For<IAuditLogRepository>();
@@ -29,7 +31,7 @@ public sealed class CreateUserCommandHandlerTests
             .Returns((User?)null);
 
         var result = await _sut.Handle(
-            new CreateUserCommand("new@test.com", "pass123!", UserRole.Operator), default);
+            new CreateUserCommand("new@test.com", ValidPassword, UserRole.Operator), default);
 
         result.UserId.Should().NotBe(Guid.Empty);
         await _users.Received(1).AddAsync(Arg.Any<User>(), Arg.Any<CancellationToken>());
@@ -42,7 +44,7 @@ public sealed class CreateUserCommandHandlerTests
         _users.FindByEmailAsync(Arg.Any<Email>(), Arg.Any<CancellationToken>()).Returns(existing);
 
         var act = () => _sut.Handle(
-            new CreateUserCommand("taken@test.com", "pw", UserRole.Operator), default);
+            new CreateUserCommand("taken@test.com", ValidPassword, UserRole.Operator), default);
 
         await act.Should().ThrowAsync<UserAlreadyExistsException>();
     }
@@ -54,8 +56,8 @@ public sealed class CreateUserCommandHandlerTests
             .Returns((User?)null);
 
         await _sut.Handle(
-            new CreateUserCommand("u@test.com", "plain", UserRole.Auditor), default);
+            new CreateUserCommand("u@test.com", ValidPassword, UserRole.Auditor), default);
 
-        _hasher.Received(1).Hash("plain");
+        _hasher.Received(1).Hash(ValidPassword);
     }
 }

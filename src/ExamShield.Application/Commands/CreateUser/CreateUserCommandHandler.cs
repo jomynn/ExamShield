@@ -23,13 +23,14 @@ public sealed class CreateUserCommandHandler : IRequestHandler<CreateUserCommand
 
     public async Task<CreateUserResult> Handle(CreateUserCommand command, CancellationToken ct)
     {
-        var email = new Email(command.Email);
+        var email    = new Email(command.Email);
+        var password = new Password(command.Password);
 
         var existing = await _users.FindByEmailAsync(email, ct);
         if (existing is not null)
             throw new UserAlreadyExistsException(command.Email);
 
-        var user = User.Create(email, _hasher.Hash(command.Password), command.Role);
+        var user = User.Create(email, _hasher.Hash(password.Value), command.Role);
 
         await _users.AddAsync(user, ct);
         await _auditLog.AppendAsync(AuditLog.Record(AuditAction.UserCreated), ct);

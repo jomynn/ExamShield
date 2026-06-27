@@ -19,12 +19,14 @@ public sealed class ChangePasswordCommandHandler : IRequestHandler<ChangePasswor
 
     public async Task Handle(ChangePasswordCommand command, CancellationToken ct)
     {
+        var newPassword = new Password(command.NewPassword);
+
         var user = await _users.GetByIdAsync(new UserId(command.UserId), ct);
 
         if (user is null || !_hasher.Verify(command.CurrentPassword, user.PasswordHash))
             throw new InvalidCredentialsException();
 
-        user.ChangePassword(_hasher.Hash(command.NewPassword));
+        user.ChangePassword(_hasher.Hash(newPassword.Value));
         await _users.SaveAsync(user, ct);
         await _refreshTokens.RevokeAllForUserAsync(user.Id, ct);
     }

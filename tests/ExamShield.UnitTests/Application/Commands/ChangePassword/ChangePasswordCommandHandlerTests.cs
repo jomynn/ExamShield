@@ -11,6 +11,8 @@ namespace ExamShield.UnitTests.Application.Commands.ChangePassword;
 
 public sealed class ChangePasswordCommandHandlerTests
 {
+    private const string NewPassword = "N3wStr0ng!Pass";
+
     private readonly IUserRepository _users = Substitute.For<IUserRepository>();
     private readonly IPasswordHasher _hasher = Substitute.For<IPasswordHasher>();
     private readonly IRefreshTokenRepository _refreshTokens = Substitute.For<IRefreshTokenRepository>();
@@ -30,9 +32,9 @@ public sealed class ChangePasswordCommandHandlerTests
         var user = MakeUser();
         _users.GetByIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>()).Returns(user);
         _hasher.Verify("old-pw", "old-hash").Returns(true);
-        _hasher.Hash("new-pw").Returns("new-hash");
+        _hasher.Hash(NewPassword).Returns("new-hash");
 
-        await _sut.Handle(new ChangePasswordCommand(_userId, "old-pw", "new-pw"), default);
+        await _sut.Handle(new ChangePasswordCommand(_userId, "old-pw", NewPassword), default);
 
         user.PasswordHash.Should().Be("new-hash");
         await _users.Received(1).SaveAsync(user, Arg.Any<CancellationToken>());
@@ -44,9 +46,9 @@ public sealed class ChangePasswordCommandHandlerTests
         var user = MakeUser();
         _users.GetByIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>()).Returns(user);
         _hasher.Verify("old-pw", "old-hash").Returns(true);
-        _hasher.Hash("new-pw").Returns("new-hash");
+        _hasher.Hash(NewPassword).Returns("new-hash");
 
-        await _sut.Handle(new ChangePasswordCommand(_userId, "old-pw", "new-pw"), default);
+        await _sut.Handle(new ChangePasswordCommand(_userId, "old-pw", NewPassword), default);
 
         await _refreshTokens.Received(1).RevokeAllForUserAsync(user.Id, Arg.Any<CancellationToken>());
     }
@@ -58,7 +60,7 @@ public sealed class ChangePasswordCommandHandlerTests
         _users.GetByIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>()).Returns(user);
         _hasher.Verify("wrong", "old-hash").Returns(false);
 
-        var act = () => _sut.Handle(new ChangePasswordCommand(_userId, "wrong", "new-pw"), default);
+        var act = () => _sut.Handle(new ChangePasswordCommand(_userId, "wrong", NewPassword), default);
 
         await act.Should().ThrowAsync<InvalidCredentialsException>();
     }
@@ -68,7 +70,7 @@ public sealed class ChangePasswordCommandHandlerTests
     {
         _users.GetByIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>()).Returns((User?)null);
 
-        var act = () => _sut.Handle(new ChangePasswordCommand(_userId, "any", "new-pw"), default);
+        var act = () => _sut.Handle(new ChangePasswordCommand(_userId, "any", NewPassword), default);
 
         await act.Should().ThrowAsync<InvalidCredentialsException>();
     }
@@ -80,7 +82,7 @@ public sealed class ChangePasswordCommandHandlerTests
         _users.GetByIdAsync(Arg.Any<UserId>(), Arg.Any<CancellationToken>()).Returns(user);
         _hasher.Verify("wrong", "old-hash").Returns(false);
 
-        try { await _sut.Handle(new ChangePasswordCommand(_userId, "wrong", "new-pw"), default); }
+        try { await _sut.Handle(new ChangePasswordCommand(_userId, "wrong", NewPassword), default); }
         catch { /* expected */ }
 
         await _users.DidNotReceive().SaveAsync(Arg.Any<User>(), Arg.Any<CancellationToken>());
