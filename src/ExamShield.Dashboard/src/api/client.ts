@@ -161,8 +161,12 @@ export const api = {
   deactivateUser: (userId: string) =>
     request<void>(`/users/${userId}/deactivate`, { method: 'PUT' }),
 
-  getExams: (page = 1, pageSize = 50) =>
-    request<ExamListResponse>(`/exams/?page=${page}&pageSize=${pageSize}`),
+  getExams: (page = 1, pageSize = 50, search?: string, status?: string) => {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+    if (search) params.append('search', search)
+    if (status) params.append('status', status)
+    return request<ExamListResponse>(`/exams/?${params}`)
+  },
 
   createExam: (payload: CreateExamPayload) =>
     request<ExamItem>('/exams/', {

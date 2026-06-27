@@ -34,9 +34,16 @@ public sealed class InMemoryExamRepository : IExamRepository
         Task.FromResult<IReadOnlyList<Exam>>(_store.Values.ToList());
 
     public Task<(IReadOnlyList<Exam> Items, int TotalCount)> ListPagedAsync(
-        int page, int pageSize, CancellationToken ct = default)
+        int page, int pageSize,
+        string? search = null, ExamStatus? status = null,
+        CancellationToken ct = default)
     {
-        var all = _store.Values.OrderByDescending(e => e.CreatedAt).ToList();
+        var query = _store.Values.AsEnumerable();
+        if (!string.IsNullOrWhiteSpace(search))
+            query = query.Where(e => e.Name.Contains(search, StringComparison.OrdinalIgnoreCase));
+        if (status is not null)
+            query = query.Where(e => e.Status == status);
+        var all = query.OrderByDescending(e => e.CreatedAt).ToList();
         var items = all.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         return Task.FromResult<(IReadOnlyList<Exam>, int)>((items, all.Count));
     }

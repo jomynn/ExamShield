@@ -1,3 +1,4 @@
+using ExamShield.Domain.Entities;
 using MediatR;
 
 namespace ExamShield.Application.Queries.GetExams;
@@ -15,4 +16,7 @@ public sealed record GetExamsResult(
     public int TotalPages => PageSize > 0 ? (int)Math.Ceiling((double)TotalCount / PageSize) : 0;
 }
 
-public sealed record GetExamsQuery(int Page = 1, int PageSize = 50) : IRequest<GetExamsResult>;
+public sealed record GetExamsQuery(
+    int Page = 1, int PageSize = 50,
+    string? Search = null, ExamStatus? Status = null)
+    : IRequest<GetExamsResult>;

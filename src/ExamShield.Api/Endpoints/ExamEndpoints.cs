@@ -9,6 +9,7 @@ using ExamShield.Application.Queries.GetAnswerKey;
 using ExamShield.Application.Queries.GetExamCandidates;
 using ExamShield.Application.Queries.GetExamSubmissionStatus;
 using ExamShield.Application.Queries.GetExams;
+using ExamShield.Domain.Entities;
 using ExamShield.Domain.Exceptions;
 using MediatR;
 
@@ -20,9 +21,12 @@ public static class ExamEndpoints
     {
         var group = app.MapGroup("/exams").WithTags("Exams");
 
-        group.MapGet("/", async (IMediator mediator, CancellationToken ct, int page = 1, int pageSize = 50) =>
+        group.MapGet("/", async (
+            IMediator mediator, CancellationToken ct,
+            int page = 1, int pageSize = 50,
+            string? search = null, ExamStatus? status = null) =>
         {
-            var result = await mediator.Send(new GetExamsQuery(page, pageSize), ct);
+            var result = await mediator.Send(new GetExamsQuery(page, pageSize, search, status), ct);
             var items = result.Exams
                 .Select(e => new ExamResponse(e.ExamId, e.Name, e.Description, e.Status, e.TotalQuestions, e.CreatedAt))
                 .ToList();

@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, type CreateExamPayload } from '../api/client'
 
-export function useExams(page = 1, pageSize = 50) {
+export function useExams(page = 1, pageSize = 50, search?: string, status?: string) {
   return useQuery({
-    queryKey: ['exams', page, pageSize],
-    queryFn: () => api.getExams(page, pageSize),
+    queryKey: ['exams', page, pageSize, search, status],
+    queryFn: () => api.getExams(page, pageSize, search, status),
   })
 }
 

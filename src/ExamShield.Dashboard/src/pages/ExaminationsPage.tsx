@@ -15,9 +15,13 @@ const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'muted'> = {
 
 const PAGE_SIZE = 20
 
+const EXAM_STATUSES = ['', 'Draft', 'Active', 'Closed']
+
 export default function ExaminationsPage() {
   const [page, setPage] = useState(1)
-  const { data, isLoading } = useExams(page, PAGE_SIZE)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const { data, isLoading } = useExams(page, PAGE_SIZE, search || undefined, statusFilter || undefined)
   const create = useCreateExam()
   const activate = useActivateExam()
   const close = useCloseExam()
@@ -84,6 +88,32 @@ export default function ExaminationsPage() {
         >
           Create Exam
         </button>
+      </div>
+
+      <div className="flex gap-2">
+        <input
+          value={search}
+          onChange={e => { setSearch(e.target.value); setPage(1) }}
+          placeholder="Search by name…"
+          className="flex-1 rounded border border-[#30363D] bg-[#161B22] px-3 py-1.5 text-sm text-white placeholder-[#8B949E]"
+        />
+        <select
+          value={statusFilter}
+          onChange={e => { setStatusFilter(e.target.value); setPage(1) }}
+          className="rounded border border-[#30363D] bg-[#161B22] px-3 py-1.5 text-sm text-white"
+        >
+          {EXAM_STATUSES.map(s => (
+            <option key={s} value={s}>{s || 'All statuses'}</option>
+          ))}
+        </select>
+        {(search || statusFilter) && (
+          <button
+            onClick={() => { setSearch(''); setStatusFilter(''); setPage(1) }}
+            className="text-sm text-[#8B949E] hover:text-white px-2"
+          >
+            Clear
+          </button>
+        )}
       </div>
 
       {showForm && (
