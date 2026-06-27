@@ -29,6 +29,7 @@ public sealed class RegisterCaptureCommandHandlerDuplicateTests
         _exams.GetByIdAsync(Arg.Any<ExamId>(), Arg.Any<CancellationToken>()).Returns(exam);
 
         var device = Device.Register("Dev", new PublicKey(new byte[91]));
+        device.Approve();
         _devices.GetByIdAsync(Arg.Any<DeviceId>(), Arg.Any<CancellationToken>()).Returns(device);
 
         _sig.Verify(Arg.Any<Hash>(), Arg.Any<Signature>(), Arg.Any<PublicKey>()).Returns(true);

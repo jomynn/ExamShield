@@ -30,6 +30,7 @@ public sealed class DuplicateCaptureTests : IClassFixture<TestWebApplicationFact
             new RegisterDeviceRequest("Dup Device", _ecdsa.ExportSubjectPublicKeyInfo()));
         var device = await devRes.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
         _deviceId = device!.DeviceId;
+        await _client.PutAsync($"/devices/{_deviceId}/approve", null);
     }
 
     public void Dispose() => _ecdsa.Dispose();

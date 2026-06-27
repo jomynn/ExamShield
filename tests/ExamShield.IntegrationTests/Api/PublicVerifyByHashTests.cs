@@ -19,6 +19,7 @@ public sealed class PublicVerifyByHashTests(TestWebApplicationFactory factory)
             new RegisterDeviceRequest("HashVerify-Test Device", _ecdsa.ExportSubjectPublicKeyInfo()));
         devRes.EnsureSuccessStatusCode();
         _deviceId = (await devRes.Content.ReadFromJsonAsync<RegisterDeviceResponse>())!.DeviceId;
+        await _client.PutAsync($"/devices/{_deviceId}/approve", null);
     }
 
     public Task DisposeAsync() { _ecdsa.Dispose(); _client.Dispose(); return Task.CompletedTask; }

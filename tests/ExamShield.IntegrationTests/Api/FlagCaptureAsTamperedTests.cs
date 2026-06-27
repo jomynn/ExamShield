@@ -26,6 +26,7 @@ public sealed class FlagCaptureAsTamperedTests : IClassFixture<TestWebApplicatio
         var devRes = await _client.PostAsJsonAsync("/devices",
             new RegisterDeviceRequest("Flag Device", ecdsa.ExportSubjectPublicKeyInfo()));
         var device = await devRes.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
+        await _client.PutAsync($"/devices/{device!.DeviceId}/approve", null);
 
         var img     = System.Text.Encoding.UTF8.GetBytes("flag-tamper-test");
         var hashHex = Convert.ToHexString(SHA256.HashData(img)).ToLowerInvariant();

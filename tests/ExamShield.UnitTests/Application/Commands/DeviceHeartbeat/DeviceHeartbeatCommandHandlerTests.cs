@@ -23,6 +23,7 @@ public sealed class DeviceHeartbeatCommandHandlerTests
         using var ecdsa = System.Security.Cryptography.ECDsa.Create(
             System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
         var device = Device.Register("Test Device", new PublicKey(ecdsa.ExportSubjectPublicKeyInfo()));
+        device.Approve();
         _devices.GetByIdAsync(Arg.Any<DeviceId>(), Arg.Any<CancellationToken>())
             .Returns(device);
 
@@ -62,6 +63,7 @@ public sealed class DeviceHeartbeatCommandHandlerTests
         using var ecdsa = System.Security.Cryptography.ECDsa.Create(
             System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
         var device = Device.Register("Test Device", new PublicKey(ecdsa.ExportSubjectPublicKeyInfo()));
+        device.Approve();
         _devices.GetByIdAsync(Arg.Any<DeviceId>(), Arg.Any<CancellationToken>())
             .Returns(device);
 

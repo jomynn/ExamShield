@@ -27,6 +27,7 @@ public sealed class ScoreEndpointsTests : IClassFixture<TestWebApplicationFactor
         var deviceResponse = await _client.PostAsJsonAsync("/devices",
             new RegisterDeviceRequest("Score-Test Device", _ecdsa.ExportSubjectPublicKeyInfo()));
         var device = await deviceResponse.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
+        await _client.PutAsync($"/devices/{device!.DeviceId}/approve", null);
 
         // Create and activate a dedicated exam for this test class to avoid cross-test pollution
         // when one test publishes results and another asserts results are not yet published.

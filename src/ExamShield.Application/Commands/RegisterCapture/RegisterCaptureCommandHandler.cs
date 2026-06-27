@@ -49,6 +49,9 @@ public sealed class RegisterCaptureCommandHandler
         var device = await _devices.GetByIdAsync(deviceId, ct)
             ?? throw new DeviceNotFoundException(command.DeviceId);
 
+        if (device.Status != DeviceStatus.Approved)
+            throw new DeviceNotApprovedException(command.DeviceId);
+
         if (!_sigService.Verify(hash, signature, device.PublicKey))
             throw new InvalidSignatureException(command.DeviceId);
 

@@ -27,6 +27,7 @@ public sealed class BatchOcrEndpointTests : IClassFixture<TestWebApplicationFact
         var devRes = await _client.PostAsJsonAsync("/devices",
             new RegisterDeviceRequest("Batch OCR Device", ecdsa.ExportSubjectPublicKeyInfo()));
         var device = await devRes.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
+        await _client.PutAsync($"/devices/{device!.DeviceId}/approve", null);
 
         for (var i = 0; i < 2; i++)
         {

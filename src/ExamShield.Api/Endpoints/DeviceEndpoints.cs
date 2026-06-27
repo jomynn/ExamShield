@@ -1,4 +1,5 @@
 using ExamShield.Api.Contracts;
+using ExamShield.Application.Commands.ApproveDevice;
 using ExamShield.Application.Commands.DeviceHeartbeat;
 using ExamShield.Application.Commands.DisableDevice;
 using ExamShield.Application.Commands.EnableDevice;
@@ -39,6 +40,13 @@ public static class DeviceEndpoints
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
+        app.MapPut("/devices/{id:guid}/approve", ApproveDeviceAsync)
+            .WithName("ApproveDevice")
+            .WithTags("Device")
+            .RequireAuthorization("Administrator")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
         app.MapPost("/devices/{id:guid}/heartbeat", HeartbeatAsync)
             .WithName("DeviceHeartbeat")
             .WithTags("Device")
@@ -65,6 +73,13 @@ public static class DeviceEndpoints
             result.Devices.Select(d =>
                 new DeviceResponse(d.DeviceId, d.Name, d.IsActive, d.RegisteredAt, d.LastSeenAt)).ToList());
         return Results.Ok(response);
+    }
+
+    private static async Task<IResult> ApproveDeviceAsync(
+        Guid id, ISender sender, CancellationToken ct)
+    {
+        await sender.Send(new ApproveDeviceCommand(id), ct);
+        return Results.NoContent();
     }
 
     private static async Task<IResult> DisableDeviceAsync(Guid id, ISender sender, CancellationToken ct)

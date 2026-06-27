@@ -21,6 +21,7 @@ public sealed class AuditSignatureTests(TestWebApplicationFactory factory)
         var deviceResp = await _client.PostAsJsonAsync("/devices",
             new RegisterDeviceRequest("SigTest Device", _ecdsa.ExportSubjectPublicKeyInfo()));
         var device = await deviceResp.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
+        await _client.PutAsync($"/devices/{device!.DeviceId}/approve", null);
 
         var hashHex = new string('b', 64);
         var captureResp = await _client.PostAsJsonAsync("/capture",

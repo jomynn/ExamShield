@@ -21,6 +21,7 @@ public sealed class DeviceHeartbeatTests : IClassFixture<TestWebApplicationFacto
             new RegisterDeviceRequest("Heartbeat Device", ecdsa.ExportSubjectPublicKeyInfo()));
         var device = await res.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
         _deviceId = device!.DeviceId;
+        await _client.PutAsync($"/devices/{_deviceId}/approve", null);
     }
 
     public Task DisposeAsync() => Task.CompletedTask;

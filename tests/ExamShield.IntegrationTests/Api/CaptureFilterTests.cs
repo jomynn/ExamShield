@@ -23,6 +23,7 @@ public sealed class CaptureFilterTests : IClassFixture<TestWebApplicationFactory
         var devRes = await _client.PostAsJsonAsync("/devices",
             new RegisterDeviceRequest("Filter Test Device", ecdsa.ExportSubjectPublicKeyInfo()));
         var device = await devRes.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
+        await _client.PutAsync($"/devices/{device!.DeviceId}/approve", null);
 
         // Exam A — will have one capture
         var examARes = await _client.PostAsJsonAsync("/exams/", new CreateExamRequest("Filter Exam A", null, 5));

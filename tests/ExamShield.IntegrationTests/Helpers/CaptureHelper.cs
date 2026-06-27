@@ -14,6 +14,7 @@ public static class CaptureHelper
             new RegisterDeviceRequest("Capture Helper Device", ecdsa.ExportSubjectPublicKeyInfo()));
         devRes.EnsureSuccessStatusCode();
         var device = await devRes.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
+        await client.PutAsync($"/devices/{device!.DeviceId}/approve", null);
 
         // Unique hash per call so FindByHashAsync returns the correct capture
         var hashHex = Convert.ToHexString(SHA256.HashData(Guid.NewGuid().ToByteArray())).ToLowerInvariant();

@@ -20,8 +20,9 @@ public sealed class RegisterCaptureCommandHandlerTests
 
     public RegisterCaptureCommandHandlerTests()
     {
-        // Default: valid device + valid signature + active exam
+        // Default: approved device + valid signature + active exam
         var device = Device.Register("Test Device", new PublicKey(new byte[] { 0x04 }));
+        device.Approve();
         _devices.GetByIdAsync(Arg.Any<DeviceId>(), Arg.Any<CancellationToken>()).Returns(device);
         _sigService.Verify(Arg.Any<Hash>(), Arg.Any<Signature>(), Arg.Any<PublicKey>()).Returns(true);
 

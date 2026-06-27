@@ -62,7 +62,8 @@ public sealed class DeviceRepositoryTests : IAsyncLifetime
 
         loaded!.Name.Should().Be("Mobile-Scanner-07");
         loaded.PublicKey.Bytes.Should().StartWith(keyBytes);
-        loaded.IsActive.Should().BeTrue();
+        loaded.Status.Should().Be(ExamShield.Domain.Enums.DeviceStatus.Pending); // newly registered = Pending
+        loaded.IsActive.Should().BeFalse(); // IsActive is false until Approved
         loaded.RegisteredAt.Should().BeCloseTo(device.RegisteredAt, TimeSpan.FromSeconds(1));
     }
 

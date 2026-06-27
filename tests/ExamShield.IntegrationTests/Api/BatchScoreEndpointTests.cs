@@ -29,6 +29,7 @@ public sealed class BatchScoreEndpointTests : IClassFixture<TestWebApplicationFa
         var devRes = await _client.PostAsJsonAsync("/devices",
             new RegisterDeviceRequest("Batch Score Device", ecdsa.ExportSubjectPublicKeyInfo()));
         var device = await devRes.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
+        await _client.PutAsync($"/devices/{device!.DeviceId}/approve", null);
 
         var imageBytes = System.Text.Encoding.UTF8.GetBytes("batch-score-test-image");
         var hashHex = Convert.ToHexString(SHA256.HashData(imageBytes)).ToLowerInvariant();

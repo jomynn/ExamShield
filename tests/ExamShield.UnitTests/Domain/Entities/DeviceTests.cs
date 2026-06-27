@@ -26,10 +26,21 @@ public sealed class DeviceTests
     }
 
     [Fact]
-    public void Register_SetsIsActiveTrue()
+    public void Register_SetsStatusPending()
     {
         var device = Device.Register("Scanner-01", TestKey);
 
+        device.Status.Should().Be(ExamShield.Domain.Enums.DeviceStatus.Pending);
+        device.IsActive.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Approve_SetsStatusApproved_AndIsActiveTrue()
+    {
+        var device = Device.Register("Scanner-01", TestKey);
+        device.Approve();
+
+        device.Status.Should().Be(ExamShield.Domain.Enums.DeviceStatus.Approved);
         device.IsActive.Should().BeTrue();
     }
 

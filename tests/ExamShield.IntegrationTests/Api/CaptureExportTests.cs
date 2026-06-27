@@ -26,6 +26,7 @@ public sealed class CaptureExportTests : IClassFixture<TestWebApplicationFactory
         var devRes = await _client.PostAsJsonAsync("/devices",
             new RegisterDeviceRequest("Export Device", ecdsa.ExportSubjectPublicKeyInfo()));
         var device = await devRes.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
+        await _client.PutAsync($"/devices/{device!.DeviceId}/approve", null);
 
         var imageBytes = System.Text.Encoding.UTF8.GetBytes("export-test-image");
         var hashHex = Convert.ToHexString(SHA256.HashData(imageBytes)).ToLowerInvariant();

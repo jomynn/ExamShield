@@ -42,6 +42,7 @@ public sealed class SecurityEventTests(TestWebApplicationFactory factory)
         var devResp = await _client.PostAsJsonAsync("/devices",
             new RegisterDeviceRequest("SecTestDev", pubKey));
         var dev = await devResp.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
+        await _client.PutAsync($"/devices/{dev!.DeviceId}/approve", null);
 
         // 2. Register capture with real hash
         var realBytes = new byte[] { 1, 2, 3, 4, 5 };

@@ -20,6 +20,7 @@ public sealed class ExamStateEndpointTests(TestWebApplicationFactory factory)
         var devRes = await _client.PostAsJsonAsync("/devices",
             new RegisterDeviceRequest("ExamState-Test Device", _ecdsa.ExportSubjectPublicKeyInfo()));
         _deviceId = (await devRes.Content.ReadFromJsonAsync<RegisterDeviceResponse>())!.DeviceId;
+        await _client.PutAsync($"/devices/{_deviceId}/approve", null);
     }
 
     public Task DisposeAsync() { _ecdsa.Dispose(); _client.Dispose(); return Task.CompletedTask; }

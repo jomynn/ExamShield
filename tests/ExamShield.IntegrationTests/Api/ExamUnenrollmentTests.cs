@@ -52,6 +52,7 @@ public sealed class ExamUnenrollmentTests : IClassFixture<TestWebApplicationFact
         var devRes = await _client.PostAsJsonAsync("/devices",
             new RegisterDeviceRequest("Unenroll Dev", ecdsa.ExportSubjectPublicKeyInfo()));
         var device = await devRes.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
+        await _client.PutAsync($"/devices/{device!.DeviceId}/approve", null);
 
         var img     = System.Text.Encoding.UTF8.GetBytes("unenroll-capture");
         var hashHex = Convert.ToHexString(SHA256.HashData(img)).ToLowerInvariant();

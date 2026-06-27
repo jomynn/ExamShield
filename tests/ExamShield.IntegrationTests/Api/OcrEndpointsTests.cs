@@ -26,6 +26,7 @@ public sealed class OcrEndpointsTests : IClassFixture<TestWebApplicationFactory>
         var deviceResponse = await _client.PostAsJsonAsync("/devices",
             new RegisterDeviceRequest("OCR-Test Device", _ecdsa.ExportSubjectPublicKeyInfo()));
         var device = await deviceResponse.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
+        await _client.PutAsync($"/devices/{device!.DeviceId}/approve", null);
 
         var captureResponse = await _client.PostAsJsonAsync("/capture", new RegisterCaptureRequest(
             ExamId: _factory.ActiveExamId, StudentId: Guid.NewGuid(),

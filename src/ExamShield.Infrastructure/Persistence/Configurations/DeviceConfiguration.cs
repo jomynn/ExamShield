@@ -1,4 +1,5 @@
 using ExamShield.Domain.Entities;
+using ExamShield.Domain.Enums;
 using ExamShield.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -27,6 +28,9 @@ internal sealed class DeviceConfiguration : IEntityTypeConfiguration<Device>
                 dt => dt.UtcTicks,
                 v => new DateTimeOffset(v, TimeSpan.Zero));
 
+        builder.Property(d => d.Status);
+
+        builder.Ignore(d => d.IsActive);
         builder.Ignore(d => d.DomainEvents);
     }
 }

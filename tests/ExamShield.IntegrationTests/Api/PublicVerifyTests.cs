@@ -24,6 +24,7 @@ public sealed class PublicVerifyTests(TestWebApplicationFactory factory)
         var devResp = await _auth.PostAsJsonAsync("/devices",
             new RegisterDeviceRequest("PubVerifyDev", pubKey));
         var dev = await devResp.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
+        await _auth.PutAsync($"/devices/{dev!.DeviceId}/approve", null);
 
         var imageBytes = new byte[] { 10, 20, 30, 40, 50 };
         var hash = SHA256.HashData(imageBytes);

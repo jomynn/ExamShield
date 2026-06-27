@@ -23,6 +23,7 @@ public sealed class CaptureEndpointsTests : IClassFixture<TestWebApplicationFact
             new RegisterDeviceRequest("Test Device", _ecdsa.ExportSubjectPublicKeyInfo()));
         var body = await response.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
         _deviceId = body!.DeviceId;
+        await _client.PutAsync($"/devices/{_deviceId}/approve", null);
     }
 
     public Task DisposeAsync()

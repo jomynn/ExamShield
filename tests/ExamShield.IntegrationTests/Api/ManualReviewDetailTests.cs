@@ -25,6 +25,7 @@ public sealed class ManualReviewDetailTests(TestWebApplicationFactory factory)
         var devResp = await _client.PostAsJsonAsync("/devices",
             new RegisterDeviceRequest("ReviewDev", pubKey));
         var dev = await devResp.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
+        await _client.PutAsync($"/devices/{dev!.DeviceId}/approve", null);
 
         // Register and upload capture
         var imageBytes = new byte[] { 1, 2, 3, 4, 5 };

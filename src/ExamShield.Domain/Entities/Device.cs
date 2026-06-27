@@ -1,3 +1,4 @@
+using ExamShield.Domain.Enums;
 using ExamShield.Domain.Events;
 using ExamShield.Domain.ValueObjects;
 
@@ -9,7 +10,8 @@ public sealed class Device : AggregateRoot
     public string Name { get; private set; } = null!;
     public PublicKey PublicKey { get; private set; } = null!;
     public DateTimeOffset RegisteredAt { get; private set; }
-    public bool IsActive { get; private set; }
+    public DeviceStatus Status { get; private set; }
+    public bool IsActive => Status == DeviceStatus.Approved;
     public DateTimeOffset? LastSeenAt { get; private set; }
 
     private Device() { } // EF Core
@@ -25,15 +27,16 @@ public sealed class Device : AggregateRoot
             Name = name,
             PublicKey = publicKey,
             RegisteredAt = DateTimeOffset.UtcNow,
-            IsActive = true
+            Status = DeviceStatus.Pending
         };
 
         device.AddDomainEvent(new DeviceRegistered(device.Id));
         return device;
     }
 
-    public void Disable() => IsActive = false;
-    public void Enable()  => IsActive = true;
+    public void Approve()  => Status = DeviceStatus.Approved;
+    public void Disable()  => Status = DeviceStatus.Disabled;
+    public void Enable()   => Status = DeviceStatus.Approved;
 
     public void RecordHeartbeat()
     {

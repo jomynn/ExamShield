@@ -24,6 +24,7 @@ public sealed class AnswerSheetImageEndpointTests
             new RegisterDeviceRequest("ImageTest Device", _ecdsa.ExportSubjectPublicKeyInfo()));
         var body = await res.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
         _deviceId = body!.DeviceId;
+        await _client.PutAsync($"/devices/{_deviceId}/approve", null);
     }
 
     public Task DisposeAsync() { _ecdsa.Dispose(); _client.Dispose(); return Task.CompletedTask; }

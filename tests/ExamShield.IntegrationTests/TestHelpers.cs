@@ -12,6 +12,7 @@ public static class TestHelpers
         var devRes = await client.PostAsJsonAsync("/devices",
             new RegisterDeviceRequest("Helper Device", ecdsa.ExportSubjectPublicKeyInfo()));
         var device = await devRes.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
+        await client.PutAsync($"/devices/{device!.DeviceId}/approve", null);
 
         var hashHex = new string('a', 64);
         var capRes = await client.PostAsJsonAsync("/capture",
