@@ -38,6 +38,12 @@ public sealed class InMemorySecurityEventRepository : ISecurityEventRepository
             query.OrderByDescending(e => e.OccurredAt).Take(limit).ToList());
     }
 
+    public Task<IReadOnlyList<SecurityEvent>> ListByCaptureIdAsync(
+        Guid captureId, int limit, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<SecurityEvent>>(
+            _store.Where(e => e.CaptureId == captureId)
+                  .OrderByDescending(e => e.OccurredAt).Take(limit).ToList());
+
     public Task<int> CountAllAsync(CancellationToken ct = default) =>
         Task.FromResult(_store.Count);
 

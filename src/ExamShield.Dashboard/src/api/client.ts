@@ -131,9 +131,10 @@ export const api = {
   deviceHeartbeat: (id: string) =>
     request<{ deviceId: string; lastSeenAt: string }>(`/devices/${id}/heartbeat`, { method: 'POST' }),
 
-  getSecurityEvents: (limit = 100, severity?: string) => {
+  getSecurityEvents: (limit = 100, severity?: string, captureId?: string) => {
     const params = new URLSearchParams({ limit: String(limit) })
-    if (severity) params.set('severity', severity)
+    if (severity)   params.set('severity', severity)
+    if (captureId)  params.set('captureId', captureId)
     return request<SecurityEventListResponse>(`/security/events?${params}`)
   },
 

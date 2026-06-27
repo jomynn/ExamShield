@@ -11,8 +11,12 @@ public sealed class GetSecurityEventsQueryHandler(ISecurityEventRepository repo)
     {
         IReadOnlyList<Domain.Entities.SecurityEvent> events;
 
-        if (request.Severity is not null &&
-            Enum.TryParse<SecuritySeverity>(request.Severity, ignoreCase: true, out var sev))
+        if (request.CaptureId is not null)
+        {
+            events = await repo.ListByCaptureIdAsync(request.CaptureId.Value, request.Limit, ct);
+        }
+        else if (request.Severity is not null &&
+                 Enum.TryParse<SecuritySeverity>(request.Severity, ignoreCase: true, out var sev))
         {
             events = await repo.ListBySeverityAsync(sev, request.Limit, ct);
         }

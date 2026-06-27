@@ -12,6 +12,7 @@ public interface ISecurityEventRepository
         IEnumerable<SecurityEventType> types, int limit,
         DateTimeOffset? from = null, DateTimeOffset? to = null,
         CancellationToken ct = default);
+    Task<IReadOnlyList<SecurityEvent>> ListByCaptureIdAsync(Guid captureId, int limit, CancellationToken ct = default);
     Task<int> CountAllAsync(CancellationToken ct = default);
     Task<int> CountBySeverityAsync(SecuritySeverity severity, CancellationToken ct = default);
 }

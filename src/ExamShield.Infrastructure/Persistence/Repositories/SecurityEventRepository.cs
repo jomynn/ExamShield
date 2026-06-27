@@ -42,6 +42,14 @@ public sealed class SecurityEventRepository(ExamShieldDbContext context) : ISecu
             .ToListAsync(ct);
     }
 
+    public async Task<IReadOnlyList<SecurityEvent>> ListByCaptureIdAsync(
+        Guid captureId, int limit, CancellationToken ct = default) =>
+        await context.SecurityEvents
+            .Where(e => e.CaptureId == captureId)
+            .OrderByDescending(e => e.OccurredAt)
+            .Take(limit)
+            .ToListAsync(ct);
+
     public Task<int> CountAllAsync(CancellationToken ct = default) =>
         context.SecurityEvents.CountAsync(ct);
 
