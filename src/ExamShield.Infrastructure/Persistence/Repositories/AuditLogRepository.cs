@@ -32,11 +32,17 @@ public sealed class AuditLogRepository(ExamShieldDbContext context, IServerSigni
     public async Task<(IReadOnlyList<AuditLog> Entries, int TotalCount)> QueryAsync(
         CaptureId? captureId, int page, int pageSize,
         AuditAction? action = null,
+        string? userId = null,
+        DateTimeOffset? from = null,
+        DateTimeOffset? to = null,
         CancellationToken ct = default)
     {
         var query = context.AuditLogs.AsQueryable();
         if (captureId is not null) query = query.Where(e => e.CaptureId == captureId);
         if (action    is not null) query = query.Where(e => e.Action    == action);
+        if (userId    is not null) query = query.Where(e => e.UserId    == userId);
+        if (from      is not null) query = query.Where(e => e.OccurredAt >= from);
+        if (to        is not null) query = query.Where(e => e.OccurredAt <= to);
         var total = await query.CountAsync(ct);
         var entries = await query
             .OrderByDescending(e => e.OccurredAt)

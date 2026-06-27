@@ -12,6 +12,9 @@ public interface IAuditLogRepository
     Task<(IReadOnlyList<AuditLog> Entries, int TotalCount)> QueryAsync(
         CaptureId? captureId, int page, int pageSize,
         AuditAction? action = null,
+        string? userId = null,
+        DateTimeOffset? from = null,
+        DateTimeOffset? to = null,
         CancellationToken ct = default);
 
     // Returns entries in ascending chronological order for chain traversal/verification.

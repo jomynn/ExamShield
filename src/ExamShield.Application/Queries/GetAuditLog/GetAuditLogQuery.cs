@@ -6,7 +6,10 @@ public sealed record GetAuditLogQuery(
     Guid? CaptureId = null,
     int Page = 1,
     int PageSize = 50,
-    string? Action = null
+    string? Action = null,
+    string? UserId = null,
+    DateTimeOffset? From = null,
+    DateTimeOffset? To = null
 ) : IRequest<GetAuditLogResult>;
 
 public sealed record GetAuditLogResult(

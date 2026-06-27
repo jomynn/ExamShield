@@ -19,7 +19,9 @@ public sealed class GetAuditLogQueryHandler : IRequestHandler<GetAuditLogQuery, 
             Enum.TryParse<AuditAction>(query.Action, ignoreCase: true, out var parsed)
             ? parsed : null;
 
-        var (entries, total) = await _repository.QueryAsync(captureId, query.Page, query.PageSize, action, ct);
+        var (entries, total) = await _repository.QueryAsync(
+            captureId, query.Page, query.PageSize, action,
+            query.UserId, query.From, query.To, ct);
 
         var dtos = entries.Select(e => new AuditLogDto(
             e.Id.Value,

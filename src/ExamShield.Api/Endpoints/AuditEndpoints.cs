@@ -39,12 +39,16 @@ public static class AuditEndpoints
         int page = 1,
         int pageSize = 50,
         string? action = null,
+        string? userId = null,
+        DateTimeOffset? from = null,
+        DateTimeOffset? to = null,
         CancellationToken ct = default)
     {
         if (action is not null && !Enum.TryParse<AuditAction>(action, ignoreCase: true, out _))
             return Results.BadRequest(new { error = $"Unknown audit action '{action}'." });
 
-        var result = await sender.Send(new GetAuditLogQuery(captureId, page, pageSize, action), ct);
+        var result = await sender.Send(
+            new GetAuditLogQuery(captureId, page, pageSize, action, userId, from, to), ct);
 
         var response = new AuditLogResponse(
             result.Entries.Select(e => new AuditLogEntryResponse(
