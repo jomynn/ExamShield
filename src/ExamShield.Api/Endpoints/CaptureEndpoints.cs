@@ -3,6 +3,7 @@ using ExamShield.Application.Commands.RegisterCapture;
 using ExamShield.Application.Commands.VerifyIntegrity;
 using ExamShield.Application.Queries.ExportCaptures;
 using ExamShield.Application.Queries.GetCaptures;
+using ExamShield.Application.Queries.GetChainOfCustody;
 using ExamShield.Domain.Entities;
 using ExamShield.Domain.Exceptions;
 using ExamShield.Domain.Interfaces;
@@ -81,6 +82,18 @@ public static class CaptureEndpoints
             .RequireAuthorization("Operator")
             .Produces<VerifyIntegrityResponse>()
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        app.MapGet("/captures/{id:guid}/chain-of-custody",
+            async (Guid id, ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(new GetChainOfCustodyQuery(id), ct);
+                return Results.Ok(result);
+            })
+        .WithName("GetChainOfCustody")
+        .WithTags("Capture")
+        .RequireAuthorization("Auditor")
+        .Produces<GetChainOfCustodyResult>()
+        .ProducesProblem(StatusCodes.Status404NotFound);
 
         // Also register the /captures/{id}/image route on the root app (not under /capture group)
         app.MapGet("/captures/{id:guid}/image", GetCaptureImageAsync)

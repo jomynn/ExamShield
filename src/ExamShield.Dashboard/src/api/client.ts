@@ -130,6 +130,9 @@ export const api = {
   verifyCapture: (captureId: string) =>
     request<VerifyCaptureResponse>(`/public/verify?captureId=${encodeURIComponent(captureId)}`),
 
+  getChainOfCustody: (captureId: string) =>
+    request<ChainOfCustodyResult>(`/captures/${captureId}/chain-of-custody`),
+
   exportCaptures: (examId?: string, status?: string) => {
     const params = new URLSearchParams()
     if (examId) params.set('examId', examId)
@@ -526,4 +529,17 @@ export interface PublicVerifyResponse {
   signatureValid: boolean
   isUploaded: boolean
   capturedAt: string | null
+}
+
+export interface ChainAuditEntry { action: string; userId: string; occurredAt: string; reason: string | null }
+export interface ChainOcrInfo { ocrResultId: string; overallConfidence: number; answerCount: number; completedAt: string }
+export interface ChainScoreInfo { scoreId: string; correctAnswers: number; totalQuestions: number; percentage: number; scoredAt: string }
+export interface ChainReviewInfo { reviewId: string; status: string; requestedAt: string }
+export interface ChainOfCustodyResult {
+  captureId: string; examId: string; studentId: string; deviceId: string
+  pageNumber: number; hashHex: string; status: string; capturedAt: string; storageKey: string | null
+  ocrResult: ChainOcrInfo | null
+  score: ChainScoreInfo | null
+  reviews: ChainReviewInfo[]
+  auditTrail: ChainAuditEntry[]
 }

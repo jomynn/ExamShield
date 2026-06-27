@@ -37,4 +37,7 @@ public sealed class ScoreRepository : IScoreRepository
 
     public Task<bool> ExistsByCaptureIdAsync(CaptureId captureId, CancellationToken ct = default) =>
         _context.Scores.AnyAsync(s => s.CaptureId == captureId, ct);
+
+    public Task<Score?> GetByCaptureIdAsync(CaptureId captureId, CancellationToken ct = default) =>
+        _context.Scores.FirstOrDefaultAsync(s => s.CaptureId == captureId, ct);
 }

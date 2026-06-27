@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '../api/client'
 import ImageViewer from '../components/ImageViewer'
 import Pagination from '../components/Pagination'
+import { useChainOfCustody } from '../hooks/useCaptures'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5083'
 
@@ -30,7 +31,9 @@ export default function AnswerSheetsPage() {
     ),
   })
 
-  const [viewingId, setViewingId] = useState<string | null>(null)
+  const [viewingId,  setViewingId]  = useState<string | null>(null)
+  const [chainId,    setChainId]    = useState<string | null>(null)
+  const { data: chain, isLoading: chainLoading } = useChainOfCustody(chainId)
 
   function handleFilterChange() {
     setPage(1)
@@ -143,14 +146,22 @@ export default function AnswerSheetsPage() {
                     {new Date(c.capturedAt).toLocaleString()}
                   </td>
                   <td className="px-4 py-3">
-                    {c.storageKey && (
+                    <div className="flex gap-2">
+                      {c.storageKey && (
+                        <button
+                          onClick={() => setViewingId(viewingId === c.captureId ? null : c.captureId)}
+                          className="text-xs px-2 py-1 bg-[#21262D] hover:bg-[#30363D] text-[#00BFFF] rounded"
+                        >
+                          View Image
+                        </button>
+                      )}
                       <button
-                        onClick={() => setViewingId(viewingId === c.captureId ? null : c.captureId)}
-                        className="text-xs px-2 py-1 bg-[#21262D] hover:bg-[#30363D] text-[#00BFFF] rounded"
+                        onClick={() => setChainId(chainId === c.captureId ? null : c.captureId)}
+                        className="text-xs px-2 py-1 bg-[#21262D] hover:bg-[#30363D] text-purple-400 rounded"
                       >
-                        View Image
+                        Chain
                       </button>
-                    )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -166,6 +177,41 @@ export default function AnswerSheetsPage() {
             totalPages={data?.totalPages ?? 1}
             onPageChange={setPage}
           />
+        </div>
+      )}
+
+      {/* Chain of Custody panel */}
+      {chainId && (
+        <div className="mt-6 rounded-lg border border-purple-800/40 bg-[#161B22] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-purple-300">Chain of Custody</h2>
+            <button onClick={() => setChainId(null)} className="text-xs text-muted-foreground hover:text-white">✕ Close</button>
+          </div>
+          {chainLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+          {chain && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div><span className="text-muted-foreground">Status</span><br/><span className="font-mono">{chain.status}</span></div>
+                <div><span className="text-muted-foreground">Page</span><br/><span className="font-mono">{chain.pageNumber}</span></div>
+                <div className="col-span-2"><span className="text-muted-foreground">Hash</span><br/><span className="font-mono text-[10px] break-all">{chain.hashHex}</span></div>
+                {chain.ocrResult && <div><span className="text-muted-foreground">OCR Confidence</span><br/><span className="font-mono">{(chain.ocrResult.overallConfidence * 100).toFixed(1)}%</span></div>}
+                {chain.score && <div><span className="text-muted-foreground">Score</span><br/><span className="font-mono">{chain.score.correctAnswers}/{chain.score.totalQuestions} ({chain.score.percentage.toFixed(1)}%)</span></div>}
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Audit Trail ({chain.auditTrail.length} events)</p>
+                <ol className="relative border-l border-purple-800/40 ml-2 space-y-2">
+                  {chain.auditTrail.map((a, i) => (
+                    <li key={i} className="ml-4 text-xs">
+                      <span className="absolute -left-1.5 mt-0.5 h-3 w-3 rounded-full bg-purple-700" />
+                      <span className="font-medium text-purple-300">{a.action}</span>
+                      <span className="ml-2 text-muted-foreground">{new Date(a.occurredAt).toLocaleTimeString()}</span>
+                      {a.reason && <span className="ml-2 text-muted-foreground">— {a.reason}</span>}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

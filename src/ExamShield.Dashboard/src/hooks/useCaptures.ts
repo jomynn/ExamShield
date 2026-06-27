@@ -16,3 +16,11 @@ export function useVerifyCapture() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['captures'] }),
   })
 }
+
+export function useChainOfCustody(captureId: string | null) {
+  return useQuery({
+    queryKey: ['chain-of-custody', captureId],
+    queryFn: () => api.getChainOfCustody(captureId!),
+    enabled: !!captureId,
+  })
+}

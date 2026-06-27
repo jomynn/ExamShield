@@ -32,4 +32,7 @@ public sealed class InMemoryScoreRepository : IScoreRepository
 
     public Task<bool> ExistsByCaptureIdAsync(CaptureId captureId, CancellationToken ct = default) =>
         Task.FromResult(_store.Values.Any(s => s.CaptureId == captureId));
+
+    public Task<Score?> GetByCaptureIdAsync(CaptureId captureId, CancellationToken ct = default) =>
+        Task.FromResult(_store.Values.FirstOrDefault(s => s.CaptureId == captureId));
 }
