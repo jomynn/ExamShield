@@ -2,6 +2,7 @@ using ExamShield.Api.Contracts;
 using ExamShield.Application.Commands.ActivateExam;
 using ExamShield.Application.Commands.CloseExam;
 using ExamShield.Application.Commands.CreateExam;
+using ExamShield.Application.Commands.DeleteExam;
 using ExamShield.Application.Commands.BulkEnrollStudents;
 using ExamShield.Application.Commands.EnrollStudent;
 using ExamShield.Application.Commands.UpdateExam;
@@ -93,6 +94,22 @@ public static class ExamEndpoints
         .Produces(StatusCodes.Status204NoContent)
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
+        group.MapDelete("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
+        {
+            try
+            {
+                await mediator.Send(new DeleteExamCommand(id), ct);
+                return Results.NoContent();
+            }
+            catch (KeyNotFoundException)           { return Results.NotFound(); }
+            catch (InvalidOperationException e)    { return Results.UnprocessableEntity(new { error = e.Message }); }
+        })
+        .WithName("DeleteExam")
+        .RequireAuthorization("Administrator")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
 
         group.MapPut("/{id:guid}/activate", async (Guid id, IMediator mediator, CancellationToken ct) =>

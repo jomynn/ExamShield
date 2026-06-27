@@ -36,6 +36,9 @@ internal sealed class ExamConfiguration : IEntityTypeConfiguration<Exam>
                 dt => dt.HasValue ? (long?)dt.Value.UtcTicks : null,
                 v => v.HasValue ? (DateTimeOffset?)new DateTimeOffset(v.Value, TimeSpan.Zero) : null);
 
+        builder.Property(e => e.IsDeleted).HasDefaultValue(false);
+        builder.HasQueryFilter(e => !e.IsDeleted);
+
         builder.Ignore(e => e.DomainEvents);
     }
 }

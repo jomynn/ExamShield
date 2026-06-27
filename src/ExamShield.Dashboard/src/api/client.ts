@@ -215,6 +215,9 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
+  deleteExam: (examId: string) =>
+    request<void>(`/exams/${examId}`, { method: 'DELETE' }),
+
   updateExam: (examId: string, payload: {
     name: string; description?: string;
     scheduledAt?: string | null; endsAt?: string | null;

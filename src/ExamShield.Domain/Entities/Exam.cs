@@ -14,6 +14,7 @@ public sealed class Exam : AggregateRoot
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset? ScheduledAt { get; private set; }
     public DateTimeOffset? EndsAt { get; private set; }
+    public bool IsDeleted { get; private set; }
 
     private Exam() { }
 
@@ -64,5 +65,14 @@ public sealed class Exam : AggregateRoot
         if (Status == ExamStatus.Closed)
             throw new InvalidOperationException("Exam is already closed.");
         Status = ExamStatus.Closed;
+    }
+
+    public void MarkDeleted()
+    {
+        if (IsDeleted)
+            throw new InvalidOperationException("Exam is already deleted.");
+        if (Status != ExamStatus.Draft)
+            throw new InvalidOperationException("Only Draft exams can be deleted.");
+        IsDeleted = true;
     }
 }

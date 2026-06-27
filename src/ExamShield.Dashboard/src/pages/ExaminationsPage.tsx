@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  useExams, useCreateExam, useUpdateExam, useActivateExam, useCloseExam,
+  useExams, useCreateExam, useDeleteExam, useUpdateExam, useActivateExam, useCloseExam,
   useAnswerKey, useSetAnswerKey, useExamCandidates, useEnrollStudent,
   useUnenrollStudent, useExamSubmissionStatus,
 } from '../hooks/useExams'
@@ -24,6 +24,7 @@ export default function ExaminationsPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const { data, isLoading } = useExams(page, PAGE_SIZE, search || undefined, statusFilter || undefined)
   const create   = useCreateExam()
+  const remove   = useDeleteExam()
   const update   = useUpdateExam()
   const activate = useActivateExam()
   const close    = useCloseExam()
@@ -269,6 +270,16 @@ export default function ExaminationsPage() {
                             className="px-3 py-1 rounded text-xs bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
                           >
                             Activate
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Delete "${exam.name}"? This cannot be undone.`))
+                                remove.mutate(exam.examId)
+                            }}
+                            disabled={remove.isPending}
+                            className="px-3 py-1 rounded text-xs border border-red-500/40 text-red-500 hover:bg-red-500/10 disabled:opacity-50"
+                          >
+                            Delete
                           </button>
                         </>
                       )}

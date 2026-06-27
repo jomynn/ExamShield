@@ -16,6 +16,14 @@ export function useCreateExam() {
   })
 }
 
+export function useDeleteExam() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (examId: string) => api.deleteExam(examId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['exams'] }),
+  })
+}
+
 export function useUpdateExam() {
   const qc = useQueryClient()
   return useMutation({
