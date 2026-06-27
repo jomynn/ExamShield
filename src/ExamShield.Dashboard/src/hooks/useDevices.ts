@@ -8,6 +8,14 @@ export function useDevices() {
   })
 }
 
+export function useApproveDevice() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.approveDevice(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['devices'] }),
+  })
+}
+
 export function useDisableDevice() {
   const qc = useQueryClient()
   return useMutation({

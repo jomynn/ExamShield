@@ -1,4 +1,4 @@
-import { useDevices, useDisableDevice, useEnableDevice, useDeviceHeartbeat } from '../hooks/useDevices'
+import { useDevices, useApproveDevice, useDisableDevice, useEnableDevice, useDeviceHeartbeat } from '../hooks/useDevices'
 import StatusChip from '../components/ui/StatusChip'
 import type { DeviceEntry } from '../api/client'
 
@@ -14,11 +14,18 @@ function healthStatus(lastSeenAt: string | null): { label: string; variant: 'suc
   return { label: 'Stale', variant: 'danger' }
 }
 
+const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'danger' | 'muted'> = {
+  Approved: 'success',
+  Pending:  'warning',
+  Disabled: 'danger',
+}
+
 function DeviceRow({ device }: { device: DeviceEntry }) {
+  const approve   = useApproveDevice()
   const disable   = useDisableDevice()
   const enable    = useEnableDevice()
   const heartbeat = useDeviceHeartbeat()
-  const busy      = disable.isPending || enable.isPending
+  const busy      = approve.isPending || disable.isPending || enable.isPending
 
   const health = healthStatus(device.lastSeenAt)
 
@@ -27,8 +34,8 @@ function DeviceRow({ device }: { device: DeviceEntry }) {
       <td className="px-4 py-3 font-medium text-foreground">{device.name}</td>
       <td className="px-4 py-3">
         <StatusChip
-          label={device.isActive ? 'Active' : 'Disabled'}
-          variant={device.isActive ? 'success' : 'danger'}
+          label={device.status}
+          variant={STATUS_VARIANT[device.status] ?? 'muted'}
         />
       </td>
       <td className="px-4 py-3">
@@ -48,7 +55,16 @@ function DeviceRow({ device }: { device: DeviceEntry }) {
           >
             Ping
           </button>
-          {device.isActive ? (
+          {device.status === 'Pending' && (
+            <button
+              onClick={() => approve.mutate(device.deviceId)}
+              disabled={busy}
+              className="rounded-md border border-green-500/40 px-3 py-1 text-xs text-green-500 hover:bg-green-500/10 disabled:opacity-40"
+            >
+              Approve
+            </button>
+          )}
+          {device.status === 'Approved' && (
             <button
               onClick={() => disable.mutate(device.deviceId)}
               disabled={busy}
@@ -56,13 +72,14 @@ function DeviceRow({ device }: { device: DeviceEntry }) {
             >
               Disable
             </button>
-          ) : (
+          )}
+          {device.status === 'Disabled' && (
             <button
               onClick={() => enable.mutate(device.deviceId)}
               disabled={busy}
-              className="rounded-md border border-green-500/40 px-3 py-1 text-xs text-green-500 hover:bg-green-500/10 disabled:opacity-40"
+              className="rounded-md border border-yellow-500/40 px-3 py-1 text-xs text-yellow-500 hover:bg-yellow-500/10 disabled:opacity-40"
             >
-              Enable
+              Re-enable
             </button>
           )}
         </div>

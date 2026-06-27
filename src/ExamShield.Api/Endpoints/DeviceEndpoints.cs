@@ -71,7 +71,7 @@ public static class DeviceEndpoints
         var result = await sender.Send(new GetDevicesQuery(), ct);
         var response = new DeviceListResponse(
             result.Devices.Select(d =>
-                new DeviceResponse(d.DeviceId, d.Name, d.IsActive, d.RegisteredAt, d.LastSeenAt)).ToList());
+                new DeviceResponse(d.DeviceId, d.Name, d.Status, d.IsActive, d.RegisteredAt, d.LastSeenAt)).ToList());
         return Results.Ok(response);
     }
 

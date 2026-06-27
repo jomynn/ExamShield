@@ -40,6 +40,7 @@ export interface AuditResponse { entries: AuditEntry[]; totalCount: number }
 export interface DeviceEntry {
   deviceId: string
   name: string
+  status: string
   isActive: boolean
   registeredAt: string
   lastSeenAt: string | null
@@ -101,6 +102,9 @@ export const api = {
   },
 
   getDevices: () => request<DeviceListResponse>('/devices'),
+
+  approveDevice: (id: string) =>
+    request<void>(`/devices/${id}/approve`, { method: 'PUT' }),
 
   disableDevice: (id: string) =>
     request<void>(`/devices/${id}/disable`, { method: 'PUT' }),

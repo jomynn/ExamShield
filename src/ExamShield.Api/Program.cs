@@ -86,6 +86,7 @@ app.UseExceptionHandler(exceptionApp => exceptionApp.Run(async ctx =>
     {
         CaptureNotFoundException     => (404, ex.Message),
         DeviceNotFoundException      => (404, ex.Message),
+        DeviceNotApprovedException   => (422, ex.Message),
         DuplicateUploadException          => (409, ex.Message),
         DuplicateCaptureException         => (409, ex.Message),
         CaptureAlreadyTamperedException   => (409, ex.Message),
