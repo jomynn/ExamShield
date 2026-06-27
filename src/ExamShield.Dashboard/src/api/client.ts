@@ -224,6 +224,9 @@ export const api = {
   updateSettings: (payload: UpdateSettingsPayload) =>
     request<SettingsResponse>('/settings/', { method: 'PUT', body: JSON.stringify(payload) }),
 
+  testAlert: () =>
+    request<{ sent: boolean; error: string | null }>('/settings/alert/test', { method: 'POST' }),
+
   getReportSummary: () => request<ReportSummaryResponse>('/reports/summary'),
 
   exportAuditLog: (params?: { captureId?: string; from?: string; to?: string }) => {

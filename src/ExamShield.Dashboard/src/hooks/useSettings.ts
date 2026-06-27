@@ -15,3 +15,9 @@ export function useUpdateSettings() {
     onSuccess: data => qc.setQueryData(['settings'], data),
   })
 }
+
+export function useTestAlert() {
+  return useMutation({
+    mutationFn: () => api.testAlert(),
+  })
+}

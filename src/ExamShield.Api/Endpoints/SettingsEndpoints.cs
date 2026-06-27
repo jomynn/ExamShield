@@ -1,4 +1,5 @@
 using ExamShield.Api.Contracts;
+using ExamShield.Application.Commands.TestAlert;
 using ExamShield.Application.Commands.UpdateSettings;
 using ExamShield.Application.Queries.GetSettings;
 using MediatR;
@@ -32,6 +33,17 @@ public static class SettingsEndpoints
         .RequireAuthorization("Administrator")
         .Produces<SettingsResponse>()
         .ProducesValidationProblem();
+
+        group.MapPost("/alert/test", async (ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new TestAlertCommand(), ct);
+            return result.Sent
+                ? Results.Ok(new AlertTestResponse(true, null))
+                : Results.Ok(new AlertTestResponse(false, result.Error));
+        })
+        .WithName("TestAlert")
+        .RequireAuthorization("Administrator")
+        .Produces<AlertTestResponse>();
 
         return app;
     }

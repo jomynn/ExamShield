@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
-import { useSettings, useUpdateSettings } from '../hooks/useSettings'
+import { useSettings, useUpdateSettings, useTestAlert } from '../hooks/useSettings'
 
 const SEVERITY_OPTIONS = ['Info', 'Warning', 'High', 'Critical']
 
 export default function SettingsPage() {
   const { data, isLoading } = useSettings()
-  const update = useUpdateSettings()
-  const [saved, setSaved] = useState(false)
+  const update    = useUpdateSettings()
+  const testAlert = useTestAlert()
+  const [saved, setSaved]             = useState(false)
+  const [alertResult, setAlertResult] = useState<{ sent: boolean; error: string | null } | null>(null)
 
   const [form, setForm] = useState({
     ocrConfidenceThreshold: 0.85,
@@ -140,6 +142,34 @@ export default function SettingsPage() {
           <span className="text-sm text-green-500">Settings saved successfully.</span>
         )}
       </div>
+
+      <section className="space-y-3 border-t pt-6">
+        <h2 className="text-base font-semibold">Alert Channels</h2>
+        <p className="text-sm text-muted-foreground">
+          Send a test notification to all configured alert channels (Slack, Teams, Email, LINE Notify, Webhook).
+        </p>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() =>
+              testAlert.mutate(undefined, {
+                onSuccess: r => setAlertResult(r),
+                onError: () => setAlertResult({ sent: false, error: 'Request failed' }),
+              })
+            }
+            disabled={testAlert.isPending}
+            className="px-4 py-2 rounded border text-sm font-medium hover:bg-muted disabled:opacity-50"
+          >
+            {testAlert.isPending ? 'Sending…' : 'Send Test Alert'}
+          </button>
+          {alertResult && (
+            <span className={`text-sm ${alertResult.sent ? 'text-green-500' : 'text-red-400'}`}>
+              {alertResult.sent
+                ? 'Test alert sent successfully.'
+                : `Failed: ${alertResult.error ?? 'unknown error'}`}
+            </span>
+          )}
+        </div>
+      </section>
     </div>
   )
 }

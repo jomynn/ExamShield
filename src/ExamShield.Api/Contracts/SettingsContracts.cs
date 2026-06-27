@@ -13,3 +13,5 @@ public sealed record UpdateSettingsRequest(
     string NotificationSeverity,
     int AccessTokenExpiryMinutes,
     int RefreshTokenExpiryDays);
+
+public sealed record AlertTestResponse(bool Sent, string? Error);
