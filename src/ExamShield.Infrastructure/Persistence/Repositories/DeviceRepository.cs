@@ -20,6 +20,9 @@ public sealed class DeviceRepository : IDeviceRepository
     public Task<Device?> GetByIdAsync(DeviceId id, CancellationToken ct = default) =>
         _context.Devices.FirstOrDefaultAsync(d => d.Id == id, ct);
 
+    public Task<bool> ExistsByPublicKeyAsync(PublicKey key, CancellationToken ct = default) =>
+        _context.Devices.AnyAsync(d => d.PublicKey == key, ct);
+
     public async Task<IReadOnlyList<Device>> ListAllAsync(CancellationToken ct = default) =>
         await _context.Devices.OrderByDescending(d => d.RegisteredAt).ToListAsync(ct);
 

@@ -18,6 +18,9 @@ public sealed class InMemoryDeviceRepository : IDeviceRepository
     public Task<Device?> GetByIdAsync(DeviceId id, CancellationToken ct = default) =>
         Task.FromResult(_store.TryGetValue(id, out var device) ? device : null);
 
+    public Task<bool> ExistsByPublicKeyAsync(PublicKey key, CancellationToken ct = default) =>
+        Task.FromResult(_store.Values.Any(d => d.PublicKey == key));
+
     public Task<IReadOnlyList<Device>> ListAllAsync(CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<Device>>(_store.Values.OrderByDescending(d => d.RegisteredAt).ToList());
 

@@ -1,5 +1,6 @@
 using ExamShield.Domain.Entities;
 using ExamShield.Domain.Enums;
+using ExamShield.Domain.Exceptions;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.ValueObjects;
 using MediatR;
@@ -19,7 +20,12 @@ public sealed class RegisterDeviceCommandHandler : IRequestHandler<RegisterDevic
 
     public async Task<RegisterDeviceResult> Handle(RegisterDeviceCommand command, CancellationToken ct)
     {
-        var device = Device.Register(command.Name, new PublicKey(command.PublicKeyBytes));
+        var publicKey = new PublicKey(command.PublicKeyBytes);
+
+        if (await _repository.ExistsByPublicKeyAsync(publicKey, ct))
+            throw new DuplicateDevicePublicKeyException();
+
+        var device = Device.Register(command.Name, publicKey);
 
         await _repository.AddAsync(device, ct);
         await _auditLog.AppendAsync(
