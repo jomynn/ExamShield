@@ -30,6 +30,11 @@ export default function SessionManagementPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['sessions'] }),
   })
 
+  const { mutate: revokeAll, isPending: isRevokingAll } = useMutation({
+    mutationFn: () => api.revokeAllSessions(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['sessions'] }),
+  })
+
   const sessions = data?.sessions ?? []
   const active   = sessions.filter(s => !isExpired(s.expiresAt))
   const expired  = sessions.filter(s => isExpired(s.expiresAt))
@@ -45,12 +50,12 @@ export default function SessionManagementPage() {
         </div>
         {active.length > 1 && (
           <button
-            onClick={() => active.forEach(s => revoke(s.id))}
-            disabled={isRevoking}
+            onClick={() => revokeAll()}
+            disabled={isRevokingAll}
             className="inline-flex items-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-sm font-medium text-red-400 hover:bg-red-500/20 disabled:opacity-50"
           >
             <ShieldAlert className="h-4 w-4" />
-            Revoke all
+            {isRevokingAll ? 'Revoking…' : 'Revoke all'}
           </button>
         )}
       </div>

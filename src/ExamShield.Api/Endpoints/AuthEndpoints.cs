@@ -8,6 +8,7 @@ using ExamShield.Application.Commands.Logout;
 using ExamShield.Application.Commands.MfaLogin;
 using ExamShield.Application.Commands.Refresh;
 using ExamShield.Application.Commands.ResetPassword;
+using ExamShield.Application.Commands.RevokeAllSessions;
 using ExamShield.Application.Commands.RevokeSession;
 using ExamShield.Application.Queries.GetProfile;
 using ExamShield.Application.Queries.ListActiveSessions;
@@ -82,6 +83,11 @@ public static class AuthEndpoints
             .RequireAuthorization()
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapDelete("/sessions", RevokeAllSessionsAsync)
+            .WithName("RevokeAllSessions")
+            .RequireAuthorization()
+            .Produces(StatusCodes.Status204NoContent);
 
         group.MapPost("/users", CreateUserAsync)
             .WithName("CreateUser")
@@ -194,6 +200,14 @@ public static class AuthEndpoints
         {
             return Results.Forbid();
         }
+    }
+
+    private static async Task<IResult> RevokeAllSessionsAsync(
+        ISender sender, HttpContext ctx, CancellationToken ct)
+    {
+        if (ExtractUserId(ctx) is not Guid userId) return Results.Unauthorized();
+        await sender.Send(new RevokeAllSessionsCommand(userId), ct);
+        return Results.NoContent();
     }
 
     private static async Task<IResult> CreateUserAsync(

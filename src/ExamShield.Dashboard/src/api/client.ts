@@ -400,6 +400,9 @@ export const api = {
   revokeSession: (sessionId: string) =>
     request<void>(`/auth/sessions/${sessionId}`, { method: 'DELETE' }),
 
+  revokeAllSessions: () =>
+    request<void>('/auth/sessions', { method: 'DELETE' }),
+
   getExamRankings: (examId: string) =>
     request<ExamRankingsResponse>(`/score/rankings/${examId}`),
 
