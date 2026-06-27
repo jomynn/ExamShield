@@ -57,9 +57,9 @@ public static class ScoreEndpoints
             })
         .RequireAuthorization("Administrator");
 
-        app.MapGet("/results", async (IMediator mediator, CancellationToken ct) =>
+        app.MapGet("/results", async (Guid? examId, IMediator mediator, CancellationToken ct) =>
         {
-            var result = await mediator.Send(new GetResultsQuery(), ct);
+            var result = await mediator.Send(new GetResultsQuery(examId), ct);
             var items = result.Results.Select(s => new ScoreResultItem(
                 s.ScoreId, s.CaptureId, s.ExamId, s.StudentId,
                 s.CorrectAnswers, s.TotalQuestions, s.Percentage, s.ScoredAt)).ToList();

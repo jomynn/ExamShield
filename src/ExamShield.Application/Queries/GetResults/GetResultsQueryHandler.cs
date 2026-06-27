@@ -16,17 +16,26 @@ public sealed class GetResultsQueryHandler : IRequestHandler<GetResultsQuery, Ge
 
     public async Task<GetResultsResult> Handle(GetResultsQuery query, CancellationToken ct)
     {
-        var cached = await _cache.GetAsync<GetResultsResult>(CacheKeys.PublishedResults, ct);
+        var cacheKey = query.ExamId is null
+            ? CacheKeys.PublishedResults
+            : $"{CacheKeys.PublishedResults}:{query.ExamId}";
+
+        var cached = await _cache.GetAsync<GetResultsResult>(cacheKey, ct);
         if (cached is not null) return cached;
 
         var scores = await _scores.GetPublishedAsync(ct);
-        var result = new GetResultsResult(scores
+
+        var filtered = query.ExamId is null
+            ? scores
+            : scores.Where(s => s.ExamId.Value == query.ExamId.Value);
+
+        var result = new GetResultsResult(filtered
             .Select(s => new ScoreDto(
                 s.Id.Value, s.CaptureId.Value, s.ExamId.Value, s.StudentId.Value,
                 s.CorrectAnswers, s.TotalQuestions, s.Percentage, s.ScoredAt))
             .ToList());
 
-        await _cache.SetAsync(CacheKeys.PublishedResults, result, TimeSpan.FromMinutes(5), ct);
+        await _cache.SetAsync(cacheKey, result, TimeSpan.FromMinutes(5), ct);
         return result;
     }
 }

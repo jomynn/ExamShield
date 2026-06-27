@@ -389,7 +389,10 @@ export const api = {
 
   getRoles: () => request<RoleListResponse>('/roles'),
 
-  getResults: () => request<GetResultsResponse>('/results'),
+  getResults: (examId?: string) => {
+    const url = examId ? `/results?examId=${encodeURIComponent(examId)}` : '/results'
+    return request<GetResultsResponse>(url)
+  },
 
   getStatistics: () => request<StatisticsResponse>('/statistics'),
 
