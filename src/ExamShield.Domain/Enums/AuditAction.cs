@@ -16,5 +16,6 @@ public enum AuditAction
     ResultPublished,
     ResultsPublished,
     ReviewRequestSubmitted,
-    AnswerKeySet
+    AnswerKeySet,
+    StudentEnrolled
 }

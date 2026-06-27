@@ -49,3 +49,20 @@ export function useSetAnswerKey() {
     onSuccess: (_data, vars) => qc.invalidateQueries({ queryKey: ['answer-key', vars.examId] }),
   })
 }
+
+export function useExamCandidates(examId: string | null) {
+  return useQuery({
+    queryKey: ['exam-candidates', examId],
+    queryFn: () => api.getExamCandidates(examId!),
+    enabled: !!examId,
+  })
+}
+
+export function useEnrollStudent() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ examId, studentId }: { examId: string; studentId: string }) =>
+      api.enrollStudent(examId, studentId),
+    onSuccess: (_data, vars) => qc.invalidateQueries({ queryKey: ['exam-candidates', vars.examId] }),
+  })
+}

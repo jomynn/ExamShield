@@ -9,6 +9,10 @@ public sealed record ExamResponse(
     Guid ExamId, string Name, string? Description,
     string Status, int TotalQuestions, DateTimeOffset CreatedAt);
 
+public sealed record EnrollStudentRequest(Guid StudentId);
+public sealed record ExamCandidateItem(Guid StudentId, DateTimeOffset EnrolledAt);
+public sealed record ExamCandidatesResponse(Guid ExamId, IReadOnlyList<ExamCandidateItem> Candidates);
+
 public sealed record ExamListResponse(
     IReadOnlyList<ExamResponse> Exams,
     int TotalCount,

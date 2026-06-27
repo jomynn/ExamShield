@@ -76,6 +76,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IReviewRequestRepository, ReviewRequestRepository>();
         services.AddScoped<ISystemSettingsRepository, SystemSettingsRepository>();
         services.AddSingleton<IAnswerKeyRepository, StubAnswerKeyRepository>();
+        services.AddSingleton<IExamCandidateRepository, StubExamCandidateRepository>();
         var wmOptions = configuration.GetSection(WatermarkOptions.Section).Get<WatermarkOptions>() ?? new WatermarkOptions();
         var hmacKey = string.IsNullOrEmpty(wmOptions.HmacKeyBase64)
             ? new byte[32]

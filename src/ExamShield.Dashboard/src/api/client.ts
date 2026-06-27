@@ -184,6 +184,15 @@ export const api = {
       `/exams/${examId}/answer-key`
     ),
 
+  enrollStudent: (examId: string, studentId: string) =>
+    request<void>(`/exams/${examId}/students`, {
+      method: 'POST',
+      body: JSON.stringify({ studentId }),
+    }),
+
+  getExamCandidates: (examId: string) =>
+    request<ExamCandidatesResponse>(`/exams/${examId}/students`),
+
   getScoringQueue: () => request<ScoringQueueResponse>('/score/queue'),
 
   scoreCapture: (captureId: string) =>
@@ -469,6 +478,9 @@ export interface ExamReportResponse {
   lowestScorePercentage: number
   totalReviewRequests: number
 }
+
+export interface ExamCandidateItem { studentId: string; enrolledAt: string }
+export interface ExamCandidatesResponse { examId: string; candidates: ExamCandidateItem[] }
 
 export interface RoleItem {
   roleName: string

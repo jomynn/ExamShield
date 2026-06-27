@@ -2,9 +2,12 @@ using ExamShield.Api.Contracts;
 using ExamShield.Application.Commands.ActivateExam;
 using ExamShield.Application.Commands.CloseExam;
 using ExamShield.Application.Commands.CreateExam;
+using ExamShield.Application.Commands.EnrollStudent;
 using ExamShield.Application.Commands.SetAnswerKey;
 using ExamShield.Application.Queries.GetAnswerKey;
+using ExamShield.Application.Queries.GetExamCandidates;
 using ExamShield.Application.Queries.GetExams;
+using ExamShield.Domain.Exceptions;
 using MediatR;
 
 namespace ExamShield.Api.Endpoints;
@@ -88,6 +91,29 @@ public static class ExamEndpoints
         .RequireAuthorization("Operator")
         .Produces<AnswerKeyResponse>()
         .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapPost("/{id:guid}/students", async (Guid id, EnrollStudentRequest request, IMediator mediator, CancellationToken ct) =>
+        {
+            await mediator.Send(new EnrollStudentCommand(id, request.StudentId), ct);
+            return Results.NoContent();
+        })
+        .WithName("EnrollStudent")
+        .RequireAuthorization("Administrator")
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status409Conflict);
+
+        group.MapGet("/{id:guid}/students", async (Guid id, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(new GetExamCandidatesQuery(id), ct);
+            var items = result.Candidates
+                .Select(c => new ExamCandidateItem(c.StudentId, c.EnrolledAt))
+                .ToList();
+            return Results.Ok(new ExamCandidatesResponse(id, items));
+        })
+        .WithName("GetExamCandidates")
+        .RequireAuthorization("Operator")
+        .Produces<ExamCandidatesResponse>();
 
         return app;
     }

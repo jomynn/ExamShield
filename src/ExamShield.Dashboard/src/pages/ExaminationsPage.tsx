@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   useExams, useCreateExam, useActivateExam, useCloseExam,
-  useAnswerKey, useSetAnswerKey,
+  useAnswerKey, useSetAnswerKey, useExamCandidates, useEnrollStudent,
 } from '../hooks/useExams'
 import StatusChip from '../components/ui/StatusChip'
 import Pagination from '../components/Pagination'
@@ -31,6 +31,11 @@ export default function ExaminationsPage() {
   const [keyExamTotalQ, setKeyExamTotalQ] = useState(0)
   const [keyAnswers, setKeyAnswers] = useState<Record<number, string>>({})
   const { data: existingKey } = useAnswerKey(keyExamId)
+
+  const [enrollExamId, setEnrollExamId] = useState<string | null>(null)
+  const [newStudentId, setNewStudentId] = useState('')
+  const { data: candidatesData } = useExamCandidates(enrollExamId)
+  const enroll = useEnrollStudent()
 
   if (isLoading) return <p>Loading...</p>
 
@@ -157,6 +162,12 @@ export default function ExaminationsPage() {
                             Answer Key
                           </button>
                           <button
+                            onClick={() => { setEnrollExamId(exam.examId); setNewStudentId('') }}
+                            className="px-3 py-1 rounded text-xs bg-teal-600 text-white hover:bg-teal-700"
+                          >
+                            Students
+                          </button>
+                          <button
                             onClick={() => close.mutate(exam.examId)}
                             disabled={close.isPending}
                             className="px-3 py-1 rounded text-xs bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50"
@@ -230,6 +241,63 @@ export default function ExaminationsPage() {
             {setKey.isError && (
               <p className="text-sm text-red-500">{String(setKey.error)}</p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Enrollment Modal */}
+      {enrollExamId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background rounded-xl border p-6 w-full max-w-md space-y-4 max-h-[80vh] overflow-y-auto">
+            <h2 className="text-lg font-semibold">Enrolled Students</h2>
+
+            <form
+              onSubmit={e => {
+                e.preventDefault()
+                enroll.mutate({ examId: enrollExamId, studentId: newStudentId }, {
+                  onSuccess: () => setNewStudentId(''),
+                })
+              }}
+              className="flex gap-2"
+            >
+              <input
+                value={newStudentId}
+                onChange={e => setNewStudentId(e.target.value)}
+                placeholder="Student ID (UUID)"
+                required
+                className="flex-1 rounded border px-3 py-1.5 text-sm bg-background"
+              />
+              <button
+                type="submit"
+                disabled={enroll.isPending}
+                className="px-4 py-1.5 rounded bg-teal-600 text-white text-sm hover:bg-teal-700 disabled:opacity-50"
+              >
+                Enroll
+              </button>
+            </form>
+
+            {enroll.isError && (
+              <p className="text-sm text-red-400">{String(enroll.error)}</p>
+            )}
+
+            <div className="space-y-1 max-h-64 overflow-y-auto">
+              {(candidatesData?.candidates ?? []).length === 0
+                ? <p className="text-sm text-muted-foreground">No students enrolled yet.</p>
+                : (candidatesData?.candidates ?? []).map(c => (
+                  <div key={c.studentId} className="flex items-center justify-between text-sm py-1 border-b">
+                    <span className="font-mono text-xs">{c.studentId}</span>
+                    <span className="text-xs text-muted-foreground">{new Date(c.enrolledAt).toLocaleDateString()}</span>
+                  </div>
+                ))
+              }
+            </div>
+
+            <button
+              onClick={() => setEnrollExamId(null)}
+              className="px-4 py-2 rounded border text-sm hover:bg-muted/30"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
