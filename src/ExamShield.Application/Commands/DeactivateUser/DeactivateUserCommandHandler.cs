@@ -5,7 +5,7 @@ using MediatR;
 
 namespace ExamShield.Application.Commands.DeactivateUser;
 
-public sealed class DeactivateUserCommandHandler(IUserRepository users)
+public sealed class DeactivateUserCommandHandler(IUserRepository users, IRefreshTokenRepository tokens)
     : IRequestHandler<DeactivateUserCommand>
 {
     public async Task Handle(DeactivateUserCommand request, CancellationToken ct)
@@ -15,5 +15,6 @@ public sealed class DeactivateUserCommandHandler(IUserRepository users)
 
         user.Deactivate();
         await users.SaveAsync(user, ct);
+        await tokens.RevokeAllForUserAsync(user.Id, ct);
     }
 }
