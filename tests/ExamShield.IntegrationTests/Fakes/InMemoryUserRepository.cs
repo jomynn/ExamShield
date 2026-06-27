@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using ExamShield.Domain.Entities;
+using ExamShield.Domain.Enums;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.ValueObjects;
 
@@ -44,9 +45,20 @@ public sealed class InMemoryUserRepository : IUserRepository
         Task.FromResult<IReadOnlyList<User>>(_byEmail.Values.ToList());
 
     public Task<(IReadOnlyList<User> Items, int TotalCount)> ListPagedAsync(
-        int page, int pageSize, CancellationToken ct = default)
+        int page, int pageSize,
+        string? search = null, string? role = null,
+        CancellationToken ct = default)
     {
-        var all = _byEmail.Values.OrderBy(u => u.Email.Value).ToList();
+        var query = _byEmail.Values.AsEnumerable();
+        if (!string.IsNullOrWhiteSpace(search))
+            query = query.Where(u => u.Email.Value.Contains(search, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(role))
+        {
+            if (!Enum.TryParse<UserRole>(role, out var parsedRole))
+                return Task.FromResult<(IReadOnlyList<User>, int)>(([], 0));
+            query = query.Where(u => u.Role == parsedRole);
+        }
+        var all = query.OrderBy(u => u.Email.Value).ToList();
         var items = all.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         return Task.FromResult<(IReadOnlyList<User>, int)>((items, all.Count));
     }

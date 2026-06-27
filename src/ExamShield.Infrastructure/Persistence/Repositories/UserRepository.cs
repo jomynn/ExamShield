@@ -1,4 +1,5 @@
 using ExamShield.Domain.Entities;
+using ExamShield.Domain.Enums;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
@@ -33,9 +34,20 @@ public sealed class UserRepository : IUserRepository
         await _context.Users.ToListAsync(ct);
 
     public async Task<(IReadOnlyList<User> Items, int TotalCount)> ListPagedAsync(
-        int page, int pageSize, CancellationToken ct = default)
+        int page, int pageSize,
+        string? search = null, string? role = null,
+        CancellationToken ct = default)
     {
-        var query = _context.Users.OrderBy(u => u.Email);
+        var query = _context.Users.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(search))
+            query = query.Where(u => u.Email.Value.Contains(search));
+        if (!string.IsNullOrWhiteSpace(role))
+        {
+            if (!Enum.TryParse<UserRole>(role, out var parsedRole))
+                return ([], 0);
+            query = query.Where(u => u.Role == parsedRole);
+        }
+        query = query.OrderBy(u => u.Email);
         var total = await query.CountAsync(ct);
         var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
         return (items, total);

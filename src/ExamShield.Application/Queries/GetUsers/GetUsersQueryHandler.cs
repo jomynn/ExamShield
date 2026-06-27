@@ -8,7 +8,7 @@ public sealed class GetUsersQueryHandler(IUserRepository users)
 {
     public async Task<GetUsersResult> Handle(GetUsersQuery request, CancellationToken ct)
     {
-        var (items, total) = await users.ListPagedAsync(request.Page, request.PageSize, ct);
+        var (items, total) = await users.ListPagedAsync(request.Page, request.PageSize, request.Search, request.Role, ct);
         var dtos = items
             .OrderBy(u => u.Email.Value)
             .Select(u => new UserDto(u.Id.Value, u.Email.Value, u.Role.ToString(), u.IsActive, u.CreatedAt))

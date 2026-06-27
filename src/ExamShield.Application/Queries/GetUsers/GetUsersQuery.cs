@@ -14,4 +14,7 @@ public sealed record GetUsersResult(
     public int TotalPages => PageSize > 0 ? (int)Math.Ceiling((double)TotalCount / PageSize) : 0;
 }
 
-public sealed record GetUsersQuery(int Page = 1, int PageSize = 50) : IRequest<GetUsersResult>;
+public sealed record GetUsersQuery(
+    int Page = 1, int PageSize = 50,
+    string? Search = null, string? Role = null)
+    : IRequest<GetUsersResult>;

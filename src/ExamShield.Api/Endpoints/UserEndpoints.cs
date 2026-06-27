@@ -12,9 +12,12 @@ public static class UserEndpoints
     {
         var group = app.MapGroup("/users").WithTags("Users").RequireAuthorization("Administrator");
 
-        group.MapGet("/", async (IMediator mediator, CancellationToken ct, int page = 1, int pageSize = 50) =>
+        group.MapGet("/", async (
+            IMediator mediator, CancellationToken ct,
+            int page = 1, int pageSize = 50,
+            string? search = null, string? role = null) =>
         {
-            var result = await mediator.Send(new GetUsersQuery(page, pageSize), ct);
+            var result = await mediator.Send(new GetUsersQuery(page, pageSize, search, role), ct);
             var items = result.Users
                 .Select(u => new UserResponse(u.UserId, u.Email, u.Role, u.IsActive, u.CreatedAt))
                 .ToList();

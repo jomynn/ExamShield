@@ -152,8 +152,12 @@ export const api = {
     }).then(r => r.blob())
   },
 
-  getUsers: (page = 1, pageSize = 50) =>
-    request<UserListResponse>(`/users/?page=${page}&pageSize=${pageSize}`),
+  getUsers: (page = 1, pageSize = 50, search?: string, role?: string) => {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+    if (search) params.append('search', search)
+    if (role) params.append('role', role)
+    return request<UserListResponse>(`/users/?${params}`)
+  },
 
   updateUserRole: (userId: string, role: string) =>
     request<void>(`/users/${userId}/role`, {
