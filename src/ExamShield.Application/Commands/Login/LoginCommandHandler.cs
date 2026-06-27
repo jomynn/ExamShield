@@ -10,6 +10,9 @@ namespace ExamShield.Application.Commands.Login;
 
 public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResult>
 {
+    public const int MaxFailedAttempts = 5;
+    public static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(15);
+
     private readonly IUserRepository _users;
     private readonly IPasswordHasher _hasher;
     private readonly IJwtTokenService _jwt;
@@ -29,14 +32,24 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginRes
     {
         var user = await _users.FindByEmailAsync(new Email(command.Email), ct);
 
-        if (user is null || !user.IsActive || !_hasher.Verify(command.Password, user.PasswordHash))
+        if (user is null || !user.IsActive || user.IsLockedOut ||
+            !_hasher.Verify(command.Password, user.PasswordHash))
         {
+            if (user is not null && user.IsActive && !user.IsLockedOut)
+            {
+                user.RecordFailedLogin(MaxFailedAttempts, LockoutDuration);
+                await _users.SaveAsync(user, ct);
+            }
+
             await _security.AddAsync(SecurityEvent.Create(
                 SecurityEventType.LoginFailed, SecuritySeverity.Warning,
                 $"Failed login attempt for {command.Email}",
                 ipAddress: command.IpAddress), ct);
             throw new InvalidCredentialsException();
         }
+
+        user.ResetFailedLogin();
+        await _users.SaveAsync(user, ct);
 
         if (user.MfaEnabled)
             return new LoginResult(string.Empty, string.Empty, user.Role.ToString(), RequiresMfa: true);

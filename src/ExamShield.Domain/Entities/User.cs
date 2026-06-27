@@ -33,6 +33,24 @@ public sealed class User
     public bool MfaEnabled { get; private set; }
     public string? MfaSecret { get; private set; }
     public string? DisplayName { get; private set; }
+    public int FailedLoginAttempts { get; private set; }
+    public DateTimeOffset? LockedUntil { get; private set; }
+
+    public bool IsLockedOut =>
+        LockedUntil is not null && LockedUntil > DateTimeOffset.UtcNow;
+
+    public void RecordFailedLogin(int maxAttempts, TimeSpan lockoutDuration)
+    {
+        FailedLoginAttempts++;
+        if (FailedLoginAttempts >= maxAttempts)
+            LockedUntil = DateTimeOffset.UtcNow.Add(lockoutDuration);
+    }
+
+    public void ResetFailedLogin()
+    {
+        FailedLoginAttempts = 0;
+        LockedUntil = null;
+    }
 
     public void UpdateProfile(string? displayName)
     {
