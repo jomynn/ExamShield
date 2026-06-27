@@ -6,6 +6,7 @@ import {
 } from '../hooks/useExams'
 import StatusChip from '../components/ui/StatusChip'
 import Pagination from '../components/Pagination'
+import { api } from '../api/client'
 
 const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'muted'> = {
   Active: 'success',
@@ -106,6 +107,19 @@ export default function ExaminationsPage() {
             <option key={s} value={s}>{s || 'All statuses'}</option>
           ))}
         </select>
+        <button
+          onClick={() => api.exportExams(search || undefined, statusFilter || undefined).then(blob => {
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `exams-${Date.now()}.csv`
+            a.click()
+            URL.revokeObjectURL(url)
+          })}
+          className="px-3 py-1.5 rounded border border-[#30363D] bg-[#161B22] text-sm text-[#8B949E] hover:text-white"
+        >
+          Export CSV
+        </button>
         {(search || statusFilter) && (
           <button
             onClick={() => { setSearch(''); setStatusFilter(''); setPage(1) }}

@@ -171,6 +171,16 @@ export const api = {
     return request<ExamListResponse>(`/exams/?${params}`)
   },
 
+  exportExams: (search?: string, status?: string) => {
+    const params = new URLSearchParams()
+    if (search) params.set('search', search)
+    if (status) params.set('status', status)
+    const query = params.toString() ? `?${params}` : ''
+    return fetch(`${BASE_URL}/exams/export${query}`, {
+      headers: { ...authHeaders() },
+    }).then(r => r.blob())
+  },
+
   createExam: (payload: CreateExamPayload) =>
     request<ExamItem>('/exams/', {
       method: 'POST',

@@ -8,6 +8,7 @@ using ExamShield.Application.Commands.SetAnswerKey;
 using ExamShield.Application.Queries.GetAnswerKey;
 using ExamShield.Application.Queries.GetExamCandidates;
 using ExamShield.Application.Queries.GetExamSubmissionStatus;
+using ExamShield.Application.Queries.ExportExams;
 using ExamShield.Application.Queries.GetExams;
 using ExamShield.Domain.Entities;
 using ExamShield.Domain.Exceptions;
@@ -145,6 +146,20 @@ public static class ExamEndpoints
         .WithName("GetExamSubmissionStatus")
         .RequireAuthorization("Operator")
         .Produces<ExamSubmissionStatusResponse>();
+
+        group.MapGet("/export", async (
+            IMediator mediator, CancellationToken ct,
+            string? search = null, ExamStatus? status = null) =>
+        {
+            var result = await mediator.Send(new ExportExamsQuery(search, status), ct);
+            return Results.File(
+                System.Text.Encoding.UTF8.GetBytes(result.Csv),
+                "text/csv",
+                result.Filename);
+        })
+        .WithName("ExportExams")
+        .RequireAuthorization("Auditor")
+        .Produces(StatusCodes.Status200OK, contentType: "text/csv");
 
         return app;
     }
