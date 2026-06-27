@@ -72,6 +72,20 @@ export default function AnswerSheetsPage() {
             Clear
           </button>
         )}
+        <button
+          onClick={() => api.exportCaptures(examIdFilter || undefined, statusFilter || undefined)
+            .then(blob => {
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = `captures-${Date.now()}.csv`
+              a.click()
+              URL.revokeObjectURL(url)
+            })}
+          className="ml-auto px-3 py-1.5 rounded border border-[#30363D] text-sm text-[#8B949E] hover:text-white hover:border-[#58A6FF]"
+        >
+          Export CSV
+        </button>
       </div>
 
       {viewingId && (

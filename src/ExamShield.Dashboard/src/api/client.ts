@@ -130,6 +130,16 @@ export const api = {
   verifyCapture: (captureId: string) =>
     request<VerifyCaptureResponse>(`/public/verify?captureId=${encodeURIComponent(captureId)}`),
 
+  exportCaptures: (examId?: string, status?: string) => {
+    const params = new URLSearchParams()
+    if (examId) params.set('examId', examId)
+    if (status) params.set('status', status)
+    const query = params.toString() ? `?${params}` : ''
+    return fetch(`${BASE_URL}/captures/export${query}`, {
+      headers: { ...authHeaders() },
+    }).then(r => r.blob())
+  },
+
   getUsers: (page = 1, pageSize = 50) =>
     request<UserListResponse>(`/users/?page=${page}&pageSize=${pageSize}`),
 
@@ -180,6 +190,12 @@ export const api = {
     request<ScoreCaptureResponse>('/score', {
       method: 'POST',
       body: JSON.stringify({ captureId }),
+    }),
+
+  batchScore: (examId: string) =>
+    request<{ examId: string; scored: number; skipped: number }>('/score/batch', {
+      method: 'POST',
+      body: JSON.stringify({ examId }),
     }),
 
   getStudentResults: (studentId: string) =>

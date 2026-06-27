@@ -19,3 +19,14 @@ export function useScoreCapture() {
     },
   })
 }
+
+export function useBatchScore() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (examId: string) => api.batchScore(examId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['scoring-queue'] })
+      qc.invalidateQueries({ queryKey: ['results'] })
+    },
+  })
+}

@@ -23,3 +23,6 @@ public sealed record ScoringQueueItemResponse(
     string OcrStatus, double OverallConfidence, DateTimeOffset CompletedAt);
 
 public sealed record ScoringQueueResponse(IReadOnlyList<ScoringQueueItemResponse> Items);
+
+public sealed record BatchScoreRequest(Guid ExamId);
+public sealed record BatchScoreResponse(Guid ExamId, int Scored, int Skipped);

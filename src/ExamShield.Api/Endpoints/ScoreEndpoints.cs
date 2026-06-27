@@ -1,4 +1,5 @@
 using ExamShield.Api.Contracts;
+using ExamShield.Application.Commands.BatchScore;
 using ExamShield.Application.Commands.PublishResults;
 using ExamShield.Application.Commands.ScoreCapture;
 using ExamShield.Application.Queries.GetResults;
@@ -33,6 +34,16 @@ public static class ScoreEndpoints
                 result.ScoreId, result.CorrectAnswers, result.TotalQuestions, result.Percentage));
         })
         .RequireAuthorization("Operator");
+
+        app.MapPost("/score/batch", async (BatchScoreRequest request, IMediator mediator, CancellationToken ct) =>
+        {
+            var result = await mediator.Send(new BatchScoreCommand(request.ExamId), ct);
+            return Results.Ok(new BatchScoreResponse(request.ExamId, result.Scored, result.Skipped));
+        })
+        .WithName("BatchScore")
+        .RequireAuthorization("Operator")
+        .Produces<BatchScoreResponse>()
+        .ProducesProblem(StatusCodes.Status404NotFound);
 
         app.MapPost("/results/publish",
             async (PublishResultsRequest request, IMediator mediator, CancellationToken ct) =>

@@ -1,6 +1,7 @@
 using ExamShield.Api.Contracts;
 using ExamShield.Application.Commands.RegisterCapture;
 using ExamShield.Application.Commands.VerifyIntegrity;
+using ExamShield.Application.Queries.ExportCaptures;
 using ExamShield.Application.Queries.GetCaptures;
 using ExamShield.Domain.Entities;
 using ExamShield.Domain.Exceptions;
@@ -42,6 +43,31 @@ public static class CaptureEndpoints
         .WithTags("Capture")
         .RequireAuthorization("Operator")
         .Produces<CaptureListResponse>()
+        .ProducesProblem(StatusCodes.Status400BadRequest);
+
+        // GET /captures/export — download filtered capture list as CSV
+        app.MapGet("/captures/export", async (
+            IMediator mediator, CancellationToken ct,
+            Guid? examId = null, string? status = null) =>
+        {
+            CaptureStatus? parsedStatus = null;
+            if (status is not null)
+            {
+                if (!Enum.TryParse<CaptureStatus>(status, ignoreCase: true, out var s))
+                    return Results.BadRequest(new { title = $"Unknown status '{status}'.", status = 400 });
+                parsedStatus = s;
+            }
+
+            var result = await mediator.Send(new ExportCapturesQuery(examId, parsedStatus), ct);
+            return Results.File(
+                System.Text.Encoding.UTF8.GetBytes(result.Csv),
+                "text/csv",
+                result.Filename);
+        })
+        .WithName("ExportCaptures")
+        .WithTags("Capture")
+        .RequireAuthorization("Operator")
+        .Produces<byte[]>(StatusCodes.Status200OK, "text/csv")
         .ProducesProblem(StatusCodes.Status400BadRequest);
 
         group.MapPost("/", RegisterCaptureAsync)
