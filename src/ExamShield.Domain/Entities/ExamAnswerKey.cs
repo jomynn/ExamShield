@@ -16,6 +16,16 @@ public sealed class ExamAnswerKey : AggregateRoot
         if (answers is null || answers.Count == 0)
             throw new ArgumentException("Answer key must contain at least one answer.", nameof(answers));
 
+        foreach (var (question, text) in answers)
+        {
+            if (question <= 0)
+                throw new ArgumentException(
+                    $"Invalid question number {question}: question numbers must be positive.", nameof(answers));
+            if (string.IsNullOrWhiteSpace(text))
+                throw new ArgumentException(
+                    $"Answer text for question {question} must not be empty.", nameof(answers));
+        }
+
         return new ExamAnswerKey
         {
             ExamId = examId,
