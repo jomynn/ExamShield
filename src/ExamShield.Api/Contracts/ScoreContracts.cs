@@ -29,3 +29,12 @@ public sealed record BatchScoreResponse(Guid ExamId, int Scored, int Skipped);
 
 public sealed record RankingEntryResponse(int Rank, Guid StudentId, int CorrectAnswers, int TotalQuestions, double Percentage);
 public sealed record ExamRankingsResponse(Guid ExamId, IReadOnlyList<RankingEntryResponse> Rankings);
+
+public sealed record ExamStatisticsResponse(
+    Guid ExamId,
+    int TotalStudents,
+    double AveragePercentage,
+    double HighestPercentage,
+    double LowestPercentage,
+    double PassRate,
+    IReadOnlyDictionary<string, int> GradeDistribution);

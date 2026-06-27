@@ -384,6 +384,9 @@ export const api = {
 
   getExamRankings: (examId: string) =>
     request<ExamRankingsResponse>(`/score/rankings/${examId}`),
+
+  getExamStatistics: (examId: string) =>
+    request<ExamStatisticsResponse>(`/score/exams/${examId}/statistics`),
 }
 
 export interface CaptureItem {
@@ -453,6 +456,16 @@ export interface RankingEntry {
 export interface ExamRankingsResponse {
   examId: string
   rankings: RankingEntry[]
+}
+
+export interface ExamStatisticsResponse {
+  examId: string
+  totalStudents: number
+  averagePercentage: number
+  highestPercentage: number
+  lowestPercentage: number
+  passRate: number
+  gradeDistribution: Record<string, number>
 }
 
 export interface CreateExamPayload {

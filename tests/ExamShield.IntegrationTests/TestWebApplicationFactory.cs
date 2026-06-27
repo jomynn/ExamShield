@@ -151,4 +151,46 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         await repo.AddAsync(token);
         return token.Token;
     }
+
+    public async Task<Guid> CreateActivatedExamAsync(string name, int totalQuestions = 10)
+    {
+        var client  = await CreateAuthenticatedClientAsync();
+        var examRes = await client.PostAsJsonAsync("/exams/",
+            new CreateExamRequest(name, null, totalQuestions));
+        var exam    = await examRes.Content.ReadFromJsonAsync<ExamResponse>();
+        var examId  = exam!.ExamId;
+        await client.PutAsync($"/exams/{examId}/activate", null);
+
+        var key = Enumerable.Range(1, totalQuestions).ToDictionary(i => i, i => "A");
+        await client.PostAsJsonAsync($"/exams/{examId}/answer-key", new SetAnswerKeyRequest(key));
+        return examId;
+    }
+
+    public async Task<Guid> RegisterScoreForStudentAsync(Guid examId, int correctAnswers = 8)
+    {
+        using var scope    = Services.CreateScope();
+        var scoreRepo      = scope.ServiceProvider.GetRequiredService<IScoreRepository>();
+        var answerKeyRepo  = scope.ServiceProvider.GetRequiredService<IAnswerKeyRepository>();
+
+        var answerKey = await answerKeyRepo.GetByExamIdAsync(new ExamId(examId));
+        if (answerKey is null)
+        {
+            var defaultKey = Enumerable.Range(1, 10).ToDictionary(i => i, i => "A");
+            answerKey      = new AnswerKey(defaultKey);
+        }
+
+        var total   = answerKey.Count;
+        var correct = Math.Min(correctAnswers, total);
+        var wrong   = total - correct;
+
+        var answers = Enumerable.Range(1, correct)
+            .Select(i => new ExtractedAnswer(i, "A", new OcrConfidence(1.0)))
+            .Concat(Enumerable.Range(correct + 1, wrong)
+                .Select(i => new ExtractedAnswer(i, "B", new OcrConfidence(1.0))))
+            .ToList<ExtractedAnswer>();
+
+        var score = Score.Create(CaptureId.New(), new ExamId(examId), StudentId.New(), answers, answerKey);
+        await scoreRepo.AddAsync(score);
+        return score.Id.Value;
+    }
 }

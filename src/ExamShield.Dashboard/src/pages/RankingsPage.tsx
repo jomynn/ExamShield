@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { api, type ExamItem, type RankingEntry } from '../api/client'
-import { Trophy, Medal } from 'lucide-react'
+import { api, type ExamItem, type RankingEntry, type ExamStatisticsResponse } from '../api/client'
+import { Trophy, Medal, Users, TrendingUp, CheckCircle } from 'lucide-react'
 import { cn } from '../lib/utils'
 
 const RANK_STYLE: Record<number, string> = {
@@ -72,6 +72,47 @@ function RankingsTable({ rows, totalQuestions }: { rows: RankingEntry[]; totalQu
   )
 }
 
+function StatStrip({ stats }: { stats: ExamStatisticsResponse }) {
+  const grades = ['A', 'B', 'C', 'D', 'F']
+  const gradeColors: Record<string, string> = {
+    A: 'text-green-500', B: 'text-blue-400', C: 'text-yellow-400', D: 'text-orange-400', F: 'text-red-400',
+  }
+  return (
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="rounded-xl border border-border bg-card p-4">
+        <div className="flex items-center gap-2 text-muted-foreground mb-1">
+          <Users className="h-4 w-4" /><span className="text-xs">Students</span>
+        </div>
+        <p className="text-2xl font-bold text-foreground">{stats.totalStudents}</p>
+      </div>
+      <div className="rounded-xl border border-border bg-card p-4">
+        <div className="flex items-center gap-2 text-muted-foreground mb-1">
+          <TrendingUp className="h-4 w-4" /><span className="text-xs">Average</span>
+        </div>
+        <p className="text-2xl font-bold text-foreground">{stats.averagePercentage.toFixed(1)}%</p>
+      </div>
+      <div className="rounded-xl border border-border bg-card p-4">
+        <div className="flex items-center gap-2 text-muted-foreground mb-1">
+          <CheckCircle className="h-4 w-4" /><span className="text-xs">Pass Rate</span>
+        </div>
+        <p className="text-2xl font-bold text-green-500">{stats.passRate.toFixed(1)}%</p>
+      </div>
+      <div className="rounded-xl border border-border bg-card p-4">
+        <div className="flex items-center gap-2 text-muted-foreground mb-2">
+          <span className="text-xs font-medium">Grade Distribution</span>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {grades.map(g => (
+            <span key={g} className={cn('text-sm font-semibold', gradeColors[g])}>
+              {g}:{stats.gradeDistribution[g] ?? 0}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function RankingsPage() {
   const [selectedExamId, setSelectedExamId] = useState<string>('')
 
@@ -83,6 +124,12 @@ export default function RankingsPage() {
   const { data: rankingsData, isLoading: rankingsLoading } = useQuery({
     queryKey: ['rankings', selectedExamId],
     queryFn: () => api.getExamRankings(selectedExamId),
+    enabled: !!selectedExamId,
+  })
+
+  const { data: statsData } = useQuery({
+    queryKey: ['exam-statistics', selectedExamId],
+    queryFn: () => api.getExamStatistics(selectedExamId),
     enabled: !!selectedExamId,
   })
 
@@ -121,6 +168,7 @@ export default function RankingsPage() {
           <p className="text-sm text-muted-foreground">Loading rankings…</p>
         ) : (
           <>
+            {statsData && statsData.totalStudents > 0 && <StatStrip stats={statsData} />}
             {rankingsData && rankingsData.rankings.length > 0 && (
               <div className="grid grid-cols-3 gap-4">
                 {[1, 2, 3].map(medal => {

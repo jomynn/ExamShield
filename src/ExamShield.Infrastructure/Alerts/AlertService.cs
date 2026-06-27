@@ -1,19 +1,24 @@
 using ExamShield.Domain.Enums;
 using ExamShield.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ExamShield.Infrastructure.Alerts;
 
 public sealed class AlertService : IAlertService
 {
     private readonly IReadOnlyList<IAlertChannel> _staticChannels;
-    private readonly DynamicAlertService _dynamic;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     public AlertService(
         IConfiguration configuration,
         IHttpClientFactory httpClientFactory,
-        INotificationChannelSettingsRepository repo)
+        IServiceScopeFactory scopeFactory)
     {
+        _scopeFactory       = scopeFactory;
+        _httpClientFactory  = httpClientFactory;
+
         var configs = configuration
             .GetSection("Alerts:Channels")
             .Get<AlertChannelConfig[]>() ?? [];
@@ -24,15 +29,18 @@ public sealed class AlertService : IAlertService
             .Where(ch => ch is not null)
             .Select(ch => ch!)
             .ToList();
-
-        _dynamic = new DynamicAlertService(repo, new HttpAlertChannelFactory(httpClientFactory));
     }
 
     public async Task SendAsync(AlertType type, string message, CancellationToken ct = default)
     {
-        var staticTask  = Task.WhenAll(_staticChannels.Select(ch => ch.SendAsync(type, message, ct)));
-        var dynamicTask = _dynamic.SendAsync(type, message, ct);
-        await Task.WhenAll(staticTask, dynamicTask);
+        var staticTask = Task.WhenAll(_staticChannels.Select(ch => ch.SendAsync(type, message, ct)));
+
+        // Create a fresh scope so we don't capture the Scoped repository as a Singleton.
+        using var scope = _scopeFactory.CreateScope();
+        var repo    = scope.ServiceProvider.GetRequiredService<INotificationChannelSettingsRepository>();
+        var dynamic = new DynamicAlertService(repo, new HttpAlertChannelFactory(_httpClientFactory));
+
+        await Task.WhenAll(staticTask, dynamic.SendAsync(type, message, ct));
     }
 
     private static IAlertChannel? CreateChannel(AlertChannelConfig config, IHttpClientFactory factory)

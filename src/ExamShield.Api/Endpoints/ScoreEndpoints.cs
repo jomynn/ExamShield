@@ -6,6 +6,7 @@ using ExamShield.Application.Queries.ExportScores;
 using ExamShield.Application.Queries.GetResults;
 using ExamShield.Application.Queries.GetScoringQueue;
 using ExamShield.Application.Queries.GetExamRankings;
+using ExamShield.Application.Queries.GetExamStatistics;
 using ExamShield.Application.Queries.GetStatistics;
 using MediatR;
 
@@ -99,5 +100,17 @@ public static class ScoreEndpoints
         .WithTags("Score")
         .RequireAuthorization("Auditor")
         .Produces<ExamRankingsResponse>();
+
+        app.MapGet("/score/exams/{examId:guid}/statistics", async (Guid examId, IMediator mediator, CancellationToken ct) =>
+        {
+            var r = await mediator.Send(new GetExamStatisticsQuery(examId), ct);
+            return Results.Ok(new ExamStatisticsResponse(
+                r.ExamId, r.TotalStudents, r.AveragePercentage,
+                r.HighestPercentage, r.LowestPercentage, r.PassRate, r.GradeDistribution));
+        })
+        .WithName("GetExamStatistics")
+        .WithTags("Score")
+        .RequireAuthorization("Auditor")
+        .Produces<ExamStatisticsResponse>();
     }
 }
