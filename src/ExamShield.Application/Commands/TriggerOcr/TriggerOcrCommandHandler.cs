@@ -16,12 +16,13 @@ public sealed class TriggerOcrCommandHandler : IRequestHandler<TriggerOcrCommand
     private readonly IOcrResultRepository _ocrResults;
     private readonly IManualReviewRepository _manualReviews;
     private readonly IAuditLogRepository _auditLog;
+    private readonly ISystemSettingsRepository _systemSettings;
 
     public TriggerOcrCommandHandler(
         ICaptureRepository captures, IImageStorage imageStorage,
         IWatermarkService watermark, IOcrService ocrService,
         IOcrResultRepository ocrResults, IManualReviewRepository manualReviews,
-        IAuditLogRepository auditLog)
+        IAuditLogRepository auditLog, ISystemSettingsRepository systemSettings)
     {
         _captures = captures;
         _imageStorage = imageStorage;
@@ -30,6 +31,7 @@ public sealed class TriggerOcrCommandHandler : IRequestHandler<TriggerOcrCommand
         _ocrResults = ocrResults;
         _manualReviews = manualReviews;
         _auditLog = auditLog;
+        _systemSettings = systemSettings;
     }
 
     public async Task<TriggerOcrResult> Handle(TriggerOcrCommand command, CancellationToken ct)
@@ -40,12 +42,13 @@ public sealed class TriggerOcrCommandHandler : IRequestHandler<TriggerOcrCommand
         if (capture.StorageKey is null)
             throw new CaptureNotUploadedException(command.CaptureId);
 
-        var storedBytes = await _imageStorage.RetrieveAsync(capture.StorageKey, ct);
-        var wm = _watermark.Extract(storedBytes);
-        var imageBytes = wm.IsValid ? storedBytes[..wm.OriginalImageLength] : storedBytes;
+        var settings      = await _systemSettings.GetAsync(ct);
+        var storedBytes   = await _imageStorage.RetrieveAsync(capture.StorageKey, ct);
+        var wm            = _watermark.Extract(storedBytes);
+        var imageBytes    = wm.IsValid ? storedBytes[..wm.OriginalImageLength] : storedBytes;
 
         var extraction = await _ocrService.ExtractAsync(imageBytes, ct);
-        var ocrResult = OcrResult.Create(capture.Id, extraction.Answers);
+        var ocrResult  = OcrResult.Create(capture.Id, extraction.Answers, settings.OcrConfidenceThreshold);
 
         await _ocrResults.AddAsync(ocrResult, ct);
 

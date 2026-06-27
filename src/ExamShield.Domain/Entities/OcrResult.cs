@@ -16,7 +16,10 @@ public sealed class OcrResult : AggregateRoot
 
     private OcrResult() { }
 
-    public static OcrResult Create(CaptureId captureId, IReadOnlyList<ExtractedAnswer> answers)
+    public static OcrResult Create(
+        CaptureId captureId,
+        IReadOnlyList<ExtractedAnswer> answers,
+        double confidenceThreshold = OcrConfidence.LowThreshold)
     {
         ArgumentNullException.ThrowIfNull(captureId);
         ArgumentNullException.ThrowIfNull(answers);
@@ -25,7 +28,7 @@ public sealed class OcrResult : AggregateRoot
             ? new OcrConfidence(answers.Average(a => a.Confidence.Value))
             : new OcrConfidence(0.0);
 
-        var status = answers.Any(a => a.Confidence.IsLow)
+        var status = answers.Any(a => a.Confidence.Value < confidenceThreshold)
             ? OcrStatus.LowConfidence
             : OcrStatus.Completed;
 

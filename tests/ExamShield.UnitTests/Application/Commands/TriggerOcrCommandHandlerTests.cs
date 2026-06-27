@@ -18,6 +18,7 @@ public sealed class TriggerOcrCommandHandlerTests
     private readonly IOcrResultRepository _ocrResults = Substitute.For<IOcrResultRepository>();
     private readonly IManualReviewRepository _manualReviews = Substitute.For<IManualReviewRepository>();
     private readonly IAuditLogRepository _auditLog = Substitute.For<IAuditLogRepository>();
+    private readonly ISystemSettingsRepository _settings = Substitute.For<ISystemSettingsRepository>();
     private readonly TriggerOcrCommandHandler _sut;
 
     private static readonly byte[] ImageBytes = "exam-image"u8.ToArray();
@@ -28,8 +29,10 @@ public sealed class TriggerOcrCommandHandlerTests
         _watermark.Extract(Arg.Any<byte[]>())
             .Returns(WatermarkExtractionResult.Success(new WatermarkPayload(), ImageBytes.Length));
 
+        _settings.GetAsync(Arg.Any<CancellationToken>()).Returns(SystemSettings.CreateDefault());
+
         _sut = new TriggerOcrCommandHandler(
-            _captures, _imageStorage, _watermark, _ocrService, _ocrResults, _manualReviews, _auditLog);
+            _captures, _imageStorage, _watermark, _ocrService, _ocrResults, _manualReviews, _auditLog, _settings);
     }
 
     private static Capture UploadedCapture()
