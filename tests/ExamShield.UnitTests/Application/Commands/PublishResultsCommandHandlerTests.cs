@@ -1,6 +1,7 @@
 using ExamShield.Application;
 using ExamShield.Application.Commands.PublishResults;
 using ExamShield.Domain.Entities;
+using ExamShield.Domain.Exceptions;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.ValueObjects;
 using FluentAssertions;
@@ -66,15 +67,14 @@ public sealed class PublishResultsCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenNoScores_ReturnsZeroPublished()
+    public async Task Handle_WhenNoScores_ThrowsNoScoresToPublishException()
     {
         var examId = ExamId.New();
         _scores.GetByExamIdAsync(examId, Arg.Any<CancellationToken>())
             .Returns(new List<Score>());
 
-        var result = await _sut.Handle(new PublishResultsCommand(examId.Value), default);
-
-        result.PublishedCount.Should().Be(0);
+        await Assert.ThrowsAsync<NoScoresToPublishException>(() =>
+            _sut.Handle(new PublishResultsCommand(examId.Value), default));
     }
 
     [Fact]
@@ -91,14 +91,15 @@ public sealed class PublishResultsCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenNoScores_DoesNotInvalidateCache()
+    public async Task Handle_WhenAllAlreadyPublished_ThrowsResultsAlreadyPublishedException()
     {
         var examId = ExamId.New();
+        var published = BuildScore(examId);
+        published.Publish();
         _scores.GetByExamIdAsync(examId, Arg.Any<CancellationToken>())
-            .Returns(new List<Score>());
+            .Returns(new List<Score> { published });
 
-        await _sut.Handle(new PublishResultsCommand(examId.Value), default);
-
-        await _cache.DidNotReceive().InvalidateAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await Assert.ThrowsAsync<ResultsAlreadyPublishedException>(() =>
+            _sut.Handle(new PublishResultsCommand(examId.Value), default));
     }
 }

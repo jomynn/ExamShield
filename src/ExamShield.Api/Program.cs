@@ -94,6 +94,8 @@ app.UseExceptionHandler(exceptionApp => exceptionApp.Run(async ctx =>
         StudentAlreadyEnrolledException  => (409, ex.Message),
         ExamFullException                => (409, ex.Message),
         StudentHasCaptureException       => (409, ex.Message),
+        ResultsAlreadyPublishedException => (409, ex.Message),
+        NoScoresToPublishException       => (422, ex.Message),
         StudentNotEnrolledException      => (404, ex.Message),
         HashMismatchException        => (400, ex.Message),
         InvalidSignatureException    => (400, ex.Message),

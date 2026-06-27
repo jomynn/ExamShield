@@ -1,5 +1,6 @@
 using ExamShield.Domain.Entities;
 using ExamShield.Domain.Enums;
+using ExamShield.Domain.Exceptions;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.ValueObjects;
 using MediatR;
@@ -26,7 +27,14 @@ public sealed class PublishResultsCommandHandler
     {
         var examId = new ExamId(command.ExamId);
         var all = await _scores.GetByExamIdAsync(examId, ct);
+
+        if (all.Count == 0)
+            throw new NoScoresToPublishException(command.ExamId);
+
         var unpublished = all.Where(s => !s.IsPublished).ToList();
+
+        if (unpublished.Count == 0)
+            throw new ResultsAlreadyPublishedException(command.ExamId);
 
         foreach (var score in unpublished)
         {
