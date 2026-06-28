@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../domain/services/auth_service.dart';
 import '../../infrastructure/api/api_client.dart';
+import 'mfa_setup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -65,7 +66,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final requiresMfa = context.watch<AuthNotifier>().requiresMfa;
+    final auth = context.watch<AuthNotifier>();
+
+    if (auth.mfaSetupRequired) {
+      return const MfaSetupScreen();
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D1117),
@@ -74,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: const EdgeInsets.all(32),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
-            child: requiresMfa ? _buildMfaStep() : _buildCredentialsStep(),
+            child: auth.requiresMfa ? _buildMfaStep() : _buildCredentialsStep(),
           ),
         ),
       ),

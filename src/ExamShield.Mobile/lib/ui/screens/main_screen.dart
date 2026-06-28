@@ -4,6 +4,7 @@ import '../../domain/services/capture_service.dart';
 import '../../domain/services/sync_service.dart';
 import 'capture_screen.dart';
 import 'history_screen.dart';
+import 'notifications_screen.dart';
 import 'sync_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -17,7 +18,12 @@ class _MainScreenState extends State<MainScreen> {
   int _tab = 0;
   int _pendingCount = 0;
 
-  static const _screens = [CaptureScreen(), HistoryScreen(), SyncScreen()];
+  static const _screens = [
+    CaptureScreen(),
+    HistoryScreen(),
+    SyncScreen(),
+    NotificationsScreen(),
+  ];
 
   @override
   void initState() {
@@ -57,6 +63,10 @@ class _MainScreenState extends State<MainScreen> {
                     child: const Icon(Icons.sync),
                   )
                 : const Icon(Icons.sync),
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.notifications_outlined),
+            label: 'Notifications',
           ),
         ],
       ),

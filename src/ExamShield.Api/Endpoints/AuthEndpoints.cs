@@ -105,7 +105,7 @@ public static class AuthEndpoints
     {
         var ip = ctx.Connection.RemoteIpAddress?.ToString();
         var result = await sender.Send(new LoginCommand(request.Email, request.Password, ip), ct);
-        return Results.Ok(new LoginResponse(result.Token, result.RefreshToken, result.Role, result.RequiresMfa));
+        return Results.Ok(new LoginResponse(result.Token, result.RefreshToken, result.Role, result.RequiresMfa, result.MfaSetupRequired));
     }
 
     private static async Task<IResult> MfaLoginAsync(

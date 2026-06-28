@@ -13,6 +13,12 @@ class ApiException implements Exception {
   String toString() => 'ApiException($statusCode): $message';
 }
 
+class MfaSetupInfo {
+  final String secret;
+  final String qrUri;
+  const MfaSetupInfo({required this.secret, required this.qrUri});
+}
+
 class ApiClient {
   final String baseUrl;
   final http.Client _http;
@@ -28,6 +34,28 @@ class ApiClient {
     );
     _assertOk(res);
     return AuthToken.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+  }
+
+  Future<MfaSetupInfo> setupMfa(String token) async {
+    final res = await _http.post(
+      Uri.parse('$baseUrl/auth/mfa/setup'),
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+    );
+    _assertOk(res);
+    final json = jsonDecode(res.body) as Map<String, dynamic>;
+    return MfaSetupInfo(
+      secret: json['secret'] as String,
+      qrUri: json['qrUri'] as String,
+    );
+  }
+
+  Future<void> verifyMfaSetup({required String code, required String token}) async {
+    final res = await _http.post(
+      Uri.parse('$baseUrl/auth/mfa/verify'),
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+      body: jsonEncode({'code': code}),
+    );
+    _assertOk(res);
   }
 
   Future<AuthToken> mfaLogin({
