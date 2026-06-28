@@ -74,7 +74,7 @@ describe('UsersPage', () => {
     await screen.findByText('admin@test.com')
     const activeChips = screen.getAllByText('Active')
     expect(activeChips.length).toBeGreaterThanOrEqual(2)
-    expect(screen.getByText('Inactive')).toBeInTheDocument()
+    expect(screen.getAllByText('Inactive').length).toBeGreaterThan(0)
   })
 
   it('shows role labels', async () => {

@@ -74,7 +74,7 @@ describe('AuditLogPage', () => {
   it('displays a verification badge per row', async () => {
     renderPage()
     await screen.findByText('CaptureRegistered')
-    const badges = screen.getAllByTestId('verification-badge')
+    const badges = await screen.findAllByTestId('verification-badge')
     expect(badges).toHaveLength(2)
   })
 

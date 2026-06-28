@@ -102,7 +102,7 @@ export default function SecurityCenterPage() {
 
       {data && (
         <div className="overflow-hidden rounded-xl border border-border">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm" data-testid="security-events-table">
             <thead className="bg-muted/50">
               <tr>
                 {['Event Type', 'Severity', 'Message', 'IP', 'Time'].map(h => (

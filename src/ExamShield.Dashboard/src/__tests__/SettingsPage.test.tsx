@@ -65,13 +65,13 @@ describe('SettingsPage', () => {
 
   it('shows Save button', async () => {
     renderPage()
-    expect(await screen.findByRole('button', { name: /save/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /save settings/i })).toBeInTheDocument()
   })
 
   it('calls updateSettings on save', async () => {
     renderPage()
-    await screen.findByRole('button', { name: /save/i })
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await screen.findByRole('button', { name: /save settings/i })
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }))
     await waitFor(() =>
       expect(apiClient.api.updateSettings).toHaveBeenCalled()
     )
@@ -85,8 +85,8 @@ describe('SettingsPage', () => {
 
   it('shows success message after save', async () => {
     renderPage()
-    await screen.findByRole('button', { name: /save/i })
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await screen.findByRole('button', { name: /save settings/i })
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }))
     expect(await screen.findByText(/saved/i)).toBeInTheDocument()
   })
 })

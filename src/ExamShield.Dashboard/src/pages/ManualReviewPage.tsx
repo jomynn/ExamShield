@@ -268,7 +268,7 @@ export default function ManualReviewPage() {
                       selectedId === r.reviewId && 'bg-primary/10'
                     )}
                   >
-                    <td className="px-4 py-3 font-mono text-xs text-foreground">{r.captureId.slice(0, 8)}…</td>
+                    <td className="px-4 py-3 font-mono text-xs text-foreground">{r.captureId.length > 8 ? `${r.captureId.slice(0, 8)}…` : r.captureId}</td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {new Date(r.createdAt).toLocaleDateString()}
                     </td>

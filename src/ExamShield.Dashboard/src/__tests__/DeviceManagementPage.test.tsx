@@ -16,14 +16,20 @@ const mockDevices = [
   {
     deviceId: 'dev-1',
     name: 'Scanner-01',
+    status: 'Approved',
     isActive: true,
     registeredAt: '2026-06-01T08:00:00Z',
+    lastSeenAt: null,
+    blacklistReason: null,
   },
   {
     deviceId: 'dev-2',
     name: 'Scanner-02',
+    status: 'Disabled',
     isActive: false,
     registeredAt: '2026-06-02T09:00:00Z',
+    lastSeenAt: null,
+    blacklistReason: null,
   },
 ]
 

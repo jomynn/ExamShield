@@ -72,8 +72,8 @@ describe('ExaminationsPage', () => {
   it('displays status chips', async () => {
     renderPage()
     await screen.findByText('Mathematics Final 2026')
-    expect(screen.getByText('Active')).toBeInTheDocument()
-    expect(screen.getByText('Draft')).toBeInTheDocument()
+    expect(screen.getAllByText('Active').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Draft').length).toBeGreaterThan(0)
   })
 
   it('shows create exam button', async () => {
@@ -106,6 +106,8 @@ describe('ExaminationsPage', () => {
         name: 'Chemistry Test',
         description: '',
         totalQuestions: 40,
+        scheduledAt: null,
+        endsAt: null,
       })
     )
   })

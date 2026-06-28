@@ -95,8 +95,8 @@ export default function ScoringPage() {
           <tbody>
             {items.map(item => (
               <tr key={item.captureId} className="border-b hover:bg-muted/30">
-                <td className="py-2 pr-4 font-mono text-xs">{item.captureId.slice(0, 8)}…</td>
-                <td className="py-2 pr-4 font-mono text-xs">{item.examId.slice(0, 8)}…</td>
+                <td className="py-2 pr-4 font-mono text-xs">{item.captureId.length > 8 ? `${item.captureId.slice(0, 8)}…` : item.captureId}</td>
+                <td className="py-2 pr-4 font-mono text-xs">{item.examId.length > 8 ? `${item.examId.slice(0, 8)}…` : item.examId}</td>
                 <td className="py-2 pr-4">
                   <span className={item.overallConfidence >= 0.85 ? 'text-green-400' : 'text-yellow-400'}>
                     {Math.round(item.overallConfidence * 100)}%

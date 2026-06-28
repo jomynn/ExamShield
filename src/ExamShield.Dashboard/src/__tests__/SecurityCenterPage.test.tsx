@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import SecurityCenterPage from '../pages/SecurityCenterPage'
@@ -7,6 +7,8 @@ import * as apiClient from '../api/client'
 vi.mock('../api/client', () => ({
   api: {
     getSecurityEvents: vi.fn(),
+    getAllActiveSessions: vi.fn(),
+    getLoginHistory: vi.fn(),
   },
 }))
 
@@ -44,6 +46,8 @@ function renderPage() {
 
 beforeEach(() => {
   vi.mocked(apiClient.api.getSecurityEvents).mockResolvedValue({ events: mockEvents })
+  vi.mocked(apiClient.api.getAllActiveSessions).mockResolvedValue({ sessions: [] })
+  vi.mocked(apiClient.api.getLoginHistory).mockResolvedValue({ events: [] })
 })
 
 describe('SecurityCenterPage', () => {
@@ -54,7 +58,8 @@ describe('SecurityCenterPage', () => {
 
   it('renders an event row for each event', async () => {
     renderPage()
-    const rows = await screen.findAllByRole('row')
+    const eventsTable = await screen.findByTestId('security-events-table')
+    const rows = within(eventsTable).getAllByRole('row')
     expect(rows).toHaveLength(3) // header + 2 data rows
   })
 
@@ -67,8 +72,9 @@ describe('SecurityCenterPage', () => {
   it('displays severity chips', async () => {
     renderPage()
     await screen.findByText('HashMismatch')
-    expect(screen.getByText('Critical')).toBeInTheDocument()
-    expect(screen.getByText('High')).toBeInTheDocument()
+    const eventsTable = screen.getByTestId('security-events-table')
+    expect(within(eventsTable).getByText('Critical')).toBeInTheDocument()
+    expect(within(eventsTable).getByText('High')).toBeInTheDocument()
   })
 
   it('shows critical count badge', async () => {

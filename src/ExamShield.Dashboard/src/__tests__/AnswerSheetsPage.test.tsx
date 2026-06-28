@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import AnswerSheetsPage from '../pages/AnswerSheetsPage'
@@ -43,8 +43,7 @@ describe('AnswerSheetsPage', () => {
 
   it('renders a row per capture', async () => {
     renderPage()
-    await screen.findByRole('heading', { name: /answer sheets/i })
-    const rows = screen.getAllByRole('row')
+    const rows = await screen.findAllByRole('row')
     expect(rows.length).toBeGreaterThan(CAPTURES.length)
   })
 
@@ -73,6 +72,6 @@ describe('AnswerSheetsPage', () => {
     await screen.findByText(/stu-3/)
     const rows = screen.getAllByRole('row')
     const created = rows.find(r => r.textContent?.includes('stu-3'))
-    expect(created?.querySelector('button')).toBeNull()
+    expect(within(created!).queryByRole('button', { name: /view image/i })).toBeNull()
   })
 })
