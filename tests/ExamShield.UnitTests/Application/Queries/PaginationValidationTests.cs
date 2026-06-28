@@ -34,11 +34,11 @@ public sealed class PaginationValidationTests
     [Fact]
     public async Task Handle_WithValidPagination_CallsRepository()
     {
-        _captures.ListPagedAsync(1, 50, null, null, null, null, default)
+        _captures.ListPagedAsync(1, 50, null, null, null, null, null, default)
             .Returns((new List<Capture>() as IReadOnlyList<Capture>, 0));
 
         await _sut.Handle(new GetCapturesQuery(Page: 1, PageSize: 50), default);
 
-        await _captures.Received(1).ListPagedAsync(1, 50, null, null, null, null, default);
+        await _captures.Received(1).ListPagedAsync(1, 50, null, null, null, null, null, default);
     }
 }

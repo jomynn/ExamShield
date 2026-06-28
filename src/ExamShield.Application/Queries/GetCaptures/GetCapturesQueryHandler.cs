@@ -11,12 +11,13 @@ public sealed class GetCapturesQueryHandler(ICaptureRepository captures)
     {
         PaginationGuard.Validate(request.Page, request.PageSize);
 
-        var examId    = request.ExamId.HasValue    ? new ExamId(request.ExamId.Value)       : (ExamId?)null;
-        var deviceId  = request.DeviceId.HasValue  ? new DeviceId(request.DeviceId.Value)   : (DeviceId?)null;
-        var studentId = request.StudentId.HasValue ? new StudentId(request.StudentId.Value) : (StudentId?)null;
+        var examId        = request.ExamId.HasValue        ? new ExamId(request.ExamId.Value)             : (ExamId?)null;
+        var deviceId      = request.DeviceId.HasValue      ? new DeviceId(request.DeviceId.Value)         : (DeviceId?)null;
+        var studentId     = request.StudentId.HasValue     ? new StudentId(request.StudentId.Value)       : (StudentId?)null;
+        var invigilatorId = request.InvigilatorId.HasValue ? new UserId(request.InvigilatorId.Value)      : (UserId?)null;
 
         var (items, total) = await captures.ListPagedAsync(
-            request.Page, request.PageSize, examId, request.Status, deviceId, studentId, ct);
+            request.Page, request.PageSize, examId, request.Status, deviceId, studentId, invigilatorId, ct);
 
         var dtos = items
             .Select(c => new CaptureDto(

@@ -30,7 +30,7 @@ public sealed class GetCapturesQueryHandlerTests
     public async Task Handle_ReturnsCapturesDtos()
     {
         IReadOnlyList<Capture> list = [MakeCapture()];
-        _captures.ListPagedAsync(1, 20, null, null, null, null, default).Returns((list, 1));
+        _captures.ListPagedAsync(1, 20, null, null, null, null, null, default).Returns((list, 1));
 
         var result = await _sut.Handle(PageQuery(), default);
 
@@ -44,7 +44,7 @@ public sealed class GetCapturesQueryHandlerTests
         IReadOnlyList<Capture> list = [MakeCapture()];
         _captures.ListPagedAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<ExamId?>(),
             Arg.Any<CaptureStatus?>(), Arg.Any<DeviceId?>(), Arg.Any<StudentId?>(),
-            default).Returns((list, 1));
+            Arg.Any<UserId?>(), default).Returns((list, 1));
 
         var result = await _sut.Handle(PageQuery(), default);
 
@@ -57,7 +57,7 @@ public sealed class GetCapturesQueryHandlerTests
         IReadOnlyList<Capture> empty = [];
         _captures.ListPagedAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<ExamId?>(),
             Arg.Any<CaptureStatus?>(), Arg.Any<DeviceId?>(), Arg.Any<StudentId?>(),
-            default).Returns((empty, 0));
+            Arg.Any<UserId?>(), default).Returns((empty, 0));
 
         var result = await _sut.Handle(PageQuery(), default);
 
@@ -70,7 +70,7 @@ public sealed class GetCapturesQueryHandlerTests
     {
         IReadOnlyList<Capture> list = [MakeCapture()];
         _captures.ListPagedAsync(3, 15, Arg.Any<ExamId?>(), Arg.Any<CaptureStatus?>(),
-            Arg.Any<DeviceId?>(), Arg.Any<StudentId?>(), default).Returns((list, 200));
+            Arg.Any<DeviceId?>(), Arg.Any<StudentId?>(), Arg.Any<UserId?>(), default).Returns((list, 200));
 
         var result = await _sut.Handle(new(3, 15), default);
 

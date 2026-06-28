@@ -40,13 +40,15 @@ public sealed class InMemoryCaptureRepository : ICaptureRepository
         int page, int pageSize,
         ExamId? examId = null, CaptureStatus? status = null,
         DeviceId? deviceId = null, StudentId? studentId = null,
+        UserId? invigilatorId = null,
         CancellationToken ct = default)
     {
         var filtered = _store.Values
-            .Where(c => examId    is null || c.ExamId    == examId)
-            .Where(c => status    is null || c.Status    == status)
-            .Where(c => deviceId  is null || c.DeviceId  == deviceId)
-            .Where(c => studentId is null || c.StudentId == studentId)
+            .Where(c => examId        is null || c.ExamId        == examId)
+            .Where(c => status        is null || c.Status        == status)
+            .Where(c => deviceId      is null || c.DeviceId      == deviceId)
+            .Where(c => studentId     is null || c.StudentId     == studentId)
+            .Where(c => invigilatorId is null || c.InvigilatorId == invigilatorId)
             .OrderByDescending(c => c.CapturedAt)
             .ToList();
         var items = filtered.Skip((page - 1) * pageSize).Take(pageSize).ToList();

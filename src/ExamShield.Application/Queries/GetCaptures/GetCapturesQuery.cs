@@ -22,4 +22,5 @@ public sealed record GetCapturesQuery(
     Guid? ExamId = null,
     CaptureStatus? Status = null,
     Guid? DeviceId = null,
-    Guid? StudentId = null) : IRequest<GetCapturesResult>;
+    Guid? StudentId = null,
+    Guid? InvigilatorId = null) : IRequest<GetCapturesResult>;

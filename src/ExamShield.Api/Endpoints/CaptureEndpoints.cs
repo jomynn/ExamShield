@@ -1,3 +1,5 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using ExamShield.Api.Contracts;
 using ExamShield.Application.Commands.FlagCaptureAsTampered;
 using ExamShield.Application.Commands.RegisterCapture;
@@ -20,9 +22,10 @@ public static class CaptureEndpoints
     {
         var group = app.MapGroup("/capture").WithTags("Capture");
 
-        // GET /captures — list captures with optional examId/status filters
+        // GET /captures — list captures with optional examId/status filters.
+        // Invigilators and Operators are scoped to their own captures only.
         app.MapGet("/captures", async (
-            IMediator mediator, CancellationToken ct,
+            ClaimsPrincipal user, IMediator mediator, CancellationToken ct,
             int page = 1, int pageSize = 50,
             Guid? examId = null, string? status = null,
             Guid? deviceId = null, Guid? studentId = null) =>
@@ -35,8 +38,16 @@ public static class CaptureEndpoints
                 parsedStatus = s;
             }
 
+            Guid? scopedInvigilatorId = null;
+            if (IsInvigilatorRole(user))
+            {
+                var uid = CallerUserId(user);
+                if (uid is null) return Results.Forbid();
+                scopedInvigilatorId = uid;
+            }
+
             var result = await mediator.Send(
-                new GetCapturesQuery(page, pageSize, examId, parsedStatus, deviceId, studentId), ct);
+                new GetCapturesQuery(page, pageSize, examId, parsedStatus, deviceId, studentId, scopedInvigilatorId), ct);
             var items = result.Captures
                 .Select(c => new CaptureListItem(
                     c.CaptureId, c.ExamId, c.StudentId, c.DeviceId,
@@ -140,11 +151,12 @@ public static class CaptureEndpoints
     }
 
     private static async Task<IResult> RegisterCaptureAsync(
-        RegisterCaptureRequest request, ISender sender, CancellationToken ct)
+        RegisterCaptureRequest request, ClaimsPrincipal user, ISender sender, CancellationToken ct)
     {
         var command = new RegisterCaptureCommand(
             request.ExamId, request.StudentId, request.DeviceId,
-            request.PageNumber, request.HashHex, request.SignatureBytes);
+            request.PageNumber, request.HashHex, request.SignatureBytes,
+            InvigilatorId: CallerUserId(user));
 
         var result = await sender.Send(command, ct);
 
@@ -165,6 +177,7 @@ public static class CaptureEndpoints
 
     private static async Task<IResult> GetCaptureImageAsync(
         Guid id,
+        ClaimsPrincipal user,
         ICaptureRepository captures,
         IImageStorage imageStorage,
         CancellationToken ct)
@@ -172,10 +185,33 @@ public static class CaptureEndpoints
         var capture = await captures.GetByIdAsync(new CaptureId(id), ct)
             ?? throw new CaptureNotFoundException(id);
 
+        // Invigilators may only view images they personally captured.
+        if (IsInvigilatorRole(user))
+        {
+            var callerUid = CallerUserId(user);
+            if (callerUid is null || capture.InvigilatorId?.Value != callerUid)
+                return Results.Forbid();
+        }
+
         if (capture.StorageKey is null)
             return Results.NotFound("Image not yet uploaded.");
 
         var bytes = await imageStorage.RetrieveAsync(capture.StorageKey, ct);
         return Results.Bytes(bytes, "application/octet-stream");
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+
+    private static readonly HashSet<string> InvigilatorRoles =
+        new(StringComparer.Ordinal) { "Invigilator", "Operator" };
+
+    private static bool IsInvigilatorRole(ClaimsPrincipal user) =>
+        InvigilatorRoles.Contains(user.FindFirstValue(ClaimTypes.Role) ?? "");
+
+    private static Guid? CallerUserId(ClaimsPrincipal user)
+    {
+        var sub = user.FindFirstValue(JwtRegisteredClaimNames.Sub)
+                  ?? user.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(sub, out var uid) ? uid : null;
     }
 }

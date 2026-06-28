@@ -40,13 +40,15 @@ public sealed class CaptureRepository : ICaptureRepository
         int page, int pageSize,
         ExamId? examId = null, CaptureStatus? status = null,
         DeviceId? deviceId = null, StudentId? studentId = null,
+        UserId? invigilatorId = null,
         CancellationToken ct = default)
     {
         var query = _context.Captures.AsQueryable();
-        if (examId    is not null) query = query.Where(c => c.ExamId    == examId);
-        if (status    is not null) query = query.Where(c => c.Status    == status);
-        if (deviceId  is not null) query = query.Where(c => c.DeviceId  == deviceId);
-        if (studentId is not null) query = query.Where(c => c.StudentId == studentId);
+        if (examId        is not null) query = query.Where(c => c.ExamId        == examId);
+        if (status        is not null) query = query.Where(c => c.Status        == status);
+        if (deviceId      is not null) query = query.Where(c => c.DeviceId      == deviceId);
+        if (studentId     is not null) query = query.Where(c => c.StudentId     == studentId);
+        if (invigilatorId is not null) query = query.Where(c => c.InvigilatorId == invigilatorId);
         query = query.OrderByDescending(c => c.CapturedAt);
         var total = await query.CountAsync(ct);
         var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);

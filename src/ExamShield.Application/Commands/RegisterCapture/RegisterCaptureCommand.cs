@@ -8,7 +8,8 @@ public sealed record RegisterCaptureCommand(
     Guid DeviceId,
     int PageNumber,
     string HashHex,
-    byte[] SignatureBytes
+    byte[] SignatureBytes,
+    Guid? InvigilatorId = null
 ) : IRequest<RegisterCaptureResult>;
 
 public sealed record RegisterCaptureResult(Guid CaptureId);

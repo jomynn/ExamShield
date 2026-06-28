@@ -12,6 +12,7 @@ public sealed class Capture : AggregateRoot
     public ExamId ExamId { get; private set; } = null!;
     public StudentId StudentId { get; private set; } = null!;
     public DeviceId DeviceId { get; private set; } = null!;
+    public UserId? InvigilatorId { get; private set; }
     public PageNumber PageNumber { get; private set; } = null!;
     public Hash ExpectedHash { get; private set; } = null!;
     public Signature Signature { get; private set; } = null!;
@@ -23,16 +24,19 @@ public sealed class Capture : AggregateRoot
 
     private Capture(
         CaptureId id, ExamId examId, StudentId studentId, DeviceId deviceId,
-        PageNumber pageNumber, Hash hash, Signature signature, DateTimeOffset capturedAt)
+        PageNumber pageNumber, Hash hash, Signature signature, DateTimeOffset capturedAt,
+        UserId? invigilatorId)
     {
         Id = id; ExamId = examId; StudentId = studentId; DeviceId = deviceId;
         PageNumber = pageNumber; ExpectedHash = hash; Signature = signature;
         CapturedAt = capturedAt; Status = CaptureStatus.Created;
+        InvigilatorId = invigilatorId;
     }
 
     public static Capture Create(
         ExamId examId, StudentId studentId, DeviceId deviceId,
-        PageNumber pageNumber, Hash hash, Signature signature)
+        PageNumber pageNumber, Hash hash, Signature signature,
+        UserId? invigilatorId = null)
     {
         ArgumentNullException.ThrowIfNull(examId, nameof(examId));
         ArgumentNullException.ThrowIfNull(studentId, nameof(studentId));
@@ -43,7 +47,7 @@ public sealed class Capture : AggregateRoot
 
         var capture = new Capture(
             CaptureId.New(), examId, studentId, deviceId,
-            pageNumber, hash, signature, DateTimeOffset.UtcNow);
+            pageNumber, hash, signature, DateTimeOffset.UtcNow, invigilatorId);
 
         capture.AddDomainEvent(new CaptureCreated(capture.Id, capture.ExamId, capture.StudentId));
         return capture;
