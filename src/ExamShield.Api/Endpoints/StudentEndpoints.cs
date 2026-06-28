@@ -1,3 +1,5 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using ExamShield.Api.Contracts;
 using ExamShield.Application.Commands.RejectReviewRequest;
 using ExamShield.Application.Commands.ResolveReviewRequest;
@@ -14,8 +16,17 @@ public static class StudentEndpoints
 {
     public static IEndpointRouteBuilder MapStudentEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/student/results", async (Guid studentId, ISender sender, CancellationToken ct) =>
+        app.MapGet("/student/results", async (Guid studentId, ISender sender, ClaimsPrincipal user, CancellationToken ct) =>
         {
+            // Students may only query their own results; higher roles may query any student.
+            if (user.IsInRole("Student") && !user.IsInRole("Operator"))
+            {
+                var sub = user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                       ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!Guid.TryParse(sub, out var callerId) || callerId != studentId)
+                    return Results.Forbid();
+            }
+
             var result = await sender.Send(new GetStudentResultsQuery(studentId), ct);
             var items = result.Results
                 .Select(r => new StudentResultItemResponse(

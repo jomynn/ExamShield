@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Json;
 
@@ -10,7 +11,7 @@ public sealed class StudentPortalAccessTests(TestWebApplicationFactory factory)
     private sealed record LoginReq(string Email, string Password);
     private sealed record LoginResp(string Token, string RefreshToken, string Role);
 
-    private async Task<HttpClient> CreateStudentClientAsync()
+    private async Task<(HttpClient Client, Guid StudentId)> CreateStudentClientAsync()
     {
         using var admin = await factory.CreateAuthenticatedClientAsync();
         var email = $"student-{Guid.NewGuid():N}@test.com";
@@ -23,25 +24,35 @@ public sealed class StudentPortalAccessTests(TestWebApplicationFactory factory)
 
         anon.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", login!.Token);
-        return anon;
+
+        var handler = new JwtSecurityTokenHandler();
+        var jwt = handler.ReadJwtToken(login.Token);
+        var sub = jwt.Claims.First(c => c.Type == JwtRegisteredClaimNames.Sub).Value;
+        return (anon, Guid.Parse(sub));
     }
 
     [Fact]
     public async Task GetStudentResults_AsStudentRole_Returns200NotForbidden()
     {
-        using var client = await CreateStudentClientAsync();
-        var res = await client.GetAsync($"/student/results?studentId={Guid.NewGuid()}");
-        Assert.NotEqual(HttpStatusCode.Forbidden, res.StatusCode);
-        Assert.NotEqual(HttpStatusCode.Unauthorized, res.StatusCode);
-        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var (client, studentId) = await CreateStudentClientAsync();
+        using (client)
+        {
+            var res = await client.GetAsync($"/student/results?studentId={studentId}");
+            Assert.NotEqual(HttpStatusCode.Forbidden, res.StatusCode);
+            Assert.NotEqual(HttpStatusCode.Unauthorized, res.StatusCode);
+            Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        }
     }
 
     [Fact]
     public async Task GetStudentReviewRequests_AsStudentRole_Returns200NotForbidden()
     {
-        using var client = await CreateStudentClientAsync();
-        var res = await client.GetAsync($"/student/review-requests?studentId={Guid.NewGuid()}");
-        Assert.NotEqual(HttpStatusCode.Forbidden, res.StatusCode);
-        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        var (client, studentId) = await CreateStudentClientAsync();
+        using (client)
+        {
+            var res = await client.GetAsync($"/student/review-requests?studentId={studentId}");
+            Assert.NotEqual(HttpStatusCode.Forbidden, res.StatusCode);
+            Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+        }
     }
 }
