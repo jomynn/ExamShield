@@ -1,10 +1,14 @@
+using ExamShield.Domain.Entities;
+using ExamShield.Domain.Enums;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.ValueObjects;
 using MediatR;
 
 namespace ExamShield.Application.Commands.MfaDisable;
 
-public sealed class MfaDisableCommandHandler(IUserRepository users)
+public sealed class MfaDisableCommandHandler(
+    IUserRepository users,
+    IAuditLogRepository auditLog)
     : IRequestHandler<MfaDisableCommand, MfaDisableResult>
 {
     public async Task<MfaDisableResult> Handle(MfaDisableCommand cmd, CancellationToken ct)
@@ -14,6 +18,7 @@ public sealed class MfaDisableCommandHandler(IUserRepository users)
 
         user.DisableMfa();
         await users.SaveAsync(user, ct);
+        await auditLog.AppendAsync(AuditLog.Record(AuditAction.MfaDisabled), ct);
         return new MfaDisableResult(false);
     }
 }

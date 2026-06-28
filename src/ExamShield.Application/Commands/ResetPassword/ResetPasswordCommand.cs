@@ -1,8 +1,9 @@
+using ExamShield.Domain.Entities;
+using ExamShield.Domain.Enums;
 using ExamShield.Domain.Exceptions;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.ValueObjects;
 using MediatR;
-
 
 namespace ExamShield.Application.Commands.ResetPassword;
 
@@ -12,7 +13,8 @@ public sealed class ResetPasswordCommandHandler(
     IPasswordResetTokenRepository tokens,
     IUserRepository users,
     IPasswordHasher hasher,
-    IRefreshTokenRepository refreshTokens)
+    IRefreshTokenRepository refreshTokens,
+    IAuditLogRepository auditLog)
     : IRequestHandler<ResetPasswordCommand>
 {
     public async Task Handle(ResetPasswordCommand command, CancellationToken ct)
@@ -33,5 +35,6 @@ public sealed class ResetPasswordCommandHandler(
         await users.SaveAsync(user, ct);
         await tokens.UpdateAsync(token, ct);
         await refreshTokens.RevokeAllForUserAsync(user.Id, ct);
+        await auditLog.AppendAsync(AuditLog.Record(AuditAction.PasswordReset), ct);
     }
 }

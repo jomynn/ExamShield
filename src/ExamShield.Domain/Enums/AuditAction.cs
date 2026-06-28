@@ -27,5 +27,7 @@ public enum AuditAction
     DeviceDisabled,
     ReviewApproved,
     ReviewRejected,
-    SettingsUpdated
+    SettingsUpdated,
+    MfaDisabled,
+    PasswordReset
 }

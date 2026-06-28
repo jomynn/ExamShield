@@ -14,10 +14,11 @@ public sealed class ResetPasswordComplexityTests
     private readonly IUserRepository               _users         = Substitute.For<IUserRepository>();
     private readonly IPasswordHasher               _hasher        = Substitute.For<IPasswordHasher>();
     private readonly IRefreshTokenRepository       _refreshTokens = Substitute.For<IRefreshTokenRepository>();
+    private readonly IAuditLogRepository           _auditLog      = Substitute.For<IAuditLogRepository>();
     private readonly ResetPasswordCommandHandler   _sut;
 
     public ResetPasswordComplexityTests() =>
-        _sut = new ResetPasswordCommandHandler(_tokens, _users, _hasher, _refreshTokens);
+        _sut = new ResetPasswordCommandHandler(_tokens, _users, _hasher, _refreshTokens, _auditLog);
 
     private void SetupValidToken(string email = "user@test.com")
     {
