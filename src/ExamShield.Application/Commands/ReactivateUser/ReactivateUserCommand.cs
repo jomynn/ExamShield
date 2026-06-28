@@ -1,3 +1,5 @@
+using ExamShield.Domain.Entities;
+using ExamShield.Domain.Enums;
 using ExamShield.Domain.Exceptions;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.ValueObjects;
@@ -7,7 +9,9 @@ namespace ExamShield.Application.Commands.ReactivateUser;
 
 public sealed record ReactivateUserCommand(Guid UserId) : IRequest;
 
-public sealed class ReactivateUserCommandHandler(IUserRepository users)
+public sealed class ReactivateUserCommandHandler(
+    IUserRepository users,
+    IAuditLogRepository auditLog)
     : IRequestHandler<ReactivateUserCommand>
 {
     public async Task Handle(ReactivateUserCommand command, CancellationToken ct)
@@ -17,5 +21,6 @@ public sealed class ReactivateUserCommandHandler(IUserRepository users)
 
         user.Reactivate();
         await users.SaveAsync(user, ct);
+        await auditLog.AppendAsync(AuditLog.Record(AuditAction.UserReactivated), ct);
     }
 }

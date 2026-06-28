@@ -10,10 +10,11 @@ namespace ExamShield.UnitTests.Application.Commands;
 
 public sealed class DeactivateUserRevokesSessionsTests
 {
-    private readonly IUserRepository _users = Substitute.For<IUserRepository>();
-    private readonly IRefreshTokenRepository _tokens = Substitute.For<IRefreshTokenRepository>();
+    private readonly IUserRepository         _users    = Substitute.For<IUserRepository>();
+    private readonly IRefreshTokenRepository _tokens   = Substitute.For<IRefreshTokenRepository>();
+    private readonly IAuditLogRepository     _auditLog = Substitute.For<IAuditLogRepository>();
 
-    private DeactivateUserCommandHandler BuildSut() => new(_users, _tokens);
+    private DeactivateUserCommandHandler BuildSut() => new(_users, _tokens, _auditLog);
 
     private static User MakeUser()
     {
