@@ -131,8 +131,9 @@ public static class CaptureEndpoints
         app.MapGet("/captures/{id:guid}/image", GetCaptureImageAsync)
             .WithName("GetCaptureImage")
             .WithTags("Capture")
-            .RequireAuthorization("Operator")
+            .RequireAuthorization("ImageViewer")
             .Produces<byte[]>(StatusCodes.Status200OK, "application/octet-stream")
+            .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
         return app;

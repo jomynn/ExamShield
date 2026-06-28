@@ -117,6 +117,12 @@ builder.Services.AddAuthorization(options =>
             "ResultPublisher", "InvestigationOfficer", "SuperAdministrator",
             "SecurityAdministrator", "SystemAdministrator"));
 
+    // Pixel-level image access — strictly allowlisted, never includes admin roles.
+    // Admin, Auditor, SecurityOfficer can see metadata/hashes but never raw image bytes.
+    options.AddPolicy("ImageViewer", p =>
+        p.RequireRole("Operator", "Invigilator", "Supervisor", "ManualReviewer",
+            "ReviewSupervisor", "InvestigationOfficer"));
+
     // Review decisions
     options.AddPolicy("ManualReviewer", p =>
         p.RequireRole("ManualReviewer", "ReviewSupervisor", "Supervisor", "Administrator",
