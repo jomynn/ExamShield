@@ -62,8 +62,16 @@ public static class StudentEndpoints
         .ProducesProblem(StatusCodes.Status404NotFound);
 
         app.MapGet("/student/review-requests",
-            async (Guid studentId, ISender sender, CancellationToken ct) =>
+            async (Guid studentId, ISender sender, ClaimsPrincipal user, CancellationToken ct) =>
             {
+                if (user.IsInRole("Student") && !user.IsInRole("Operator"))
+                {
+                    var sub = user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                           ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    if (!Guid.TryParse(sub, out var callerId) || callerId != studentId)
+                        return Results.Forbid();
+                }
+
                 var result = await sender.Send(new GetReviewRequestsQuery(studentId), ct);
                 var items = result.Items
                     .Select(r => new ReviewRequestItemResponse(
