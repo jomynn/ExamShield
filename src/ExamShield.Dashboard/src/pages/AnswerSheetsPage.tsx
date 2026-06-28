@@ -4,6 +4,8 @@ import { api } from '../api/client'
 import ImageViewer from '../components/ImageViewer'
 import Pagination from '../components/Pagination'
 import { useChainOfCustody, useFlagCaptureAsTampered } from '../hooks/useCaptures'
+import { useAuth } from '../hooks/useAuth'
+import { usePermissions } from '../hooks/usePermissions'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5083'
 
@@ -17,6 +19,8 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export default function AnswerSheetsPage() {
+  const { auth } = useAuth()
+  const { canViewImage } = usePermissions(auth.role)
   const [page, setPage] = useState(1)
   const [examIdFilter, setExamIdFilter]       = useState('')
   const [statusFilter, setStatusFilter]       = useState('')
@@ -166,13 +170,21 @@ export default function AnswerSheetsPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
-                      {c.storageKey && (
+                      {c.storageKey && canViewImage && (
                         <button
                           onClick={() => setViewingId(viewingId === c.captureId ? null : c.captureId)}
                           className="text-xs px-2 py-1 bg-[#21262D] hover:bg-[#30363D] text-[#00BFFF] rounded"
                         >
                           View Image
                         </button>
+                      )}
+                      {c.storageKey && !canViewImage && (
+                        <span className="text-xs px-2 py-1 text-[#8B949E] flex items-center gap-1 select-none" title="Your role does not permit viewing answer sheet images">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                          </svg>
+                          Restricted
+                        </span>
                       )}
                       <button
                         onClick={() => setChainId(chainId === c.captureId ? null : c.captureId)}

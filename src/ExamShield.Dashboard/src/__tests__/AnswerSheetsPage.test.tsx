@@ -7,8 +7,20 @@ import * as apiClient from '../api/client'
 vi.mock('../api/client', () => ({
   api: {
     getCaptures: vi.fn(),
+    exportCaptures: vi.fn(),
   },
 }))
+
+vi.mock('../hooks/useAuth', () => ({
+  useAuth: vi.fn(() => ({ auth: { role: 'Operator' } })),
+}))
+
+vi.mock('../hooks/useCaptures', () => ({
+  useChainOfCustody: vi.fn(() => ({ data: null, isLoading: false })),
+  useFlagCaptureAsTampered: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+}))
+
+import { useAuth } from '../hooks/useAuth'
 
 const CAPTURES = [
   { captureId: 'cap-1', examId: 'exam-1', studentId: 'stu-1', deviceId: 'dev-1', status: 'Verified',  capturedAt: '2024-01-01T10:00:00Z', storageKey: 'key-1' },
@@ -26,7 +38,8 @@ function renderPage() {
 }
 
 beforeEach(() => {
-  vi.mocked(apiClient.api.getCaptures).mockResolvedValue({ captures: CAPTURES })
+  vi.mocked(apiClient.api.getCaptures).mockResolvedValue({ captures: CAPTURES, totalCount: 3, totalPages: 1 })
+  vi.mocked(useAuth).mockReturnValue({ auth: { role: 'Operator' } } as ReturnType<typeof useAuth>)
 })
 
 describe('AnswerSheetsPage', () => {
@@ -59,19 +72,77 @@ describe('AnswerSheetsPage', () => {
     expect(screen.getByText('Uploaded')).toBeInTheDocument()
   })
 
-  it('opens image viewer when View Image is clicked for uploaded capture', async () => {
-    renderPage()
-    await screen.findByText(/stu-1/)
-    const viewBtns = screen.getAllByRole('button', { name: /view image/i })
-    fireEvent.click(viewBtns[0])
-    await waitFor(() => expect(screen.getByAltText(/answer sheet/i)).toBeInTheDocument())
-  })
-
   it('shows no image button for captures without storage key', async () => {
     renderPage()
     await screen.findByText(/stu-3/)
     const rows = screen.getAllByRole('row')
     const created = rows.find(r => r.textContent?.includes('stu-3'))
     expect(within(created!).queryByRole('button', { name: /view image/i })).toBeNull()
+    expect(within(created!).queryByText(/restricted/i)).toBeNull()
+  })
+
+  describe('image access control', () => {
+    it('shows View Image button for Operator (allowed role)', async () => {
+      vi.mocked(useAuth).mockReturnValue({ auth: { role: 'Operator' } } as ReturnType<typeof useAuth>)
+      renderPage()
+      await screen.findByText(/stu-1/)
+      expect(screen.getAllByRole('button', { name: /view image/i }).length).toBeGreaterThan(0)
+      expect(screen.queryByText(/restricted/i)).toBeNull()
+    })
+
+    it('shows View Image button for ManualReviewer (allowed role)', async () => {
+      vi.mocked(useAuth).mockReturnValue({ auth: { role: 'ManualReviewer' } } as ReturnType<typeof useAuth>)
+      renderPage()
+      await screen.findByText(/stu-1/)
+      expect(screen.getAllByRole('button', { name: /view image/i }).length).toBeGreaterThan(0)
+    })
+
+    it('shows View Image button for InvestigationOfficer (allowed role)', async () => {
+      vi.mocked(useAuth).mockReturnValue({ auth: { role: 'InvestigationOfficer' } } as ReturnType<typeof useAuth>)
+      renderPage()
+      await screen.findByText(/stu-1/)
+      expect(screen.getAllByRole('button', { name: /view image/i }).length).toBeGreaterThan(0)
+    })
+
+    it('hides View Image and shows Restricted for Administrator (blocked role)', async () => {
+      vi.mocked(useAuth).mockReturnValue({ auth: { role: 'Administrator' } } as ReturnType<typeof useAuth>)
+      renderPage()
+      await screen.findByText(/stu-1/)
+      expect(screen.queryByRole('button', { name: /view image/i })).toBeNull()
+      expect(screen.getAllByText(/restricted/i).length).toBeGreaterThan(0)
+    })
+
+    it('hides View Image and shows Restricted for Auditor (blocked role)', async () => {
+      vi.mocked(useAuth).mockReturnValue({ auth: { role: 'Auditor' } } as ReturnType<typeof useAuth>)
+      renderPage()
+      await screen.findByText(/stu-1/)
+      expect(screen.queryByRole('button', { name: /view image/i })).toBeNull()
+      expect(screen.getAllByText(/restricted/i).length).toBeGreaterThan(0)
+    })
+
+    it('hides View Image and shows Restricted for SecurityOfficer (blocked role)', async () => {
+      vi.mocked(useAuth).mockReturnValue({ auth: { role: 'SecurityOfficer' } } as ReturnType<typeof useAuth>)
+      renderPage()
+      await screen.findByText(/stu-1/)
+      expect(screen.queryByRole('button', { name: /view image/i })).toBeNull()
+      expect(screen.getAllByText(/restricted/i).length).toBeGreaterThan(0)
+    })
+
+    it('hides View Image and shows Restricted for SuperAdministrator (blocked role)', async () => {
+      vi.mocked(useAuth).mockReturnValue({ auth: { role: 'SuperAdministrator' } } as ReturnType<typeof useAuth>)
+      renderPage()
+      await screen.findByText(/stu-1/)
+      expect(screen.queryByRole('button', { name: /view image/i })).toBeNull()
+      expect(screen.getAllByText(/restricted/i).length).toBeGreaterThan(0)
+    })
+
+    it('opens image viewer when View Image is clicked for allowed role', async () => {
+      vi.mocked(useAuth).mockReturnValue({ auth: { role: 'Operator' } } as ReturnType<typeof useAuth>)
+      renderPage()
+      await screen.findByText(/stu-1/)
+      const viewBtns = screen.getAllByRole('button', { name: /view image/i })
+      fireEvent.click(viewBtns[0])
+      await waitFor(() => expect(screen.getByAltText(/answer sheet/i)).toBeInTheDocument())
+    })
   })
 })
