@@ -17,6 +17,10 @@ public sealed class EnrollStudentCommandHandler(
         var exam = await exams.GetByIdAsync(new ExamId(command.ExamId), ct)
             ?? throw new KeyNotFoundException($"Exam {command.ExamId} not found.");
 
+        if (exam.Status == ExamStatus.Closed)
+            throw new InvalidOperationException(
+                $"Cannot enroll students into a closed exam '{command.ExamId}'.");
+
         var studentId = new StudentId(command.StudentId);
 
         if (await candidates.ExistsAsync(exam.Id, studentId, ct))
