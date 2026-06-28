@@ -13,15 +13,16 @@ public sealed class ChangePasswordCommandHandlerTests
 {
     private const string NewPassword = "N3wStr0ng!Pass";
 
-    private readonly IUserRepository _users = Substitute.For<IUserRepository>();
-    private readonly IPasswordHasher _hasher = Substitute.For<IPasswordHasher>();
+    private readonly IUserRepository         _users         = Substitute.For<IUserRepository>();
+    private readonly IPasswordHasher         _hasher        = Substitute.For<IPasswordHasher>();
     private readonly IRefreshTokenRepository _refreshTokens = Substitute.For<IRefreshTokenRepository>();
+    private readonly IAuditLogRepository     _auditLog      = Substitute.For<IAuditLogRepository>();
     private readonly ChangePasswordCommandHandler _sut;
 
     private static readonly Guid _userId = Guid.NewGuid();
 
     public ChangePasswordCommandHandlerTests() =>
-        _sut = new ChangePasswordCommandHandler(_users, _hasher, _refreshTokens);
+        _sut = new ChangePasswordCommandHandler(_users, _hasher, _refreshTokens, _auditLog);
 
     private static User MakeUser() =>
         User.Create(new Email("user@examshield.io"), "old-hash", UserRole.Operator);
