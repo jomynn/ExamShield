@@ -137,6 +137,39 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         return client;
     }
 
+    public async Task<HttpClient> CreateAuthenticatedClientAsync(UserRole role)
+    {
+        if (role == UserRole.Administrator)
+            return await CreateAuthenticatedClientAsync();
+
+        var email    = $"test-{role.ToString().ToLower()}@examshield.test";
+        var password = "Test@1234!Role";
+
+        using (var scope = Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+            var existing = await users.FindByEmailAsync(new Email(email));
+            if (existing is null)
+            {
+                var user = User.Create(
+                    new Email(email),
+                    BCrypt.Net.BCrypt.HashPassword(password, workFactor: 4),
+                    role);
+                await users.SaveAsync(user);
+            }
+        }
+
+        using var loginClient = CreateClient();
+        var res  = await loginClient.PostAsJsonAsync("/auth/login",
+            new LoginRequest(email, password));
+        var body = await res.Content.ReadFromJsonAsync<LoginResponse>();
+
+        var client = CreateClient();
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", body!.Token);
+        return client;
+    }
+
     public async Task<string> RequestPasswordResetTokenAsync(string email)
     {
         using var scope = Services.CreateScope();
