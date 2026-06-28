@@ -33,8 +33,10 @@ public sealed class AuditLogDateRangeTests(TestWebApplicationFactory factory)
         var exam = await examRes.Content.ReadFromJsonAsync<ExamResponse>();
         await _client.PutAsync($"/exams/{exam!.ExamId}/activate", null);
 
+        var studentId = Guid.NewGuid();
+        await _client.PostAsJsonAsync($"/exams/{exam.ExamId}/students", new EnrollStudentRequest(studentId));
         var captureRes = await _client.PostAsJsonAsync("/capture", new RegisterCaptureRequest(
-            ExamId: exam.ExamId, StudentId: Guid.NewGuid(),
+            ExamId: exam.ExamId, StudentId: studentId,
             DeviceId: device.DeviceId, PageNumber: 1,
             HashHex: HashHex,
             SignatureBytes: ecdsa.SignHash(Convert.FromHexString(HashHex))));

@@ -76,10 +76,11 @@ public sealed class DeviceApprovalTests(TestWebApplicationFactory factory)
         var device = await devRes.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
         // deliberately NOT approving
 
+        var studentId = factory.EnrollStudentDirectly(factory.ActiveExamId);
         var hashHex = new string('c', 64);
         var capRes = await client.PostAsJsonAsync("/capture",
             new RegisterCaptureRequest(
-                factory.ActiveExamId, Guid.NewGuid(), device!.DeviceId, 1,
+                factory.ActiveExamId, studentId, device!.DeviceId, 1,
                 hashHex, ecdsa.SignHash(Convert.FromHexString(hashHex))));
 
         Assert.Equal(HttpStatusCode.UnprocessableEntity, capRes.StatusCode);

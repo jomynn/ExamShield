@@ -44,14 +44,16 @@ public sealed class CaptureDeviceFilterTests(TestWebApplicationFactory factory)
 
         var hashA = MakeCapture(ecdsaA, _deviceAId);
         var sigA  = ecdsaA.SignHash(hashA);
+        var studentAId = factory.EnrollStudentDirectly(examId);
         await _client.PostAsJsonAsync("/capture",
-            new RegisterCaptureRequest(examId, Guid.NewGuid(), _deviceAId, 1,
+            new RegisterCaptureRequest(examId, studentAId, _deviceAId, 1,
                 Convert.ToHexString(hashA), sigA));
 
         var hashB = MakeCapture(ecdsaB, _deviceBId);
         var sigB  = ecdsaB.SignHash(hashB);
+        var studentBId = factory.EnrollStudentDirectly(examId);
         await _client.PostAsJsonAsync("/capture",
-            new RegisterCaptureRequest(examId, Guid.NewGuid(), _deviceBId, 1,
+            new RegisterCaptureRequest(examId, studentBId, _deviceBId, 1,
                 Convert.ToHexString(hashB), sigB));
     }
 

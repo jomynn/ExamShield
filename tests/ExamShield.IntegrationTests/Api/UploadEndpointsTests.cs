@@ -41,7 +41,7 @@ public sealed class UploadEndpointsTests : IClassFixture<TestWebApplicationFacto
     {
         hashHex ??= SampleHashHex;
         var request = new RegisterCaptureRequest(
-            _factory.ActiveExamId, Guid.NewGuid(), _deviceId, 1, hashHex,
+            _factory.ActiveExamId, _factory.EnrollStudentDirectly(_factory.ActiveExamId), _deviceId, 1, hashHex,
             _ecdsa.SignHash(Convert.FromHexString(hashHex)));
 
         var response = await _client.PostAsJsonAsync("/capture", request);

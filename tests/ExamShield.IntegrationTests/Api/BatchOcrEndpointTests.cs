@@ -31,10 +31,12 @@ public sealed class BatchOcrEndpointTests : IClassFixture<TestWebApplicationFact
 
         for (var i = 0; i < 2; i++)
         {
+            var studentId = Guid.NewGuid();
+            await _client.PostAsJsonAsync($"/exams/{_examId}/students", new EnrollStudentRequest(studentId));
             var imageBytes = System.Text.Encoding.UTF8.GetBytes($"batch-ocr-test-image-{i}");
             var hashHex = Convert.ToHexString(SHA256.HashData(imageBytes)).ToLowerInvariant();
             var capRes = await _client.PostAsJsonAsync("/capture", new RegisterCaptureRequest(
-                _examId, Guid.NewGuid(), device!.DeviceId, i + 1,
+                _examId, studentId, device!.DeviceId, i + 1,
                 hashHex, ecdsa.SignHash(Convert.FromHexString(hashHex))));
             var cap = await capRes.Content.ReadFromJsonAsync<RegisterCaptureResponse>();
             await _client.PostAsJsonAsync("/upload", new UploadImageRequest(cap!.CaptureId, imageBytes));

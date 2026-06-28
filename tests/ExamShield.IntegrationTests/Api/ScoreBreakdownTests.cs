@@ -35,6 +35,7 @@ public sealed class ScoreBreakdownTests(TestWebApplicationFactory factory)
                 { [1] = "A", [2] = "B", [3] = "C" }));
 
         var studentId = Guid.NewGuid();
+        await _client.PostAsJsonAsync($"/exams/{exam!.ExamId}/students", new EnrollStudentRequest(studentId));
         var captureRes = await _client.PostAsJsonAsync("/capture", new RegisterCaptureRequest(
             ExamId: exam.ExamId, StudentId: studentId,
             DeviceId: device.DeviceId, PageNumber: 1,

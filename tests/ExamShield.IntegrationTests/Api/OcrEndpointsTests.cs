@@ -29,7 +29,7 @@ public sealed class OcrEndpointsTests : IClassFixture<TestWebApplicationFactory>
         await _client.PutAsync($"/devices/{device!.DeviceId}/approve", null);
 
         var captureResponse = await _client.PostAsJsonAsync("/capture", new RegisterCaptureRequest(
-            ExamId: _factory.ActiveExamId, StudentId: Guid.NewGuid(),
+            ExamId: _factory.ActiveExamId, StudentId: _factory.EnrollStudentDirectly(_factory.ActiveExamId),
             DeviceId: device!.DeviceId, PageNumber: 1,
             HashHex: HashHex,
             SignatureBytes: _ecdsa.SignHash(Convert.FromHexString(HashHex))));

@@ -28,10 +28,13 @@ public sealed class FlagCaptureAsTamperedTests : IClassFixture<TestWebApplicatio
         var device = await devRes.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
         await _client.PutAsync($"/devices/{device!.DeviceId}/approve", null);
 
+        var studentId = Guid.NewGuid();
+        await _client.PostAsJsonAsync($"/exams/{exam.ExamId}/students", new EnrollStudentRequest(studentId));
+
         var img     = System.Text.Encoding.UTF8.GetBytes("flag-tamper-test");
         var hashHex = Convert.ToHexString(SHA256.HashData(img)).ToLowerInvariant();
         var capRes  = await _client.PostAsJsonAsync("/capture",
-            new RegisterCaptureRequest(exam.ExamId, Guid.NewGuid(), device!.DeviceId, 1,
+            new RegisterCaptureRequest(exam.ExamId, studentId, device!.DeviceId, 1,
                 hashHex, ecdsa.SignHash(Convert.FromHexString(hashHex))));
         var cap = await capRes.Content.ReadFromJsonAsync<RegisterCaptureResponse>();
         _captureId = cap!.CaptureId;

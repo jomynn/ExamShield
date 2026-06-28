@@ -41,7 +41,7 @@ public sealed class ExamRankingsTests : IClassFixture<TestWebApplicationFactory>
         var imageBytes = SHA256.HashData(Guid.NewGuid().ToByteArray()); // unique per student
         var hashHex    = Convert.ToHexString(SHA256.HashData(imageBytes)).ToLowerInvariant();
 
-        await _client.PostAsJsonAsync($"/exams/{_examId}/candidates",
+        await _client.PostAsJsonAsync($"/exams/{_examId}/students",
             new EnrollStudentRequest(studentId));
 
         var capRes = await _client.PostAsJsonAsync("/capture",

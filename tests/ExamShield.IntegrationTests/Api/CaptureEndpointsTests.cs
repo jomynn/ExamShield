@@ -33,10 +33,13 @@ public sealed class CaptureEndpointsTests : IClassFixture<TestWebApplicationFact
         return Task.CompletedTask;
     }
 
-    private RegisterCaptureRequest SignedRequest(string hashHex) =>
-        new(ExamId: _factory.ActiveExamId, StudentId: Guid.NewGuid(), DeviceId: _deviceId,
+    private RegisterCaptureRequest SignedRequest(string hashHex)
+    {
+        var studentId = _factory.EnrollStudentDirectly(_factory.ActiveExamId);
+        return new(ExamId: _factory.ActiveExamId, StudentId: studentId, DeviceId: _deviceId,
             PageNumber: 1, HashHex: hashHex,
             SignatureBytes: _ecdsa.SignHash(Convert.FromHexString(hashHex)));
+    }
 
     private RegisterCaptureRequest SignedRequest() => SignedRequest(new string('a', 64));
 

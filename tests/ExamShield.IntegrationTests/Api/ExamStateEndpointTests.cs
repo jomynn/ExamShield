@@ -107,9 +107,12 @@ public sealed class ExamStateEndpointTests(TestWebApplicationFactory factory)
         var exam = await examRes.Content.ReadFromJsonAsync<ExamResponse>();
         await _client.PutAsync($"/exams/{exam!.ExamId}/activate", null);
 
+        var studentId = Guid.NewGuid();
+        await _client.PostAsJsonAsync($"/exams/{exam.ExamId}/students", new EnrollStudentRequest(studentId));
+
         var hashHex = new string('a', 64);
         var request = new RegisterCaptureRequest(
-            exam.ExamId, Guid.NewGuid(), _deviceId, 1, hashHex,
+            exam.ExamId, studentId, _deviceId, 1, hashHex,
             _ecdsa.SignHash(Convert.FromHexString(hashHex)));
 
         var response = await _client.PostAsJsonAsync("/capture", request);

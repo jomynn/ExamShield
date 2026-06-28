@@ -16,12 +16,15 @@ public static class CaptureHelper
         var device = await devRes.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
         await client.PutAsync($"/devices/{device!.DeviceId}/approve", null);
 
+        var studentId = Guid.NewGuid();
+        await client.PostAsJsonAsync($"/exams/{examId}/students", new EnrollStudentRequest(studentId));
+
         // Unique hash per call so FindByHashAsync returns the correct capture
         var hashHex = Convert.ToHexString(SHA256.HashData(Guid.NewGuid().ToByteArray())).ToLowerInvariant();
 
         var capRes = await client.PostAsJsonAsync("/capture",
             new RegisterCaptureRequest(
-                examId, Guid.NewGuid(), device!.DeviceId, 1, hashHex,
+                examId, studentId, device!.DeviceId, 1, hashHex,
                 ecdsa.SignHash(Convert.FromHexString(hashHex))));
         capRes.EnsureSuccessStatusCode();
         var capture = await capRes.Content.ReadFromJsonAsync<RegisterCaptureResponse>();

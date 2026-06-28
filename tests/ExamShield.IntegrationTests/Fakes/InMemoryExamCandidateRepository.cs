@@ -7,7 +7,14 @@ namespace ExamShield.IntegrationTests.Fakes;
 
 public sealed class InMemoryExamCandidateRepository : IExamCandidateRepository
 {
-    private readonly ConcurrentDictionary<(Guid ExamId, Guid StudentId), ExamCandidate> _store = new();
+    private readonly ConcurrentDictionary<(Guid ExamId, Guid StudentId), ExamCandidate> _store;
+
+    public InMemoryExamCandidateRepository(IEnumerable<ExamCandidate>? seed = null)
+    {
+        _store = new();
+        foreach (var candidate in seed ?? [])
+            _store.TryAdd((candidate.ExamId.Value, candidate.StudentId.Value), candidate);
+    }
 
     public Task AddAsync(ExamCandidate candidate, CancellationToken ct = default)
     {

@@ -32,7 +32,7 @@ public sealed class PublicVerifyTests(TestWebApplicationFactory factory)
 
         var capResp = await _auth.PostAsJsonAsync("/capture",
             new RegisterCaptureRequest(
-                factory.ActiveExamId, Guid.NewGuid(), dev!.DeviceId, 1,
+                factory.ActiveExamId, factory.EnrollStudentDirectly(factory.ActiveExamId), dev!.DeviceId, 1,
                 Convert.ToHexString(hash), sig));
         var cap = await capResp.Content.ReadFromJsonAsync<RegisterCaptureResponse>();
 

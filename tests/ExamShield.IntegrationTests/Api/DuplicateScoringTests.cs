@@ -33,8 +33,11 @@ public sealed class DuplicateScoringTests : IClassFixture<TestWebApplicationFact
         var examId = exam!.ExamId;
         await _client.PutAsync($"/exams/{examId}/activate", null);
 
+        var studentId = Guid.NewGuid();
+        await _client.PostAsJsonAsync($"/exams/{examId}/students", new EnrollStudentRequest(studentId));
+
         var captureRes = await _client.PostAsJsonAsync("/capture", new RegisterCaptureRequest(
-            ExamId: examId, StudentId: Guid.NewGuid(),
+            ExamId: examId, StudentId: studentId,
             DeviceId: device.DeviceId, PageNumber: 1,
             HashHex: HashHex,
             SignatureBytes: _ecdsa.SignHash(Convert.FromHexString(HashHex))));

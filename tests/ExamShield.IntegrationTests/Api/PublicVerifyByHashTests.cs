@@ -29,7 +29,7 @@ public sealed class PublicVerifyByHashTests(TestWebApplicationFactory factory)
         var hashHex = Convert.ToHexString(SHA256.HashData(Guid.NewGuid().ToByteArray())).ToLowerInvariant();
         var capRes  = await _client.PostAsJsonAsync("/capture",
             new RegisterCaptureRequest(
-                factory.ActiveExamId, Guid.NewGuid(), _deviceId, 1, hashHex,
+                factory.ActiveExamId, factory.EnrollStudentDirectly(factory.ActiveExamId), _deviceId, 1, hashHex,
                 _ecdsa.SignHash(Convert.FromHexString(hashHex))));
         capRes.EnsureSuccessStatusCode();
         var cap = await capRes.Content.ReadFromJsonAsync<RegisterCaptureResponse>();

@@ -31,6 +31,8 @@ public sealed class DuplicateCaptureTests : IClassFixture<TestWebApplicationFact
         var device = await devRes.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
         _deviceId = device!.DeviceId;
         await _client.PutAsync($"/devices/{_deviceId}/approve", null);
+
+        await _client.PostAsJsonAsync($"/exams/{_examId}/students", new EnrollStudentRequest(_studentId));
     }
 
     public void Dispose() => _ecdsa.Dispose();
@@ -68,10 +70,13 @@ public sealed class DuplicateCaptureTests : IClassFixture<TestWebApplicationFact
     {
         await _client.PostAsJsonAsync("/capture", MakeCaptureRequest(page: 1));
 
+        var otherStudentId = Guid.NewGuid();
+        await _client.PostAsJsonAsync($"/exams/{_examId}/students", new EnrollStudentRequest(otherStudentId));
+
         var imageBytes = System.Text.Encoding.UTF8.GetBytes("dup-other-student");
         var hashHex = Convert.ToHexString(SHA256.HashData(imageBytes)).ToLowerInvariant();
         var r2 = await _client.PostAsJsonAsync("/capture", new RegisterCaptureRequest(
-            _examId, Guid.NewGuid(), _deviceId, 1,
+            _examId, otherStudentId, _deviceId, 1,
             hashHex, _ecdsa.SignHash(Convert.FromHexString(hashHex))));
 
         Assert.Equal(HttpStatusCode.Created, r2.StatusCode);

@@ -10,11 +10,12 @@ namespace ExamShield.UnitTests.Application.Commands.RegisterCapture;
 
 public sealed class RegisterCapturePendingDeviceTests
 {
-    private readonly ICaptureRepository _captures = Substitute.For<ICaptureRepository>();
-    private readonly IDeviceRepository  _devices  = Substitute.For<IDeviceRepository>();
-    private readonly ISignatureVerificationService _sig = Substitute.For<ISignatureVerificationService>();
-    private readonly IAuditLogRepository _audit   = Substitute.For<IAuditLogRepository>();
-    private readonly IExamRepository _exams       = Substitute.For<IExamRepository>();
+    private readonly ICaptureRepository           _captures   = Substitute.For<ICaptureRepository>();
+    private readonly IDeviceRepository            _devices    = Substitute.For<IDeviceRepository>();
+    private readonly ISignatureVerificationService _sig       = Substitute.For<ISignatureVerificationService>();
+    private readonly IAuditLogRepository          _audit      = Substitute.For<IAuditLogRepository>();
+    private readonly IExamRepository              _exams      = Substitute.For<IExamRepository>();
+    private readonly IExamCandidateRepository     _candidates = Substitute.For<IExamCandidateRepository>();
     private readonly RegisterCaptureCommandHandler _sut;
 
     public RegisterCapturePendingDeviceTests()
@@ -23,7 +24,8 @@ public sealed class RegisterCapturePendingDeviceTests
         exam.Activate();
         _exams.GetByIdAsync(Arg.Any<ExamId>(), Arg.Any<CancellationToken>()).Returns(exam);
         _sig.Verify(Arg.Any<Hash>(), Arg.Any<Signature>(), Arg.Any<PublicKey>()).Returns(true);
-        _sut = new RegisterCaptureCommandHandler(_captures, _devices, _sig, _audit, _exams);
+        _candidates.ExistsAsync(Arg.Any<ExamId>(), Arg.Any<StudentId>(), Arg.Any<CancellationToken>()).Returns(true);
+        _sut = new RegisterCaptureCommandHandler(_captures, _devices, _sig, _audit, _exams, _candidates);
     }
 
     [Fact]

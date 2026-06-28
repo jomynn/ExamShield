@@ -41,8 +41,11 @@ public sealed class ScoreEndpointsTests : IClassFixture<TestWebApplicationFactor
         await _client.PostAsJsonAsync($"/exams/{_examId}/answer-key",
             new SetAnswerKeyRequest(new Dictionary<int, string> { [1] = "A", [2] = "B", [3] = "C" }));
 
+        var enrolledStudentId = Guid.NewGuid();
+        await _client.PostAsJsonAsync($"/exams/{_examId}/students", new EnrollStudentRequest(enrolledStudentId));
+
         var captureResponse = await _client.PostAsJsonAsync("/capture", new RegisterCaptureRequest(
-            ExamId: _examId, StudentId: Guid.NewGuid(),
+            ExamId: _examId, StudentId: enrolledStudentId,
             DeviceId: device!.DeviceId, PageNumber: 1,
             HashHex: HashHex,
             SignatureBytes: _ecdsa.SignHash(Convert.FromHexString(HashHex))));

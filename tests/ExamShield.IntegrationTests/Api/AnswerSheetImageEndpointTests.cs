@@ -35,8 +35,9 @@ public sealed class AnswerSheetImageEndpointTests
 
     private async Task<Guid> RegisterCaptureAsync()
     {
+        var studentId = _factory.EnrollStudentDirectly(_factory.ActiveExamId);
         var req = new RegisterCaptureRequest(
-            _factory.ActiveExamId, Guid.NewGuid(), _deviceId, 1,
+            _factory.ActiveExamId, studentId, _deviceId, 1,
             SampleHash, _ecdsa.SignHash(Convert.FromHexString(SampleHash)));
         var res = await _client.PostAsJsonAsync("/capture", req);
         var body = await res.Content.ReadFromJsonAsync<RegisterCaptureResponse>();

@@ -10,11 +10,12 @@ namespace ExamShield.UnitTests.Application.Commands;
 
 public sealed class RegisterCaptureCommandHandlerDuplicateTests
 {
-    private readonly ICaptureRepository             _repo    = Substitute.For<ICaptureRepository>();
-    private readonly IDeviceRepository              _devices = Substitute.For<IDeviceRepository>();
-    private readonly ISignatureVerificationService  _sig     = Substitute.For<ISignatureVerificationService>();
-    private readonly IAuditLogRepository            _audit   = Substitute.For<IAuditLogRepository>();
-    private readonly IExamRepository                _exams   = Substitute.For<IExamRepository>();
+    private readonly ICaptureRepository             _repo       = Substitute.For<ICaptureRepository>();
+    private readonly IDeviceRepository              _devices    = Substitute.For<IDeviceRepository>();
+    private readonly ISignatureVerificationService  _sig        = Substitute.For<ISignatureVerificationService>();
+    private readonly IAuditLogRepository            _audit      = Substitute.For<IAuditLogRepository>();
+    private readonly IExamRepository                _exams      = Substitute.For<IExamRepository>();
+    private readonly IExamCandidateRepository       _candidates = Substitute.For<IExamCandidateRepository>();
     private readonly RegisterCaptureCommandHandler  _sut;
 
     private static readonly Guid ExamId    = Guid.NewGuid();
@@ -33,12 +34,13 @@ public sealed class RegisterCaptureCommandHandlerDuplicateTests
         _devices.GetByIdAsync(Arg.Any<DeviceId>(), Arg.Any<CancellationToken>()).Returns(device);
 
         _sig.Verify(Arg.Any<Hash>(), Arg.Any<Signature>(), Arg.Any<PublicKey>()).Returns(true);
+        _candidates.ExistsAsync(Arg.Any<ExamId>(), Arg.Any<StudentId>(), Arg.Any<CancellationToken>()).Returns(true);
 
         _repo.ExistsByStudentExamPageAsync(
             Arg.Any<StudentId>(), Arg.Any<ExamId>(), Arg.Any<PageNumber>(), Arg.Any<CancellationToken>())
             .Returns(false);
 
-        _sut = new RegisterCaptureCommandHandler(_repo, _devices, _sig, _audit, _exams);
+        _sut = new RegisterCaptureCommandHandler(_repo, _devices, _sig, _audit, _exams, _candidates);
     }
 
     private RegisterCaptureCommand MakeCommand(int page = 1) =>

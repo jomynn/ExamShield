@@ -11,16 +11,17 @@ namespace ExamShield.UnitTests.Application.Commands;
 
 public sealed class RegisterCaptureCommandHandlerTests
 {
-    private readonly ICaptureRepository _repository = Substitute.For<ICaptureRepository>();
-    private readonly IDeviceRepository _devices = Substitute.For<IDeviceRepository>();
-    private readonly ISignatureVerificationService _sigService = Substitute.For<ISignatureVerificationService>();
-    private readonly IAuditLogRepository _auditLog = Substitute.For<IAuditLogRepository>();
-    private readonly IExamRepository _exams = Substitute.For<IExamRepository>();
+    private readonly ICaptureRepository           _repository  = Substitute.For<ICaptureRepository>();
+    private readonly IDeviceRepository            _devices     = Substitute.For<IDeviceRepository>();
+    private readonly ISignatureVerificationService _sigService  = Substitute.For<ISignatureVerificationService>();
+    private readonly IAuditLogRepository          _auditLog    = Substitute.For<IAuditLogRepository>();
+    private readonly IExamRepository              _exams       = Substitute.For<IExamRepository>();
+    private readonly IExamCandidateRepository     _candidates  = Substitute.For<IExamCandidateRepository>();
     private readonly RegisterCaptureCommandHandler _sut;
 
     public RegisterCaptureCommandHandlerTests()
     {
-        // Default: approved device + valid signature + active exam
+        // Default: approved device + valid signature + active exam + enrolled student
         var device = Device.Register("Test Device", new PublicKey(new byte[] { 0x04 }));
         device.Approve();
         _devices.GetByIdAsync(Arg.Any<DeviceId>(), Arg.Any<CancellationToken>()).Returns(device);
@@ -30,7 +31,9 @@ public sealed class RegisterCaptureCommandHandlerTests
         activeExam.Activate();
         _exams.GetByIdAsync(Arg.Any<ExamId>(), Arg.Any<CancellationToken>()).Returns(activeExam);
 
-        _sut = new RegisterCaptureCommandHandler(_repository, _devices, _sigService, _auditLog, _exams);
+        _candidates.ExistsAsync(Arg.Any<ExamId>(), Arg.Any<StudentId>(), Arg.Any<CancellationToken>()).Returns(true);
+
+        _sut = new RegisterCaptureCommandHandler(_repository, _devices, _sigService, _auditLog, _exams, _candidates);
     }
 
     private static RegisterCaptureCommand ValidCommand() => new(

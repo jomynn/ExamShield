@@ -14,8 +14,11 @@ public static class TestHelpers
         var device = await devRes.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
         await client.PutAsync($"/devices/{device!.DeviceId}/approve", null);
 
-        var hashHex = new string('a', 64);
         var studentId = Guid.NewGuid();
+        await client.PostAsJsonAsync($"/exams/{examId}/students",
+            new EnrollStudentRequest(studentId));
+
+        var hashHex = new string('a', 64);
         var capRes = await client.PostAsJsonAsync("/capture",
             new RegisterCaptureRequest(
                 examId, studentId, device!.DeviceId, 1, hashHex,

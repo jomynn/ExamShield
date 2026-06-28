@@ -35,8 +35,11 @@ public sealed class GetResultsByExamTests(TestWebApplicationFactory factory)
             await _client.PostAsJsonAsync("/exams/" + exam.ExamId + "/answer-key",
                 new SetAnswerKeyRequest(new Dictionary<int, string> { [1] = "A" }));
 
+            var studentId = Guid.NewGuid();
+            await _client.PostAsJsonAsync($"/exams/{exam.ExamId}/students", new EnrollStudentRequest(studentId));
+
             var captureRes = await _client.PostAsJsonAsync("/capture", new RegisterCaptureRequest(
-                ExamId: exam.ExamId, StudentId: Guid.NewGuid(),
+                ExamId: exam.ExamId, StudentId: studentId,
                 DeviceId: device.DeviceId, PageNumber: 1,
                 HashHex: hash,
                 SignatureBytes: ecdsa.SignHash(Convert.FromHexString(hash))));

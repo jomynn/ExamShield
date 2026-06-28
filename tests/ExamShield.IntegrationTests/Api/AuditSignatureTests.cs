@@ -24,9 +24,10 @@ public sealed class AuditSignatureTests(TestWebApplicationFactory factory)
         await _client.PutAsync($"/devices/{device!.DeviceId}/approve", null);
 
         var hashHex = new string('b', 64);
+        var studentId = factory.EnrollStudentDirectly(factory.ActiveExamId);
         var captureResp = await _client.PostAsJsonAsync("/capture",
             new RegisterCaptureRequest(
-                factory.ActiveExamId, Guid.NewGuid(), device!.DeviceId,
+                factory.ActiveExamId, studentId, device!.DeviceId,
                 1, hashHex, _ecdsa.SignHash(Convert.FromHexString(hashHex))));
         var capture = await captureResp.Content.ReadFromJsonAsync<RegisterCaptureResponse>();
         _captureId = capture!.CaptureId;

@@ -28,10 +28,12 @@ public sealed class CaptureExportTests : IClassFixture<TestWebApplicationFactory
         var device = await devRes.Content.ReadFromJsonAsync<RegisterDeviceResponse>();
         await _client.PutAsync($"/devices/{device!.DeviceId}/approve", null);
 
+        var studentId = Guid.NewGuid();
+        await _client.PostAsJsonAsync($"/exams/{_examId}/students", new EnrollStudentRequest(studentId));
         var imageBytes = System.Text.Encoding.UTF8.GetBytes("export-test-image");
         var hashHex = Convert.ToHexString(SHA256.HashData(imageBytes)).ToLowerInvariant();
         await _client.PostAsJsonAsync("/capture", new RegisterCaptureRequest(
-            _examId, Guid.NewGuid(), device!.DeviceId, 1,
+            _examId, studentId, device!.DeviceId, 1,
             hashHex, ecdsa.SignHash(Convert.FromHexString(hashHex))));
     }
 

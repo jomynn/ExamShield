@@ -47,8 +47,11 @@ public sealed class PublishResultsValidationTests(TestWebApplicationFactory fact
         var imageBytes = "already-published-test"u8.ToArray();
         var hash = Convert.ToHexString(SHA256.HashData(imageBytes)).ToLowerInvariant();
 
+        var studentId = Guid.NewGuid();
+        await client.PostAsJsonAsync($"/exams/{exam.ExamId}/students", new EnrollStudentRequest(studentId));
+
         var captureRes = await client.PostAsJsonAsync("/capture", new RegisterCaptureRequest(
-            ExamId: exam.ExamId, StudentId: Guid.NewGuid(),
+            ExamId: exam.ExamId, StudentId: studentId,
             DeviceId: device.DeviceId, PageNumber: 1,
             HashHex: hash,
             SignatureBytes: ecdsa.SignHash(Convert.FromHexString(hash))));

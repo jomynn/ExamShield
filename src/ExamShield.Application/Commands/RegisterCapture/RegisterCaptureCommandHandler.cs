@@ -15,19 +15,22 @@ public sealed class RegisterCaptureCommandHandler
     private readonly ISignatureVerificationService _sigService;
     private readonly IAuditLogRepository _auditLog;
     private readonly IExamRepository _exams;
+    private readonly IExamCandidateRepository _candidates;
 
     public RegisterCaptureCommandHandler(
         ICaptureRepository repository,
         IDeviceRepository devices,
         ISignatureVerificationService sigService,
         IAuditLogRepository auditLog,
-        IExamRepository exams)
+        IExamRepository exams,
+        IExamCandidateRepository candidates)
     {
         _repository = repository;
         _devices = devices;
         _sigService = sigService;
         _auditLog = auditLog;
         _exams = exams;
+        _candidates = candidates;
     }
 
     public async Task<RegisterCaptureResult> Handle(
@@ -48,6 +51,9 @@ public sealed class RegisterCaptureCommandHandler
 
         if (exam.EndsAt is not null && DateTimeOffset.UtcNow > exam.EndsAt)
             throw new ExamExpiredException(command.ExamId, exam.EndsAt.Value);
+
+        if (!await _candidates.ExistsAsync(examId, studentId, ct))
+            throw new StudentNotEnrolledException(command.ExamId, command.StudentId);
 
         var device = await _devices.GetByIdAsync(deviceId, ct)
             ?? throw new DeviceNotFoundException(command.DeviceId);

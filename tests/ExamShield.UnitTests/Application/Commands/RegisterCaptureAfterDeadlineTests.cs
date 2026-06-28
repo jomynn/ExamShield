@@ -9,15 +9,19 @@ namespace ExamShield.UnitTests.Application.Commands;
 
 public sealed class RegisterCaptureAfterDeadlineTests
 {
-    private readonly ICaptureRepository _captures = Substitute.For<ICaptureRepository>();
-    private readonly IDeviceRepository _devices = Substitute.For<IDeviceRepository>();
+    private readonly ICaptureRepository           _captures   = Substitute.For<ICaptureRepository>();
+    private readonly IDeviceRepository            _devices    = Substitute.For<IDeviceRepository>();
     private readonly ISignatureVerificationService _sigService = Substitute.For<ISignatureVerificationService>();
-    private readonly IAuditLogRepository _auditLog = Substitute.For<IAuditLogRepository>();
-    private readonly IExamRepository _exams = Substitute.For<IExamRepository>();
+    private readonly IAuditLogRepository          _auditLog   = Substitute.For<IAuditLogRepository>();
+    private readonly IExamRepository              _exams      = Substitute.For<IExamRepository>();
+    private readonly IExamCandidateRepository     _candidates = Substitute.For<IExamCandidateRepository>();
     private readonly RegisterCaptureCommandHandler _sut;
 
-    public RegisterCaptureAfterDeadlineTests() =>
-        _sut = new RegisterCaptureCommandHandler(_captures, _devices, _sigService, _auditLog, _exams);
+    public RegisterCaptureAfterDeadlineTests()
+    {
+        _candidates.ExistsAsync(Arg.Any<ExamId>(), Arg.Any<StudentId>(), Arg.Any<CancellationToken>()).Returns(true);
+        _sut = new RegisterCaptureCommandHandler(_captures, _devices, _sigService, _auditLog, _exams, _candidates);
+    }
 
     private static Exam MakeExpiredExam()
     {

@@ -34,10 +34,13 @@ public sealed class GetCaptureByIdTests(TestWebApplicationFactory factory)
 
     private async Task<Guid> RegisterCaptureAsync()
     {
+        var studentId = Guid.NewGuid();
+        await _client.PostAsJsonAsync($"/exams/{_examId}/students", new EnrollStudentRequest(studentId));
+
         var img     = System.Text.Encoding.UTF8.GetBytes($"capture-detail-{Guid.NewGuid()}");
         var hashHex = Convert.ToHexString(SHA256.HashData(img)).ToLowerInvariant();
         var req = new RegisterCaptureRequest(
-            _examId, Guid.NewGuid(), _deviceId, 1,
+            _examId, studentId, _deviceId, 1,
             hashHex, _ecdsa.SignHash(Convert.FromHexString(hashHex)));
         var res = await _client.PostAsJsonAsync("/capture", req);
         return (await res.Content.ReadFromJsonAsync<RegisterCaptureResponse>())!.CaptureId;

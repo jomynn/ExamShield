@@ -25,8 +25,8 @@ public sealed class CaptureStudentFilterTests(TestWebApplicationFactory factory)
         await _client.PutAsync($"/devices/{deviceId}/approve", null);
 
         var examId = factory.ActiveExamId;
-        _studentAId = Guid.NewGuid();
-        _studentBId = Guid.NewGuid();
+        _studentAId = factory.EnrollStudentDirectly(examId);
+        _studentBId = factory.EnrollStudentDirectly(examId);
 
         async Task<Guid> RegisterAsync(Guid studentId, int page)
         {

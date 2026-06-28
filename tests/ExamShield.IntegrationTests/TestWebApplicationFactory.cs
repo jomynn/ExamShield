@@ -30,12 +30,16 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
     private readonly Exam _activeExam;
     public Guid ActiveExamId => _activeExam.Id.Value;
 
+    private readonly ExamCandidate _preEnrolledCandidate;
+    public Guid EnrolledStudentId => _preEnrolledCandidate.StudentId.Value;
+
     private string? _cachedToken;
 
     public TestWebApplicationFactory()
     {
         _activeExam = Exam.Create("Integration Test Exam", null, 50);
         _activeExam.Activate();
+        _preEnrolledCandidate = ExamCandidate.Enroll(_activeExam.Id, StudentId.New());
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -88,7 +92,8 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.AddSingleton<IAnswerKeyRepository, InMemoryAnswerKeyRepository>();
 
             services.RemoveAll<IExamCandidateRepository>();
-            services.AddSingleton<IExamCandidateRepository, InMemoryExamCandidateRepository>();
+            services.AddSingleton<IExamCandidateRepository>(
+                new InMemoryExamCandidateRepository(seed: [_preEnrolledCandidate]));
 
             services.RemoveAll<ISystemSettingsRepository>();
             services.AddSingleton<ISystemSettingsRepository, InMemorySystemSettingsRepository>();
@@ -186,6 +191,20 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         var token = PasswordResetToken.Create(email, expiresAt: DateTimeOffset.UtcNow.AddHours(-1));
         await repo.AddAsync(token);
         return token.Token;
+    }
+
+    /// <summary>
+    /// Directly enrolls a fresh random student in the given exam via the in-memory repo (no HTTP).
+    /// Safe to call synchronously from test helpers because xUnit has no SynchronizationContext.
+    /// </summary>
+    public Guid EnrollStudentDirectly(Guid examId)
+    {
+        var studentId = Guid.NewGuid();
+        using var scope = Services.CreateScope();
+        var repo = scope.ServiceProvider.GetRequiredService<IExamCandidateRepository>();
+        repo.AddAsync(ExamCandidate.Enroll(new ExamId(examId), new StudentId(studentId)))
+            .GetAwaiter().GetResult();
+        return studentId;
     }
 
     public async Task<Guid> CreateActivatedExamAsync(string name, int totalQuestions = 10)

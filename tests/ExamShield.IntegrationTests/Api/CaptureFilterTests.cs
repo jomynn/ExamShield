@@ -37,9 +37,11 @@ public sealed class CaptureFilterTests : IClassFixture<TestWebApplicationFactory
         _examBId = examB!.ExamId;
         await _client.PutAsync($"/exams/{_examBId}/activate", null);
 
+        var studentId = Guid.NewGuid();
+        await _client.PostAsJsonAsync($"/exams/{_examAId}/students", new EnrollStudentRequest(studentId));
         var hashHex = new string('a', 64);
         var capRes = await _client.PostAsJsonAsync("/capture", new RegisterCaptureRequest(
-            _examAId, Guid.NewGuid(), device!.DeviceId, 1,
+            _examAId, studentId, device!.DeviceId, 1,
             hashHex, ecdsa.SignHash(Convert.FromHexString(hashHex))));
         var cap = await capRes.Content.ReadFromJsonAsync<RegisterCaptureResponse>();
         _captureAId = cap!.CaptureId;

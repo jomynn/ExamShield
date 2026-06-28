@@ -36,8 +36,9 @@ public sealed class AuditEndpointsTests : IClassFixture<TestWebApplicationFactor
     private async Task<Guid> RegisterCaptureAsync()
     {
         var hashHex = new string('a', 64);
+        var studentId = _factory.EnrollStudentDirectly(_factory.ActiveExamId);
         var request = new RegisterCaptureRequest(
-            _factory.ActiveExamId, Guid.NewGuid(), _deviceId, 1, hashHex,
+            _factory.ActiveExamId, studentId, _deviceId, 1, hashHex,
             _ecdsa.SignHash(Convert.FromHexString(hashHex)));
 
         var response = await _client.PostAsJsonAsync("/capture", request);
