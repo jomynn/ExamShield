@@ -1,3 +1,4 @@
+using ExamShield.Domain.Entities;
 using ExamShield.Domain.Enums;
 using ExamShield.Domain.Exceptions;
 using ExamShield.Domain.Interfaces;
@@ -8,7 +9,8 @@ namespace ExamShield.Application.Commands.UpdateUserRole;
 
 public sealed class UpdateUserRoleCommandHandler(
     IUserRepository users,
-    IRefreshTokenRepository refreshTokens)
+    IRefreshTokenRepository refreshTokens,
+    IAuditLogRepository auditLog)
     : IRequestHandler<UpdateUserRoleCommand>
 {
     public async Task Handle(UpdateUserRoleCommand request, CancellationToken ct)
@@ -22,5 +24,6 @@ public sealed class UpdateUserRoleCommandHandler(
         user.ChangeRole(role);
         await users.SaveAsync(user, ct);
         await refreshTokens.RevokeAllForUserAsync(user.Id, ct);
+        await auditLog.AppendAsync(AuditLog.Record(AuditAction.UserRoleChanged), ct);
     }
 }

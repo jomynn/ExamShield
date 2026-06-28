@@ -18,5 +18,14 @@ public enum AuditAction
     ReviewRequestSubmitted,
     AnswerKeySet,
     StudentEnrolled,
-    StudentUnenrolled
+    StudentUnenrolled,
+    UserRoleChanged,
+    UserDeactivated,
+    UserReactivated,
+    PasswordChanged,
+    DeviceEnabled,
+    DeviceDisabled,
+    ReviewApproved,
+    ReviewRejected,
+    SettingsUpdated
 }

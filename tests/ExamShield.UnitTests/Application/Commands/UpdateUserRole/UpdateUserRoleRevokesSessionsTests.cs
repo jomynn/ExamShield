@@ -11,10 +11,11 @@ public sealed class UpdateUserRoleRevokesSessionsTests
 {
     private readonly IUserRepository          _users         = Substitute.For<IUserRepository>();
     private readonly IRefreshTokenRepository  _refreshTokens = Substitute.For<IRefreshTokenRepository>();
+    private readonly IAuditLogRepository      _auditLog      = Substitute.For<IAuditLogRepository>();
     private readonly UpdateUserRoleCommandHandler _sut;
 
     public UpdateUserRoleRevokesSessionsTests() =>
-        _sut = new UpdateUserRoleCommandHandler(_users, _refreshTokens);
+        _sut = new UpdateUserRoleCommandHandler(_users, _refreshTokens, _auditLog);
 
     [Fact]
     public async Task Handle_WhenRoleChanges_RevokesAllRefreshTokens()
