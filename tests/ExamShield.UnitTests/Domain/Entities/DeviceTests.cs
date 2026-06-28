@@ -1,4 +1,5 @@
 using ExamShield.Domain.Entities;
+using ExamShield.Domain.Enums;
 using ExamShield.Domain.Events;
 using ExamShield.Domain.ValueObjects;
 using FluentAssertions;
@@ -99,5 +100,95 @@ public sealed class DeviceTests
     public void TwoDevices_AlwaysHaveDifferentIds()
     {
         Device.Register("A", TestKey).Id.Should().NotBe(Device.Register("B", TestKey).Id);
+    }
+
+    // ── Disable / Enable ──────────────────────────────────────────────────────
+
+    [Fact]
+    public void Disable_SetsStatusDisabled()
+    {
+        var device = Device.Register("Scanner", TestKey);
+        device.Approve();
+        device.Disable();
+        device.Status.Should().Be(DeviceStatus.Disabled);
+        device.IsActive.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Enable_DisabledDevice_SetsStatusApproved()
+    {
+        var device = Device.Register("Scanner", TestKey);
+        device.Disable();
+        device.Enable();
+        device.Status.Should().Be(DeviceStatus.Approved);
+        device.IsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Enable_BlacklistedDevice_ThrowsInvalidOperation()
+    {
+        var device = Device.Register("Scanner", TestKey);
+        device.Blacklist("Stolen");
+        device.Invoking(d => d.Enable()).Should().Throw<InvalidOperationException>().WithMessage("*blacklisted*");
+    }
+
+    // ── Blacklist ─────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Blacklist_SetsStatusAndReason()
+    {
+        var device = Device.Register("Scanner", TestKey);
+        device.Blacklist("  Reported stolen  ");
+
+        device.Status.Should().Be(DeviceStatus.Blacklisted);
+        device.BlacklistReason.Should().Be("Reported stolen");
+    }
+
+    [Fact]
+    public void Blacklist_AlreadyBlacklisted_ThrowsInvalidOperation()
+    {
+        var device = Device.Register("Scanner", TestKey);
+        device.Blacklist("First reason");
+        device.Invoking(d => d.Blacklist("Second")).Should().Throw<InvalidOperationException>();
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Blacklist_EmptyReason_ThrowsArgumentException(string reason)
+    {
+        var device = Device.Register("Scanner", TestKey);
+        var act = () => device.Blacklist(reason);
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void Approve_BlacklistedDevice_ThrowsInvalidOperation()
+    {
+        var device = Device.Register("Scanner", TestKey);
+        device.Blacklist("Stolen");
+        device.Invoking(d => d.Approve()).Should().Throw<InvalidOperationException>().WithMessage("*blacklisted*");
+    }
+
+    // ── RecordHeartbeat ───────────────────────────────────────────────────────
+
+    [Fact]
+    public void RecordHeartbeat_ActiveDevice_UpdatesLastSeenAt()
+    {
+        var device = Device.Register("Scanner", TestKey);
+        device.Approve();
+        var before = DateTimeOffset.UtcNow;
+
+        device.RecordHeartbeat();
+
+        device.LastSeenAt.Should().BeOnOrAfter(before);
+    }
+
+    [Fact]
+    public void RecordHeartbeat_DisabledDevice_ThrowsInvalidOperation()
+    {
+        var device = Device.Register("Scanner", TestKey);
+        device.Disable();
+        device.Invoking(d => d.RecordHeartbeat()).Should().Throw<InvalidOperationException>().WithMessage("*disabled*");
     }
 }
