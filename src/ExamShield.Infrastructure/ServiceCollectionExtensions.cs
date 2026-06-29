@@ -143,9 +143,17 @@ public static class ServiceCollectionExtensions
         }
         var cacheOptions = configuration.GetSection(CacheOptions.Section).Get<CacheOptions>() ?? new CacheOptions();
         if (cacheOptions.Type == "Redis")
+        {
             services.AddStackExchangeRedisCache(o => o.Configuration = cacheOptions.ConnectionString);
+            // Redis-backed TOTP replay cache is safe across multiple API replicas.
+            services.AddSingleton<ITotpUsedCodeCache, RedisTotpUsedCodeCache>();
+        }
         else
+        {
             services.AddDistributedMemoryCache();
+            // In-memory TOTP cache — safe for single-replica dev/test only.
+            services.AddSingleton<ITotpUsedCodeCache, InMemoryTotpUsedCodeCache>();
+        }
         services.AddSingleton<ICacheService, CacheService>();
 
         var msgOptions = configuration.GetSection(MessagingOptions.Section).Get<MessagingOptions>() ?? new MessagingOptions();
@@ -172,7 +180,7 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<IImageEncryptionService, AesGcmImageEncryptionService>();
         services.AddSingleton<ITotpService, TotpService>();
-        services.AddSingleton<ITotpUsedCodeCache, InMemoryTotpUsedCodeCache>();
+        // ITotpUsedCodeCache is registered above, conditionally: Redis in production, InMemory in dev.
         services.AddSingleton<IPasswordResetTokenRepository, InMemoryPasswordResetTokenRepository>();
         services.AddHttpClient("Alerts")
             .AddHttpMessageHandler(() => new ExamShield.Infrastructure.Http.ResilienceDelegatingHandler());

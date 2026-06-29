@@ -47,5 +47,14 @@ internal sealed class CaptureConfiguration : IEntityTypeConfiguration<Capture>
             .IsRequired(false);
 
         builder.Ignore(c => c.DomainEvents);
+
+        // Composite index for the most common list query: captures for an exam, filtered by status
+        builder.HasIndex(c => new { c.ExamId, c.Status });
+        // Invigilator scope enforcement: Invigilator/Operator list their own captures
+        builder.HasIndex(c => c.InvigilatorId);
+        // Device history queries
+        builder.HasIndex(c => c.DeviceId);
+        // Student answer-sheet lookup
+        builder.HasIndex(c => c.StudentId);
     }
 }

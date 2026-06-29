@@ -1,8 +1,11 @@
 using System.Text;
 using ExamShield.Api.Endpoints;
 using Scalar.AspNetCore;
+using Serilog;
+using Serilog.Events;
 using ExamShield.Api.Hubs;
 using ExamShield.Api.RateLimiting;
+using System.Diagnostics;
 using ExamShield.Application.Behaviors;
 using ExamShield.Application.Commands.Login;
 using ExamShield.Application.Queries.GetOcrResult;
@@ -21,7 +24,45 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.Json;
 
+// ── Serilog structured logging ────────────────────────────────────────────
+// Bootstrap logger captures startup failures before full configuration loads.
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Warning()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Serilog is active in Development and Production only.
+// In Testing, the default Microsoft.Extensions.Logging is used to avoid
+// host-builder ordering conflicts with WebApplicationFactory.
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Host.UseSerilog((ctx, services, cfg) =>
+    {
+        var isDev = ctx.HostingEnvironment.IsDevelopment();
+        cfg
+            .ReadFrom.Configuration(ctx.Configuration)
+            .ReadFrom.Services(services)
+            .Enrich.FromLogContext()
+            .Enrich.WithMachineName()
+            .Enrich.WithEnvironmentName()
+            .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command",
+                isDev ? LogEventLevel.Information : LogEventLevel.Warning)
+            // Structured JSON to console — consumed by Grafana Loki, Datadog, etc.
+            .WriteTo.Console(
+                formatter: new Serilog.Formatting.Compact.CompactJsonFormatter());
+
+        if (!isDev)
+            cfg.WriteTo.File(
+                path: "logs/examshield-.log",
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 7,
+                fileSizeLimitBytes: 100 * 1024 * 1024,
+                rollOnFileSizeLimit: true);
+    });
+}
 
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
@@ -48,9 +89,17 @@ builder.Services.AddSingleton(new LoginOptions
 });
 builder.Services.AddSingleton<HashVerificationService>();
 builder.Services.AddHostedService<DataSeeder>();
+// Tracing activity source — registered as singleton so the same source is used across
+// the application lifetime and can be subscribed to by any OTLP-compatible listener.
+var activitySource = new System.Diagnostics.ActivitySource(
+    ExamShield.Infrastructure.Telemetry.ExamShieldActivities.SourceName,
+    ExamShield.Infrastructure.Telemetry.ExamShieldActivities.Version);
+builder.Services.AddSingleton(activitySource);
+
 builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(typeof(RegisterCaptureCommand).Assembly);
+    cfg.AddOpenBehavior(typeof(TracingBehavior<,>));
     cfg.AddOpenBehavior(typeof(AlertBehavior<,>));
 });
 

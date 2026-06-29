@@ -8,6 +8,15 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.9" />
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
+    <!-- OpenTelemetry.Api 1.12.x carries CVE GHSA-g94r-2vxg-569j (moderate).
+         We use System.Diagnostics.ActivitySource (built-in .NET) instead — zero packages,
+         zero CVEs, and compatible with any OTLP-capable collector (Jaeger, Tempo, etc.)
+         pointed at OTEL_TRACES_EXPORTER. Add the OTel NuGet packages once a patched
+         version of OpenTelemetry.Api is published. -->
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.4">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

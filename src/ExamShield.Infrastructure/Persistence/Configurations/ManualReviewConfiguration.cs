@@ -77,5 +77,10 @@ public sealed class ManualReviewConfiguration : IEntityTypeConfiguration<ManualR
             .IsRequired(false);
 
         builder.Ignore(e => e.DomainEvents);
+
+        // Review queue list: reviews by status (Pending, PendingApproval, etc.)
+        builder.HasIndex(e => e.Status);
+        // Look up the review for a specific capture
+        builder.HasIndex(e => e.CaptureId);
     }
 }

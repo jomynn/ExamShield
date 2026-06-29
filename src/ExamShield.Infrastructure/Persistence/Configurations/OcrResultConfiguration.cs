@@ -46,5 +46,8 @@ public sealed class OcrResultConfiguration : IEntityTypeConfiguration<OcrResult>
             .HasColumnType("TEXT");
 
         builder.Ignore(e => e.DomainEvents);
+
+        // OCR queue: pending/in-progress results for the review queue
+        builder.HasIndex(e => new { e.CaptureId, e.Status });
     }
 }

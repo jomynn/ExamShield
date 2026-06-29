@@ -40,5 +40,12 @@ public sealed class ScoreConfiguration : IEntityTypeConfiguration<Score>
             .IsRequired(false);
 
         builder.Ignore(e => e.DomainEvents);
+
+        // Results page: scores for an exam, only published ones visible to students
+        builder.HasIndex(s => new { s.ExamId, s.IsPublished });
+        // Student portal: student's own scores
+        builder.HasIndex(s => s.StudentId);
+        // Linkback from OCR to score
+        builder.HasIndex(s => s.CaptureId);
     }
 }
