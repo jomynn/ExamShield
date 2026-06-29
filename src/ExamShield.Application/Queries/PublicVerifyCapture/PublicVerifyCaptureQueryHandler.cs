@@ -10,6 +10,7 @@ public sealed class PublicVerifyCaptureQueryHandler(
     ICaptureRepository captures,
     IDeviceRepository devices,
     IImageStorage imageStorage,
+    IImageEncryptionService encryption,
     HashVerificationService hashService,
     ISignatureVerificationService sigService,
     IWatermarkService watermarkService)
@@ -27,8 +28,12 @@ public sealed class PublicVerifyCaptureQueryHandler(
         if (capture.StorageKey is null)
             return new PublicVerifyResult(capture.Id.Value, false, false, false, false, capture.CapturedAt);
 
-        var storedBytes = await imageStorage.RetrieveAsync(capture.StorageKey, ct);
-        var extraction  = watermarkService.Extract(storedBytes);
+        var rawBytes = await imageStorage.RetrieveAsync(capture.StorageKey, ct);
+        var storedBytes = capture.EncryptedDek is not null
+            ? encryption.Decrypt(rawBytes, capture.EncryptedDek)
+            : rawBytes;
+
+        var extraction = watermarkService.Extract(storedBytes);
 
         var hashValid = extraction.IsValid &&
             hashService.ComputeHash(storedBytes[..extraction.OriginalImageLength]) == capture.ExpectedHash;

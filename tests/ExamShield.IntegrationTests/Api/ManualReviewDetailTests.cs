@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using ExamShield.Api.Contracts;
+using ExamShield.Domain.Enums;
 using FluentAssertions;
 using Xunit;
 
@@ -11,11 +12,20 @@ public sealed class ManualReviewDetailTests(TestWebApplicationFactory factory)
     : IClassFixture<TestWebApplicationFactory>, IAsyncLifetime
 {
     private HttpClient _client = null!;
+    private HttpClient _reviewerClient = null!;
 
-    public async Task InitializeAsync() =>
+    public async Task InitializeAsync()
+    {
         _client = await factory.CreateAuthenticatedClientAsync();
+        _reviewerClient = await factory.CreateAuthenticatedClientAsync(UserRole.ManualReviewer);
+    }
 
-    public Task DisposeAsync() { _client.Dispose(); return Task.CompletedTask; }
+    public Task DisposeAsync()
+    {
+        _client.Dispose();
+        _reviewerClient.Dispose();
+        return Task.CompletedTask;
+    }
 
     private async Task<(Guid captureId, Guid reviewId)> SetupReviewableCapture()
     {
@@ -93,7 +103,8 @@ public sealed class ManualReviewDetailTests(TestWebApplicationFactory factory)
     public async Task GetCaptureImage_AfterUpload_ReturnsBytes()
     {
         var (captureId, _) = await SetupReviewableCapture();
-        var response = await _client.GetAsync($"/captures/{captureId}/image");
+        // ManualReviewer has ImageViewer access and no scope restriction.
+        var response = await _reviewerClient.GetAsync($"/captures/{captureId}/image");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var bytes = await response.Content.ReadAsByteArrayAsync();
         bytes.Length.Should().BeGreaterThan(0);
@@ -102,7 +113,8 @@ public sealed class ManualReviewDetailTests(TestWebApplicationFactory factory)
     [Fact]
     public async Task GetCaptureImage_WithUnknownId_Returns404()
     {
-        var response = await _client.GetAsync($"/captures/{Guid.NewGuid()}/image");
+        // ManualReviewer has ImageViewer access — reaches the capture lookup, gets 404.
+        var response = await _reviewerClient.GetAsync($"/captures/{Guid.NewGuid()}/image");
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }

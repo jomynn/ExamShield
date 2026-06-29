@@ -34,18 +34,22 @@ public sealed class AnswerSheetImageEndpointTests
     private static readonly string SampleHash =
         Convert.ToHexString(SHA256.HashData(SampleImage)).ToLower();
 
-    private async Task<Guid> RegisterAndUploadCaptureAsync()
+    private async Task<Guid> RegisterAndUploadCaptureAsync(
+        HttpClient captureClient, HttpClient uploadClient)
     {
         var studentId = _factory.EnrollStudentDirectly(_factory.ActiveExamId);
         var req = new RegisterCaptureRequest(
             _factory.ActiveExamId, studentId, _deviceId, 1,
             SampleHash, _ecdsa.SignHash(Convert.FromHexString(SampleHash)));
-        var res = await _adminClient.PostAsJsonAsync("/capture", req);
+        var res = await captureClient.PostAsJsonAsync("/capture", req);
         var body = await res.Content.ReadFromJsonAsync<RegisterCaptureResponse>();
         var captureId = body!.CaptureId;
-        await _adminClient.PostAsJsonAsync("/upload", new UploadImageRequest(captureId, SampleImage));
+        await uploadClient.PostAsJsonAsync("/upload", new UploadImageRequest(captureId, SampleImage));
         return captureId;
     }
+
+    private Task<Guid> RegisterAndUploadCaptureAsync() =>
+        RegisterAndUploadCaptureAsync(_adminClient, _adminClient);
 
     private async Task<Guid> RegisterCaptureOnlyAsync()
     {
@@ -58,16 +62,13 @@ public sealed class AnswerSheetImageEndpointTests
         return body!.CaptureId;
     }
 
-    // ── Allowed roles ─────────────────────────────────────────────────────
+    // ── Allowed non-scoped roles (can access any capture) ─────────────────
 
     [Theory]
-    [InlineData(UserRole.Operator)]
-    [InlineData(UserRole.Invigilator)]
     [InlineData(UserRole.Supervisor)]
     [InlineData(UserRole.ManualReviewer)]
     [InlineData(UserRole.ReviewSupervisor)]
-    [InlineData(UserRole.InvestigationOfficer)]
-    public async Task GetImage_AllowedRole_Returns200(UserRole role)
+    public async Task GetImage_NonScopedAllowedRole_Returns200(UserRole role)
     {
         var captureId = await RegisterAndUploadCaptureAsync();
         using var client = await _factory.CreateAuthenticatedClientAsync(role);
@@ -75,8 +76,38 @@ public sealed class AnswerSheetImageEndpointTests
         var res = await client.GetAsync($"/captures/{captureId}/image");
 
         res.StatusCode.Should().Be(HttpStatusCode.OK);
-        var bytes = await res.Content.ReadAsByteArrayAsync();
-        bytes.Should().NotBeEmpty();
+        (await res.Content.ReadAsByteArrayAsync()).Should().NotBeEmpty();
+    }
+
+    // ── Scoped roles (Operator/Invigilator) must own the capture ──────────
+
+    [Theory]
+    [InlineData(UserRole.Operator)]
+    [InlineData(UserRole.Invigilator)]
+    public async Task GetImage_ScopedRole_OwnCapture_Returns200(UserRole role)
+    {
+        using var roleClient = await _factory.CreateAuthenticatedClientAsync(role);
+        // Role registers its own capture so InvigilatorId = role's userId.
+        var captureId = await RegisterAndUploadCaptureAsync(roleClient, roleClient);
+
+        var res = await roleClient.GetAsync($"/captures/{captureId}/image");
+
+        res.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await res.Content.ReadAsByteArrayAsync()).Should().NotBeEmpty();
+    }
+
+    // ── InvestigationOfficer requires an MFA-verified session ─────────────
+
+    [Fact]
+    public async Task GetImage_InvestigationOfficer_WithMfa_Returns200()
+    {
+        var captureId = await RegisterAndUploadCaptureAsync();
+        using var client = _factory.CreateMfaAuthenticatedClientAsync(UserRole.InvestigationOfficer);
+
+        var res = await client.GetAsync($"/captures/{captureId}/image");
+
+        res.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await res.Content.ReadAsByteArrayAsync()).Should().NotBeEmpty();
     }
 
     // ── Blocked roles — must return 403, not just hide the button ─────────
@@ -116,7 +147,7 @@ public sealed class AnswerSheetImageEndpointTests
     [Fact]
     public async Task GetImage_NonExistentCapture_Returns404()
     {
-        using var client = await _factory.CreateAuthenticatedClientAsync(UserRole.Operator);
+        using var client = await _factory.CreateAuthenticatedClientAsync(UserRole.Supervisor);
         var res = await client.GetAsync($"/captures/{Guid.NewGuid()}/image");
         res.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -125,7 +156,8 @@ public sealed class AnswerSheetImageEndpointTests
     public async Task GetImage_CaptureWithoutUpload_Returns404()
     {
         var captureId = await RegisterCaptureOnlyAsync();
-        using var client = await _factory.CreateAuthenticatedClientAsync(UserRole.Operator);
+        // ManualReviewer has no scope restriction — bypasses InvigilatorId check.
+        using var client = await _factory.CreateAuthenticatedClientAsync(UserRole.ManualReviewer);
         var res = await client.GetAsync($"/captures/{captureId}/image");
         res.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }

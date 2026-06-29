@@ -17,6 +17,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
 using Xunit;
 
 namespace ExamShield.IntegrationTests.Api;
@@ -152,6 +153,9 @@ public sealed class MfaEnforcedWebApplicationFactory : WebApplicationFactory<Pro
 
         builder.ConfigureServices(services =>
         {
+            // Remove hosted services that require external infrastructure (Postgres, MinIO, RabbitMQ).
+            services.RemoveAll<IHostedService>();
+
             // LoginOptions is registered as a concrete singleton in Program.cs before
             // ConfigureAppConfiguration can influence it, so override it here directly.
             services.RemoveAll<LoginOptions>();

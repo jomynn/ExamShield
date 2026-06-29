@@ -12,7 +12,7 @@ public static class UploadEndpoints
         app.MapPost("/upload", UploadImageAsync)
             .WithName("UploadImage")
             .WithTags("Upload")
-            .RequireAuthorization("Operator")
+            .RequireAuthorization("Invigilator")
             .RequireRateLimiting(RateLimitingExtensions.UploadPolicy)
             .Produces<UploadImageResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)

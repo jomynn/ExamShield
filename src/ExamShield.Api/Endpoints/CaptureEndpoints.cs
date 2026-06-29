@@ -88,7 +88,7 @@ public static class CaptureEndpoints
 
         group.MapPost("/", RegisterCaptureAsync)
             .WithName("RegisterCapture")
-            .RequireAuthorization("Operator")
+            .RequireAuthorization("Invigilator")
             .Produces<RegisterCaptureResponse>(StatusCodes.Status201Created)
             .ProducesValidationProblem();
 
@@ -195,8 +195,13 @@ public static class CaptureEndpoints
         }
 
         // InvestigationOfficers require a MFA-verified session for forensic image access.
-        if (user.FindFirstValue(ClaimTypes.Role) == "InvestigationOfficer" &&
-            !user.HasClaim("amr", "mfa"))
+        // "amr" is mapped by JsonWebTokenHandler to the OIDC URI (not ClaimTypes.AuthenticationMethod,
+        // which is the WS-Fed URI — a different namespace).
+        const string AmrUri = "http://schemas.microsoft.com/claims/authnmethodsreferences";
+        var hasMfaClaim = user.HasClaim("amr", "mfa")
+            || user.HasClaim(AmrUri, "mfa")
+            || user.HasClaim(ClaimTypes.AuthenticationMethod, "mfa");
+        if (user.FindFirstValue(ClaimTypes.Role) == "InvestigationOfficer" && !hasMfaClaim)
         {
             return Results.Json(
                 new { error = "mfa_required", message = "Forensic image access requires an MFA-verified session. Re-authenticate with MFA." },

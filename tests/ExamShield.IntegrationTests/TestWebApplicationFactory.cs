@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Hosting;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using ExamShield.Api.Contracts;
@@ -7,6 +8,7 @@ using ExamShield.Domain.Enums;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Domain.ValueObjects;
 using ExamShield.Infrastructure.Realtime;
+using ExamShield.Infrastructure.Storage;
 using ExamShield.IntegrationTests.Fakes;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -48,6 +50,10 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         builder.UseEnvironment("Testing");
         builder.ConfigureServices(services =>
         {
+            // Remove all hosted services that require external infrastructure
+            // (DataSeeder → Postgres, MinioBucketInitializer → MinIO, OcrConsumerService → RabbitMQ).
+            services.RemoveAll<IHostedService>();
+
             // Swap real repositories for fast in-memory fakes.
             services.RemoveAll<ICaptureRepository>();
             services.AddSingleton<ICaptureRepository, InMemoryCaptureRepository>();
@@ -111,12 +117,16 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<IDeviceCertificateRepository>();
             services.AddSingleton<IDeviceCertificateRepository, InMemoryDeviceCertificateRepository>();
 
+            // Swap real MinIO image storage with a fast in-memory store (no MinIO in CI).
+            services.RemoveAll<IImageStorage>();
+            services.AddSingleton<IImageStorage, InMemoryImageStorage>();
+
             // Swap real SMTP email sender for a no-op (no SMTP server in CI).
             services.RemoveAll<IEmailSender>();
             services.AddSingleton<IEmailSender, NullEmailSender>();
 
             services.RemoveAll<ITotpUsedCodeCache>();
-            services.AddSingleton<ITotpUsedCodeCache, InMemoryTotpUsedCodeCache>();
+            services.AddSingleton<ITotpUsedCodeCache, Fakes.InMemoryTotpUsedCodeCache>();
 
             // IPasswordHasher and IJwtTokenService stay — real BCrypt + real JWT for auth tests.
 
@@ -180,6 +190,29 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         var client = CreateClient();
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", body!.Token);
+        return client;
+    }
+
+    /// <summary>
+    /// Creates an authenticated client whose JWT contains the <c>amr: mfa</c> claim,
+    /// required by endpoints with MFA step-up enforcement (e.g. InvestigationOfficer image access).
+    /// Bypasses the TOTP HTTP flow and calls IJwtTokenService.GenerateWithMfa directly
+    /// so tests are not sensitive to TOTP timing or replay-cache state.
+    /// </summary>
+    public HttpClient CreateMfaAuthenticatedClientAsync(UserRole role)
+    {
+        using var scope = Services.CreateScope();
+        var jwtService = scope.ServiceProvider.GetRequiredService<IJwtTokenService>();
+
+        var user = User.Create(
+            new Email($"mfa-{role.ToString().ToLower()}@examshield.test"),
+            "unused-password-hash",
+            role);
+
+        var token  = jwtService.GenerateWithMfa(user);
+        var client = CreateClient();
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
         return client;
     }
 
