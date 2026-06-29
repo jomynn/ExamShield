@@ -1,3 +1,10 @@
+using Amazon;
+using Amazon.KeyManagementService;
+using Amazon.S3;
+using Azure.Identity;
+using Azure.Security.KeyVault.Keys;
+using Azure.Security.KeyVault.Keys.Cryptography;
+using Azure.Storage.Blobs;
 using ExamShield.Application.Interfaces;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Infrastructure.Alerts;
@@ -40,6 +47,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         var storageOptions = configuration.GetSection(StorageOptions.Section).Get<StorageOptions>() ?? new StorageOptions();
+        services.AddSingleton(storageOptions);
         if (storageOptions.Type == "MinIO")
         {
             var minioClient = new MinioClient()
@@ -48,10 +56,20 @@ public static class ServiceCollectionExtensions
                 .WithSSL(storageOptions.UseSSL)
                 .Build();
             services.AddSingleton<IMinioClient>(minioClient);
-            services.AddSingleton(storageOptions);
             services.AddSingleton<IObjectStore>(new MinioObjectStore(minioClient, storageOptions.BucketName, storageOptions));
             services.AddSingleton<IImageStorage, MinioImageStorage>();
             services.AddHostedService<MinioBucketInitializer>();
+        }
+        else if (storageOptions.Type == "S3")
+        {
+            var s3 = new AmazonS3Client(RegionEndpoint.GetBySystemName(storageOptions.Region));
+            services.AddSingleton<IAmazonS3>(s3);
+            services.AddSingleton<IImageStorage>(new S3ImageStorage(s3, storageOptions));
+        }
+        else if (storageOptions.Type == "AzureBlob")
+        {
+            var container = new BlobContainerClient(storageOptions.BlobConnectionString, storageOptions.BucketName);
+            services.AddSingleton<IImageStorage>(new AzureBlobImageStorage(container));
         }
         else
         {
@@ -85,7 +103,44 @@ public static class ServiceCollectionExtensions
         var hmacKey = string.IsNullOrEmpty(wmOptions.HmacKeyBase64)
             ? new byte[32]
             : Convert.FromBase64String(wmOptions.HmacKeyBase64);
-        services.AddSingleton<IWatermarkService>(new HmacWatermarkService(hmacKey));
+        // LSB steganography is the production watermark; HmacWatermarkService remains available
+        // for backward compatibility with captured images stored before the upgrade.
+        services.AddSingleton<IWatermarkService, LsbSteganographyService>();
+        services.AddSingleton(new HmacWatermarkService(hmacKey));
+
+        // Key Management Service — config-based in dev, swap for Vault/KMS/AKV in production.
+        var kmsType = configuration["Kms:Type"] ?? "Config";
+        if (kmsType == "Vault")
+        {
+            services.AddHttpClient("Vault", c =>
+            {
+                c.BaseAddress = new Uri(configuration["Vault:Address"] ?? "http://vault:8200");
+                c.DefaultRequestHeaders.Add("X-Vault-Token", configuration["Vault:Token"] ?? "");
+            });
+            var keyName = configuration["Vault:KeyName"] ?? "examshield-dek";
+            services.AddSingleton<IKeyManagementService>(sp =>
+                new VaultKeyManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("Vault"), keyName));
+        }
+        else if (kmsType == "AwsKms")
+        {
+            var kmsKeyId = configuration["Kms:KeyId"] ?? "";
+            var awsKms   = new AmazonKeyManagementServiceClient(RegionEndpoint.GetBySystemName(storageOptions.Region));
+            services.AddSingleton<IAmazonKeyManagementService>(awsKms);
+            services.AddSingleton<IKeyManagementService>(new AwsKmsKeyManagementService(awsKms, kmsKeyId));
+        }
+        else if (kmsType == "AzureKeyVault")
+        {
+            var keyId = configuration["KeyVault:KeyId"] ?? "";
+            var cryptoClient = new CryptographyClient(new Uri(keyId), new DefaultAzureCredential());
+            services.AddSingleton<IKeyManagementService>(new AzureKeyVaultKeyManagementService(cryptoClient));
+        }
+        else
+        {
+            // Default: config-based master key (dev / CI)
+            var masterKeyB64 = configuration["Encryption:MasterKeyBase64"] ?? "";
+            var masterKey = string.IsNullOrEmpty(masterKeyB64) ? new byte[32] : Convert.FromBase64String(masterKeyB64);
+            services.AddSingleton<IKeyManagementService>(new ConfigKeyManagementService(masterKey));
+        }
         var cacheOptions = configuration.GetSection(CacheOptions.Section).Get<CacheOptions>() ?? new CacheOptions();
         if (cacheOptions.Type == "Redis")
             services.AddStackExchangeRedisCache(o => o.Configuration = cacheOptions.ConnectionString);
@@ -120,7 +175,11 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ITotpUsedCodeCache, InMemoryTotpUsedCodeCache>();
         services.AddSingleton<IPasswordResetTokenRepository, InMemoryPasswordResetTokenRepository>();
         services.AddHttpClient("Alerts");
+        services.AddHttpClient("Oidc");
         services.AddSingleton<IAlertService, AlertService>();
+        var oidcOptions = configuration.GetSection(OidcOptions.Section).Get<OidcOptions>() ?? new OidcOptions();
+        services.AddSingleton(oidcOptions);
+        services.AddSingleton<OidcService>();
         services.AddSingleton<IEmailSender, SmtpEmailSender>();
         services.AddSingleton<IStudentCertificateService, QuestPdfCertificateService>();
         services.AddScoped<IDemoDataSeeder, DemoDataSeeder>();

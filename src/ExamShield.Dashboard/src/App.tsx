@@ -30,6 +30,7 @@ import ReviewRequestsPage from './pages/ReviewRequestsPage'
 import PipelineDemoPage from './pages/PipelineDemoPage'
 import ProfilePage from './pages/ProfilePage'
 import ChangePasswordPage from './pages/ChangePasswordPage'
+import OAuthCallbackPage from './pages/OAuthCallbackPage'
 import AppLayout from './components/layout/AppLayout'
 import { useNotifications } from './hooks/useNotifications'
 import NotificationToast from './components/ui/NotificationToast'
@@ -72,6 +73,7 @@ export default function App() {
             element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage onLogin={login} onMfaLogin={completeMfaLogin} requiresMfa={requiresMfa} />}
           />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/auth/callback" element={<OAuthCallbackPage />} />
           <Route path="/public/verify" element={<PublicVerificationPage />} />
           <Route
             path="/*"

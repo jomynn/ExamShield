@@ -10,6 +10,10 @@ public sealed class StorageOptions
     public string BucketName { get; init; } = "examshield";
     public bool UseSSL { get; init; } = false;
 
+    // AWS S3 / Azure Blob
+    public string Region               { get; init; } = "us-east-1";
+    public string BlobConnectionString { get; init; } = string.Empty;
+
     // Object Lock (WORM) — enables immutability at the storage layer.
     public bool EnableObjectLock { get; init; } = false;
     public int RetentionDays { get; init; } = 3650;  // 10 years

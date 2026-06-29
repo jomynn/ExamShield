@@ -1,5 +1,24 @@
 import { useState } from 'react'
 import { Zap, Mail, Lock, Hash } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
+
+// Providers listed here are shown as SSO buttons.
+// Set VITE_OIDC_PROVIDERS="google,azure" to enable them.
+const OIDC_PROVIDERS: { id: string; label: string }[] = (
+  import.meta.env.VITE_OIDC_PROVIDERS ?? ''
+)
+  .split(',')
+  .map((s: string) => s.trim())
+  .filter(Boolean)
+  .map((id: string) => ({ id, label: id === 'google' ? 'Google' : id === 'azure' ? 'Microsoft' : id }))
+
+function handleOidcLogin(provider: string) {
+  const returnUrl = `${window.location.origin}/auth/callback`
+  window.location.href =
+    `${API_BASE}/auth/external/${provider}/redirect?return_url=${encodeURIComponent(returnUrl)}`
+}
 
 interface LoginPageProps {
   onLogin?: (email: string, password: string) => Promise<void>
@@ -11,7 +30,9 @@ export default function LoginPage({ onLogin, onMfaLogin, requiresMfa }: LoginPag
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [mfaCode, setMfaCode] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [searchParams] = useSearchParams()
+  const oidcError = searchParams.get('error')
+  const [error, setError] = useState<string | null>(oidcError)
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -171,6 +192,28 @@ export default function LoginPage({ onLogin, onMfaLogin, requiresMfa }: LoginPag
               </a>
             </p>
           </form>
+
+          {OIDC_PROVIDERS.length > 0 && (
+            <>
+              <div className="relative flex items-center">
+                <div className="flex-grow border-t border-border" />
+                <span className="mx-3 text-xs text-muted-foreground">or</span>
+                <div className="flex-grow border-t border-border" />
+              </div>
+              <div className="space-y-2">
+                {OIDC_PROVIDERS.map(p => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => handleOidcLogin(p.id)}
+                    className="w-full rounded-xl border border-border bg-background/60 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted/30 transition-colors"
+                  >
+                    Continue with {p.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">

@@ -1,5 +1,8 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import {
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+} from 'recharts'
 import { api, type SecurityEventEntry, type AllSessionEntry } from '../api/client'
 import StatusChip from '../components/ui/StatusChip'
 import type { StatusVariant } from '../components/ui/StatusChip'
@@ -17,6 +20,29 @@ function severityVariant(severity: string): StatusVariant {
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString()
+}
+
+// Build hourly event-count buckets for the last 24 h from a list of events
+function buildTimelineBuckets(events: SecurityEventEntry[]) {
+  const buckets: Record<string, { label: string; Critical: number; High: number; Warning: number; Info: number }> = {}
+
+  const now = Date.now()
+  for (let i = 23; i >= 0; i--) {
+    const d = new Date(now - i * 3_600_000)
+    const key = `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:00`
+    buckets[key] = { label: key, Critical: 0, High: 0, Warning: 0, Info: 0 }
+  }
+
+  for (const ev of events) {
+    const d = new Date(ev.occurredAt)
+    if (now - d.getTime() > 24 * 3_600_000) continue
+    const key = `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:00`
+    if (!buckets[key]) continue
+    const sev = ev.severity as keyof typeof buckets[string]
+    if (sev in buckets[key]) (buckets[key][sev] as number)++
+  }
+
+  return Object.values(buckets)
 }
 
 function EventRow({ event }: { event: SecurityEventEntry }) {
@@ -46,6 +72,7 @@ function SessionRow({ session }: { session: AllSessionEntry }) {
 }
 
 const SEVERITIES = ['', 'Info', 'Warning', 'High', 'Critical']
+const AREA_COLORS = { Critical: '#f87171', High: '#fb923c', Warning: '#facc15', Info: '#38bdf8' }
 
 export default function SecurityCenterPage() {
   const [severity, setSeverity] = useState('')
@@ -71,6 +98,10 @@ export default function SecurityCenterPage() {
   })
 
   const criticalCount = data?.events.filter(e => e.severity === 'Critical').length ?? 0
+  const timelineBuckets = useMemo(
+    () => buildTimelineBuckets(data?.events ?? []),
+    [data],
+  )
 
   return (
     <div className="space-y-5 pb-4">
@@ -104,6 +135,67 @@ export default function SecurityCenterPage() {
               ))}
             </select>
           </div>
+        </div>
+      </div>
+
+      {/* Threat Timeline Chart */}
+      <div className="glass-card p-5">
+        <p className="mb-4 text-sm font-semibold text-foreground">
+          Threat Timeline
+          <span className="ml-2 text-xs font-normal text-muted-foreground">last 24 hours by severity</span>
+        </p>
+        <div style={{ height: 200 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={timelineBuckets} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
+              <defs>
+                {Object.entries(AREA_COLORS).map(([key, color]) => (
+                  <linearGradient key={key} id={`grad-${key}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor={color} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={color} stopOpacity={0}   />
+                  </linearGradient>
+                ))}
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+              <XAxis
+                dataKey="label"
+                tick={{ fontSize: 9, fill: 'var(--color-muted-foreground)' }}
+                tickLine={false} axisLine={false}
+                interval={3}
+              />
+              <YAxis
+                allowDecimals={false}
+                tick={{ fontSize: 9, fill: 'var(--color-muted-foreground)' }}
+                tickLine={false} axisLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: 'var(--glass-bg)', border: '1px solid var(--glass-border)',
+                  borderRadius: 8, fontSize: 11,
+                }}
+                labelStyle={{ color: 'var(--color-foreground)', marginBottom: 4 }}
+              />
+              {Object.entries(AREA_COLORS).map(([key, color]) => (
+                <Area
+                  key={key}
+                  type="monotone"
+                  dataKey={key}
+                  stroke={color}
+                  strokeWidth={1.5}
+                  fill={`url(#grad-${key})`}
+                  dot={false}
+                  activeDot={{ r: 3, fill: color }}
+                />
+              ))}
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-4">
+          {Object.entries(AREA_COLORS).map(([key, color]) => (
+            <span key={key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="inline-block h-2 w-2 rounded-full" style={{ background: color }} />
+              {key}
+            </span>
+          ))}
         </div>
       </div>
 

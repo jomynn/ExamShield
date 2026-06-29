@@ -262,6 +262,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 
 app.MapSetupEndpoints();
 app.MapAuthEndpoints();
+app.MapExternalAuthEndpoints();
 app.MapDeviceEndpoints();
 app.MapCaptureEndpoints();
 app.MapUploadEndpoints();
