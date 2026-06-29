@@ -6,6 +6,7 @@ using ExamShield.Application.Commands.ResolveReviewRequest;
 using ExamShield.Application.Commands.SubmitReviewRequest;
 using ExamShield.Application.Queries.GetAllReviewRequests;
 using ExamShield.Application.Queries.GetReviewRequests;
+using ExamShield.Application.Queries.GetStudentCertificate;
 using ExamShield.Application.Queries.GetStudentResults;
 using ExamShield.Domain.Exceptions;
 using MediatR;
@@ -156,6 +157,30 @@ public static class StudentEndpoints
         .WithTags("Student")
         .RequireAuthorization("Supervisor")
         .Produces(StatusCodes.Status204NoContent)
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
+        app.MapGet("/student/certificate/{captureId:guid}",
+            async (Guid captureId, ISender sender, CancellationToken ct) =>
+            {
+                try
+                {
+                    var result = await sender.Send(new GetStudentCertificateQuery(captureId), ct);
+                    return Results.File(result.PdfBytes, "application/pdf", result.Filename);
+                }
+                catch (KeyNotFoundException ex)
+                {
+                    return Results.NotFound(new { title = ex.Message, status = 404 });
+                }
+                catch (InvalidOperationException ex)
+                {
+                    return Results.UnprocessableEntity(new { title = ex.Message, status = 422 });
+                }
+            })
+        .WithName("GetStudentCertificate")
+        .WithTags("Student")
+        .RequireAuthorization("Student")
+        .Produces(StatusCodes.Status200OK, contentType: "application/pdf")
         .ProducesProblem(StatusCodes.Status404NotFound)
         .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
 

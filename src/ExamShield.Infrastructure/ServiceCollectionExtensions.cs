@@ -2,6 +2,7 @@ using ExamShield.Application.Interfaces;
 using ExamShield.Domain.Interfaces;
 using ExamShield.Infrastructure.Alerts;
 using ExamShield.Infrastructure.Cache;
+using ExamShield.Infrastructure.Certificates;
 using ExamShield.Infrastructure.Health;
 using ExamShield.Infrastructure.HealthChecks;
 using ExamShield.Infrastructure.Messaging;
@@ -121,6 +122,7 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient("Alerts");
         services.AddSingleton<IAlertService, AlertService>();
         services.AddSingleton<IEmailSender, SmtpEmailSender>();
+        services.AddSingleton<IStudentCertificateService, QuestPdfCertificateService>();
         services.AddScoped<IDemoDataSeeder, DemoDataSeeder>();
         services.AddScoped<ISystemHealthService, SystemHealthService>();
 

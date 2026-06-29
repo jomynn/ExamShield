@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { FileDown } from 'lucide-react'
 import { api } from '../api/client'
 
 function pctColor(p: number) {
@@ -36,7 +37,15 @@ export default function StudentPortalPage() {
     if (trimmed) setStudentId(trimmed)
   }
 
-  const handlePrint = () => window.print()
+  const handleDownloadCertificate = async (captureId: string, examName: string) => {
+    const blob = await api.downloadCertificate(captureId)
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `certificate-${examName.replace(/\s+/g, '-')}.pdf`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="p-6 space-y-6 max-w-3xl">
@@ -97,17 +106,9 @@ export default function StudentPortalPage() {
       {/* Results */}
       {data && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">Student ID</p>
-              <p className="font-mono text-sm text-foreground">{data.studentId}</p>
-            </div>
-            <button
-              onClick={handlePrint}
-              className="px-4 py-2 text-sm rounded border border-border text-muted-foreground hover:bg-muted"
-            >
-              Print Certificate
-            </button>
+          <div>
+            <p className="text-xs text-muted-foreground">Student ID</p>
+            <p className="font-mono text-sm text-foreground">{data.studentId}</p>
           </div>
 
           {data.results.length === 0 ? (
@@ -121,7 +122,8 @@ export default function StudentPortalPage() {
                   <th className="py-2 pr-4 text-right">%</th>
                   <th className="py-2 pr-4">Verified</th>
                   <th className="py-2 pr-4">Scored At</th>
-                  <th className="py-2">Hash</th>
+                  <th className="py-2 pr-4">Hash</th>
+                  <th className="py-2" />
                 </tr>
               </thead>
               <tbody>
@@ -144,8 +146,18 @@ export default function StudentPortalPage() {
                     <td className="py-2 pr-4 text-xs text-muted-foreground">
                       {new Date(r.scoredAt).toLocaleDateString()}
                     </td>
-                    <td className="py-2 font-mono text-[10px] text-muted-foreground truncate max-w-[120px]">
+                    <td className="py-2 pr-4 font-mono text-[10px] text-muted-foreground truncate max-w-[120px]">
                       {r.hashHex.substring(0, 16)}…
+                    </td>
+                    <td className="py-2">
+                      <button
+                        title="Download PDF certificate"
+                        onClick={() => handleDownloadCertificate(r.captureId, r.examName)}
+                        className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-cyan-400 hover:bg-cyan-400/10 transition-colors"
+                      >
+                        <FileDown className="h-3 w-3" />
+                        PDF
+                      </button>
                     </td>
                   </tr>
                 ))}

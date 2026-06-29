@@ -32,14 +32,14 @@ public sealed class OcrConfidenceTests
     [Theory]
     [InlineData(0.0)]
     [InlineData(0.5)]
-    [InlineData(0.79)]
+    [InlineData(0.84)]
     public void IsLow_BelowThreshold_ReturnsTrue(double value)
     {
         new OcrConfidence(value).IsLow.Should().BeTrue();
     }
 
     [Theory]
-    [InlineData(0.8)]
+    [InlineData(0.85)]
     [InlineData(0.95)]
     [InlineData(1.0)]
     public void IsLow_AtOrAboveThreshold_ReturnsFalse(double value)

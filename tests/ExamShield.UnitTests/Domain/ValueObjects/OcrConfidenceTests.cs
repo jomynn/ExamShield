@@ -55,8 +55,8 @@ public sealed class OcrConfidenceTests
     }
 
     [Fact]
-    public void LowThreshold_Is0Point8()
+    public void LowThreshold_MatchesSystemSettingsDefault()
     {
-        OcrConfidence.LowThreshold.Should().Be(0.8);
+        OcrConfidence.LowThreshold.Should().Be(0.85);
     }
 }

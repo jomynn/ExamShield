@@ -14,13 +14,14 @@ public sealed class PublicVerifyCaptureQueryHandlerTests
     private readonly ICaptureRepository _captures = Substitute.For<ICaptureRepository>();
     private readonly IDeviceRepository _devices = Substitute.For<IDeviceRepository>();
     private readonly IImageStorage _storage = Substitute.For<IImageStorage>();
+    private readonly IImageEncryptionService _encryption = Substitute.For<IImageEncryptionService>();
     private readonly HashVerificationService _hashService = new();
     private readonly ISignatureVerificationService _sigService = Substitute.For<ISignatureVerificationService>();
     private readonly IWatermarkService _watermark = Substitute.For<IWatermarkService>();
     private readonly PublicVerifyCaptureQueryHandler _sut;
 
     public PublicVerifyCaptureQueryHandlerTests() =>
-        _sut = new(_captures, _devices, _storage, _hashService, _sigService, _watermark);
+        _sut = new(_captures, _devices, _storage, _encryption, _hashService, _sigService, _watermark);
 
     private static Capture MakeCapture(byte[] imageBytes)
     {

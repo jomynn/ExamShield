@@ -2,7 +2,7 @@ namespace ExamShield.Domain.ValueObjects;
 
 public sealed class OcrConfidence : IEquatable<OcrConfidence>
 {
-    public const double LowThreshold = 0.8;
+    public const double LowThreshold = 0.85;
     public double Value { get; }
 
     public OcrConfidence(double value)

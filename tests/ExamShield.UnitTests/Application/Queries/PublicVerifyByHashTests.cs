@@ -12,6 +12,7 @@ public sealed class PublicVerifyByHashTests
     private readonly ICaptureRepository _captures   = Substitute.For<ICaptureRepository>();
     private readonly IDeviceRepository  _devices    = Substitute.For<IDeviceRepository>();
     private readonly IImageStorage      _storage    = Substitute.For<IImageStorage>();
+    private readonly IImageEncryptionService _encryption = Substitute.For<IImageEncryptionService>();
     private readonly HashVerificationService _hash  = new();
     private readonly ISignatureVerificationService _sig = Substitute.For<ISignatureVerificationService>();
     private readonly IWatermarkService  _watermark  = Substitute.For<IWatermarkService>();
@@ -20,7 +21,7 @@ public sealed class PublicVerifyByHashTests
     public PublicVerifyByHashTests()
     {
         _sut = new PublicVerifyCaptureQueryHandler(
-            _captures, _devices, _storage, _hash, _sig, _watermark);
+            _captures, _devices, _storage, _encryption, _hash, _sig, _watermark);
     }
 
     [Fact]

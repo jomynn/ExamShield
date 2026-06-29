@@ -91,6 +91,22 @@ services:
         mc anonymous set none local/$$MINIO_BUCKET
       "
 
+  ocr-service:
+    build:
+      context: ../src/ExamShield.OcrService
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      OCR_NUM_QUESTIONS: ${OCR_NUM_QUESTIONS:-50}
+      OCR_NUM_OPTIONS: ${OCR_NUM_OPTIONS:-5}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8081/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres_data:
   redis_data:

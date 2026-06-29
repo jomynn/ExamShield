@@ -424,6 +424,14 @@ export const api = {
   getStudentResults: (studentId: string) =>
     request<StudentResultsResponse>(`/student/results?studentId=${encodeURIComponent(studentId)}`),
 
+  downloadCertificate: (captureId: string) =>
+    fetch(`${BASE_URL}/student/certificate/${captureId}`, {
+      headers: { ...authHeaders() },
+    }).then(async r => {
+      if (!r.ok) throw new Error(await r.text())
+      return r.blob()
+    }),
+
   getSettings: () => request<SettingsResponse>('/settings/'),
 
   updateSettings: (payload: UpdateSettingsPayload) =>
