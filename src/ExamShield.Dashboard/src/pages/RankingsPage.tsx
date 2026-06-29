@@ -1,8 +1,13 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api, type ExamItem, type RankingEntry, type ExamStatisticsResponse } from '../api/client'
-import { Trophy, Medal, Users, TrendingUp, CheckCircle } from 'lucide-react'
+import { Trophy, Medal, Users, TrendingUp, CheckCircle, BarChart2, PieChart as PieChartIcon } from 'lucide-react'
 import { cn } from '../lib/utils'
+import {
+  ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
+  PieChart, Pie, Legend,
+} from 'recharts'
 
 const RANK_STYLE: Record<number, string> = {
   1: 'text-yellow-400 font-bold',
@@ -16,6 +21,21 @@ const RANK_ICON: Record<number, React.ReactNode> = {
   3: <Medal className="h-4 w-4 text-amber-600" />,
 }
 
+const GRADE_COLORS: Record<string, string> = {
+  A: '#22c55e',
+  B: '#3b82f6',
+  C: '#eab308',
+  D: '#f97316',
+  F: '#ef4444',
+}
+
+function scoreBarColor(pct: number): string {
+  if (pct >= 80) return '#22c55e'
+  if (pct >= 60) return '#3b82f6'
+  if (pct >= 40) return '#eab308'
+  return '#ef4444'
+}
+
 function PercentageBar({ value }: { value: number }) {
   const pct = Math.round(value)
   const color = pct >= 80 ? 'bg-green-500' : pct >= 60 ? 'bg-blue-500' : pct >= 40 ? 'bg-yellow-500' : 'bg-red-500'
@@ -25,6 +45,95 @@ function PercentageBar({ value }: { value: number }) {
         <div className={cn('h-full rounded-full transition-all', color)} style={{ width: `${pct}%` }} />
       </div>
       <span className="text-sm tabular-nums text-foreground">{pct}%</span>
+    </div>
+  )
+}
+
+const CHART_TOOLTIP_STYLE = {
+  background: 'hsl(var(--card))',
+  border: '1px solid hsl(var(--border))',
+  borderRadius: '8px',
+  fontSize: '12px',
+  color: 'hsl(var(--foreground))',
+}
+
+function ScoreDistributionChart({ rows }: { rows: RankingEntry[] }) {
+  const data = rows.map(r => ({
+    label: `#${r.rank}`,
+    score: Math.round(r.percentage),
+    fill: scoreBarColor(r.percentage),
+  }))
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="mb-3 flex items-center gap-2 text-muted-foreground">
+        <BarChart2 className="h-4 w-4" />
+        <span className="text-xs font-medium uppercase tracking-wide">Score by Rank</span>
+      </div>
+      <ResponsiveContainer width="100%" height={200}>
+        <BarChart data={data} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+          <XAxis
+            dataKey="label"
+            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            domain={[0, 100]}
+            tickFormatter={(v: number) => `${v}%`}
+            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip
+            contentStyle={CHART_TOOLTIP_STYLE}
+            formatter={(v: number) => [`${v}%`, 'Score']}
+          />
+          <Bar dataKey="score" radius={[4, 4, 0, 0]} maxBarSize={40}>
+            {data.map((d, i) => <Cell key={i} fill={d.fill} />)}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+function GradeDistributionChart({ distribution }: { distribution: Record<string, number> }) {
+  const data = ['A', 'B', 'C', 'D', 'F']
+    .filter(g => (distribution[g] ?? 0) > 0)
+    .map(g => ({ name: `Grade ${g}`, value: distribution[g] ?? 0, fill: GRADE_COLORS[g] }))
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="mb-3 flex items-center gap-2 text-muted-foreground">
+        <PieChartIcon className="h-4 w-4" />
+        <span className="text-xs font-medium uppercase tracking-wide">Grade Distribution</span>
+      </div>
+      <ResponsiveContainer width="100%" height={200}>
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={52}
+            outerRadius={78}
+            paddingAngle={3}
+            dataKey="value"
+          >
+            {data.map((d, i) => <Cell key={i} fill={d.fill} />)}
+          </Pie>
+          <Tooltip
+            contentStyle={CHART_TOOLTIP_STYLE}
+            formatter={(v: number, name: string) => [v, name]}
+          />
+          <Legend
+            iconType="circle"
+            iconSize={8}
+            wrapperStyle={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))' }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
     </div>
   )
 }
@@ -99,7 +208,7 @@ function StatStrip({ stats }: { stats: ExamStatisticsResponse }) {
       </div>
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="flex items-center gap-2 text-muted-foreground mb-2">
-          <span className="text-xs font-medium">Grade Distribution</span>
+          <span className="text-xs font-medium">Grade Summary</span>
         </div>
         <div className="flex gap-2 flex-wrap">
           {grades.map(g => (
@@ -134,6 +243,8 @@ export default function RankingsPage() {
   })
 
   const selectedExam = examsData?.exams.find((e: ExamItem) => e.examId === selectedExamId)
+  const rankings = rankingsData?.rankings ?? []
+  const hasData = rankings.length > 0
 
   return (
     <div className="space-y-6">
@@ -169,10 +280,18 @@ export default function RankingsPage() {
         ) : (
           <>
             {statsData && statsData.totalStudents > 0 && <StatStrip stats={statsData} />}
-            {rankingsData && rankingsData.rankings.length > 0 && (
+
+            {hasData && statsData && (
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <ScoreDistributionChart rows={rankings} />
+                <GradeDistributionChart distribution={statsData.gradeDistribution} />
+              </div>
+            )}
+
+            {hasData && (
               <div className="grid grid-cols-3 gap-4">
                 {[1, 2, 3].map(medal => {
-                  const entry = rankingsData.rankings.find(r => r.rank === medal)
+                  const entry = rankings.find(r => r.rank === medal)
                   return (
                     <div key={medal} className="rounded-xl border border-border bg-card p-4 text-center">
                       <div className="mb-2 flex justify-center">{RANK_ICON[medal]}</div>
@@ -185,7 +304,7 @@ export default function RankingsPage() {
             )}
 
             <RankingsTable
-              rows={rankingsData?.rankings ?? []}
+              rows={rankings}
               totalQuestions={selectedExam?.totalQuestions ?? 0}
             />
           </>

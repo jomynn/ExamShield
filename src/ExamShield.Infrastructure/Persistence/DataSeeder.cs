@@ -309,7 +309,8 @@ public sealed class DataSeeder(
         await ctx.SaveChangesAsync(ct);
 
         // ── 9. Scores (Math — Closed, published) ─────────────────────────────
-        var mathKey = mathAnswerKey.ToValueObject();
+        var mathKey    = mathAnswerKey.ToValueObject();
+        var physicsKey = physicsAnswerKey.ToValueObject();
 
         var score1 = Score.Create(capM1.Id, mathExam.Id, s1, ansM1, mathKey); score1.Publish(); score1.ClearDomainEvents();
         var score2 = Score.Create(capM2.Id, mathExam.Id, s2, ansM2, mathKey); score2.Publish(); score2.ClearDomainEvents();
@@ -329,9 +330,19 @@ public sealed class DataSeeder(
         var score14 = Score.Create(capM14.Id, mathExam.Id, s14, ans60,  mathKey); score14.Publish(); score14.ClearDomainEvents();
         var score15 = Score.Create(capM15.Id, mathExam.Id, s15, ans50,  mathKey); score15.Publish(); score15.ClearDomainEvents();
 
+        // Physics scores (students 1–3: 100%, 70%, 60%)
+        // Physics key: [1]C,[2]A,[3]D,[4]B,[5]C,[6]A,[7]D,[8]B,[9]C,[10]A
+        var ansPS2 = new List<ExtractedAnswer> { A(1,"C",hi),A(2,"A",hi),A(3,"D",hi),A(4,"B",hi),A(5,"C",hi),A(6,"A",hi),A(7,"A",hi),A(8,"A",hi),A(9,"C",hi),A(10,"C",hi) }; // 70%: Q7,Q8,Q10 wrong
+        var ansPS3 = new List<ExtractedAnswer> { A(1,"C",hi),A(2,"A",hi),A(3,"A",hi),A(4,"B",hi),A(5,"C",hi),A(6,"A",hi),A(7,"A",hi),A(8,"A",hi),A(9,"C",hi),A(10,"C",hi) }; // 60%: Q3,Q7,Q8,Q10 wrong
+
+        var scoreP1 = Score.Create(capP1.Id, physicsExam.Id, s1, ansP1,  physicsKey); scoreP1.Publish(); scoreP1.ClearDomainEvents();
+        var scoreP2 = Score.Create(capP2.Id, physicsExam.Id, s2, ansPS2, physicsKey); scoreP2.Publish(); scoreP2.ClearDomainEvents();
+        var scoreP3 = Score.Create(capP3.Id, physicsExam.Id, s3, ansPS3, physicsKey); scoreP3.Publish(); scoreP3.ClearDomainEvents();
+
         ctx.Scores.AddRange(score1, score2, score3,
                             score4, score5, score6, score7, score8, score9,
-                            score10, score11, score12, score13, score14, score15);
+                            score10, score11, score12, score13, score14, score15,
+                            scoreP1, scoreP2, scoreP3);
         await ctx.SaveChangesAsync(ct);
 
         // ── 10. Audit Logs ────────────────────────────────────────────────────
@@ -386,7 +397,7 @@ public sealed class DataSeeder(
 
         logger.LogInformation(
             "Seed complete: {Users} users, 3 exams, 4 devices, 18 captures, 17 OCR results, " +
-            "2 reviews, 15 scores, {Logs} audit entries, 9 security events, 2 review requests.",
+            "2 reviews, 18 scores (15 math + 3 physics), {Logs} audit entries, 9 security events, 2 review requests.",
             seedUsers.Length, logs.Length);
     }
 
