@@ -9,6 +9,7 @@ vi.mock('../api/client', () => ({
     getReportSummary: vi.fn(),
     getResults: vi.fn(),
     getAuditLog: vi.fn(),
+    getSecurityEvents: vi.fn(),
   },
 }))
 
@@ -39,6 +40,7 @@ beforeEach(() => {
   vi.mocked(apiClient.api.getReportSummary).mockResolvedValue(mockSummary)
   vi.mocked(apiClient.api.getResults).mockResolvedValue(mockResults)
   vi.mocked(apiClient.api.getAuditLog).mockResolvedValue(mockAudit)
+  vi.mocked(apiClient.api.getSecurityEvents).mockResolvedValue({ events: [] })
 })
 
 describe('ReportsPage', () => {

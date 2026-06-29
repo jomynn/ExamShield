@@ -8,24 +8,24 @@ export default function Pagination({ page, totalPages, onPageChange }: Paginatio
   if (totalPages <= 1) return null
 
   return (
-    <div className="flex items-center justify-between px-2 py-3">
-      <p className="text-sm text-muted-foreground">
-        Page {page} of {totalPages}
+    <div className="flex items-center justify-between px-4 py-3" style={{ borderTop: '1px solid var(--glass-border)' }}>
+      <p className="text-xs text-muted-foreground">
+        {`Page ${page} of ${totalPages}`}
       </p>
       <div className="flex gap-2">
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
-          className="rounded border border-border px-3 py-1 text-sm text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+          className="btn-glass text-xs px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          Previous
+          ← Previous
         </button>
         <button
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
-          className="rounded border border-border px-3 py-1 text-sm text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+          className="btn-glass text-xs px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          Next
+          Next →
         </button>
       </div>
     </div>

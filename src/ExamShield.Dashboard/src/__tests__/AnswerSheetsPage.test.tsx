@@ -51,7 +51,7 @@ describe('AnswerSheetsPage', () => {
   it('shows loading state initially', () => {
     vi.mocked(apiClient.api.getCaptures).mockImplementation(() => new Promise(() => {}))
     renderPage()
-    expect(screen.getByText(/loading/i)).toBeInTheDocument()
+    expect(screen.getByRole('status', { name: /loading/i })).toBeInTheDocument()
   })
 
   it('renders a row per capture', async () => {

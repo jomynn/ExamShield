@@ -135,12 +135,12 @@ export default function ExaminationsPage() {
           value={search}
           onChange={e => { setSearch(e.target.value); setPage(1) }}
           placeholder="Search by name…"
-          className="flex-1 rounded border border-[#30363D] bg-[#161B22] px-3 py-1.5 text-sm text-white placeholder-[#8B949E]"
+          className="flex-1 input-glass"
         />
         <select
           value={statusFilter}
           onChange={e => { setStatusFilter(e.target.value); setPage(1) }}
-          className="rounded border border-[#30363D] bg-[#161B22] px-3 py-1.5 text-sm text-white"
+          className="input-glass"
         >
           {EXAM_STATUSES.map(s => (
             <option key={s} value={s}>{s || 'All statuses'}</option>
@@ -151,14 +151,14 @@ export default function ExaminationsPage() {
           title="Scheduled from"
           value={scheduledFrom}
           onChange={e => { setScheduledFrom(e.target.value); setPage(1) }}
-          className="rounded border border-[#30363D] bg-[#161B22] px-3 py-1.5 text-sm text-white"
+          className="input-glass"
         />
         <input
           type="datetime-local"
           title="Scheduled to"
           value={scheduledTo}
           onChange={e => { setScheduledTo(e.target.value); setPage(1) }}
-          className="rounded border border-[#30363D] bg-[#161B22] px-3 py-1.5 text-sm text-white"
+          className="input-glass"
         />
         <button
           onClick={() => api.exportExams(search || undefined, statusFilter || undefined).then(blob => {
@@ -169,14 +169,14 @@ export default function ExaminationsPage() {
             a.click()
             URL.revokeObjectURL(url)
           })}
-          className="px-3 py-1.5 rounded border border-[#30363D] bg-[#161B22] text-sm text-[#8B949E] hover:text-white"
+          className="btn-glass text-xs px-4 py-2"
         >
           Export CSV
         </button>
         {(search || statusFilter) && (
           <button
             onClick={() => { setSearch(''); setStatusFilter(''); setPage(1) }}
-            className="text-sm text-[#8B949E] hover:text-white px-2"
+            className="text-sm text-muted-foreground hover:text-foreground px-2 transition-colors"
           >
             Clear
           </button>

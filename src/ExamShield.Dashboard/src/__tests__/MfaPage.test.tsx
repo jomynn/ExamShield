@@ -66,14 +66,14 @@ describe('MfaPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: /enable mfa/i }))
     const matches = await screen.findAllByText(/JBSWY3DPEHPK3PXP/)
     expect(matches.length).toBeGreaterThan(0)
-    expect(screen.getByPlaceholderText(/6-digit/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/6-digit code/i)).toBeInTheDocument()
   })
 
   it('calls verifyMfa with entered code', async () => {
     renderPage()
     fireEvent.click(await screen.findByRole('button', { name: /enable mfa/i }))
-    await screen.findByPlaceholderText(/6-digit/i)
-    fireEvent.change(screen.getByPlaceholderText(/6-digit/i), { target: { value: '123456' } })
+    await screen.findByPlaceholderText(/6-digit code/i)
+    fireEvent.change(screen.getByPlaceholderText(/6-digit code/i), { target: { value: '123456' } })
     fireEvent.click(screen.getByRole('button', { name: /verify/i }))
     await waitFor(() =>
       expect(apiClient.api.verifyMfa).toHaveBeenCalledWith('123456')
@@ -89,6 +89,6 @@ describe('MfaPage', () => {
   it('shows loading state initially', () => {
     vi.mocked(apiClient.api.getMfaStatus).mockImplementation(() => new Promise(() => {}))
     renderPage()
-    expect(screen.getByText(/loading/i)).toBeInTheDocument()
+    expect(screen.getByRole('status', { name: /loading/i })).toBeInTheDocument()
   })
 })

@@ -21,7 +21,7 @@ function formatDate(iso: string) {
 
 function EventRow({ event }: { event: SecurityEventEntry }) {
   return (
-    <tr className="hover:bg-muted/30 transition-colors">
+    <tr>
       <td className="px-4 py-3 font-medium text-foreground">{event.eventType}</td>
       <td className="px-4 py-3">
         <StatusChip label={event.severity} variant={severityVariant(event.severity)} />
@@ -29,18 +29,18 @@ function EventRow({ event }: { event: SecurityEventEntry }) {
       <td className="px-4 py-3 text-sm text-muted-foreground max-w-xs truncate" title={event.message}>
         {event.message}
       </td>
-      <td className="px-4 py-3 text-sm text-muted-foreground">{event.ipAddress ?? '—'}</td>
-      <td className="px-4 py-3 text-sm text-muted-foreground">{formatDate(event.occurredAt)}</td>
+      <td className="px-4 py-3 text-sm text-muted-foreground font-mono text-xs">{event.ipAddress ?? '—'}</td>
+      <td className="px-4 py-3 text-sm text-muted-foreground text-xs">{formatDate(event.occurredAt)}</td>
     </tr>
   )
 }
 
 function SessionRow({ session }: { session: AllSessionEntry }) {
   return (
-    <tr className="hover:bg-muted/30 transition-colors">
-      <td className="px-4 py-2 font-mono text-xs text-muted-foreground">{session.userId}</td>
-      <td className="px-4 py-2 text-sm text-muted-foreground">{new Date(session.createdAt).toLocaleString()}</td>
-      <td className="px-4 py-2 text-sm text-muted-foreground">{new Date(session.expiresAt).toLocaleString()}</td>
+    <tr>
+      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{session.userId}</td>
+      <td className="px-4 py-3 text-sm text-muted-foreground text-xs">{new Date(session.createdAt).toLocaleString()}</td>
+      <td className="px-4 py-3 text-sm text-muted-foreground text-xs">{new Date(session.expiresAt).toLocaleString()}</td>
     </tr>
   )
 }
@@ -73,44 +73,70 @@ export default function SecurityCenterPage() {
   const criticalCount = data?.events.filter(e => e.severity === 'Critical').length ?? 0
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <ShieldAlert className="h-6 w-6 text-red-500" />
-          <h1 className="text-2xl font-bold text-foreground">Security Center</h1>
-        </div>
-        <div className="flex items-center gap-3">
-          {data && criticalCount > 0 && (
-            <span className="inline-flex items-center rounded-full bg-red-500/15 px-3 py-1 text-sm font-semibold text-red-500">
-              {criticalCount} critical
-            </span>
-          )}
-          <select
-            value={severity}
-            onChange={e => setSeverity(e.target.value)}
-            className="rounded border border-border px-2 py-1 text-xs bg-background text-foreground"
-          >
-            {SEVERITIES.map(s => (
-              <option key={s} value={s}>{s || 'All Severities'}</option>
-            ))}
-          </select>
+    <div className="space-y-5 pb-4">
+      {/* Header */}
+      <div className="glass-card px-6 py-4">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl"
+              style={{ background: 'rgba(248,113,113,0.12)' }}>
+              <ShieldAlert className="h-5 w-5 text-red-400 stroke-[1.75]" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Security Center</h1>
+              <p className="text-sm text-muted-foreground">Real-time threat monitoring</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {data && criticalCount > 0 && (
+              <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
+                style={{ background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }}>
+                {criticalCount} critical
+              </span>
+            )}
+            <select
+              value={severity}
+              onChange={e => setSeverity(e.target.value)}
+              className="input-glass w-36 text-xs py-2"
+            >
+              {SEVERITIES.map(s => (
+                <option key={s} value={s}>{s || 'All Severities'}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
-      {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
-      {isError   && <p className="text-sm text-red-500">Failed to load security events.</p>}
+      {isLoading && (
+        <div role="status" aria-label="Loading" className="glass-card p-12 text-center text-muted-foreground">
+          <div className="inline-block h-5 w-5 rounded-full border-2 border-border border-t-primary animate-spin" />
+        </div>
+      )}
+      {isError && (
+        <div className="glass-card p-4 text-sm text-red-400"
+          style={{ border: '1px solid rgba(239,68,68,0.2)' }}>
+          Failed to load security events.
+        </div>
+      )}
 
+      {/* Security Events */}
       {data && (
-        <div className="overflow-hidden rounded-xl border border-border">
-          <table className="w-full text-sm" data-testid="security-events-table">
-            <thead className="bg-muted/50">
+        <div className="glass-card overflow-hidden">
+          <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--glass-border)' }}>
+            <p className="text-sm font-semibold text-foreground">
+              Security Events
+              <span className="ml-2 text-xs font-normal text-muted-foreground">({data.events.length})</span>
+            </p>
+          </div>
+          <table className="glass-table w-full" data-testid="security-events-table">
+            <thead>
               <tr>
                 {['Event Type', 'Severity', 'Message', 'IP', 'Time'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>
+                  <th key={h}>{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody>
               {data.events.map(event => (
                 <EventRow key={event.id} event={event} />
               ))}
@@ -125,86 +151,91 @@ export default function SecurityCenterPage() {
           </table>
         </div>
       )}
+
+      {/* Active Sessions */}
       {sessionsData && (
-        <div className="space-y-2">
-          <h2 className="text-lg font-semibold text-foreground">
-            Active Sessions ({sessionsData.sessions.length})
-          </h2>
-          <div className="overflow-hidden rounded-xl border border-border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr>
-                  {['User ID', 'Created', 'Expires'].map(h => (
-                    <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {sessionsData.sessions.map(s => <SessionRow key={s.id} session={s} />)}
-                {sessionsData.sessions.length === 0 && (
-                  <tr>
-                    <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">
-                      No active sessions.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+        <div className="glass-card overflow-hidden">
+          <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--glass-border)' }}>
+            <p className="text-sm font-semibold text-foreground">
+              Active Sessions
+              <span className="ml-2 text-xs font-normal text-muted-foreground">({sessionsData.sessions.length})</span>
+            </p>
           </div>
-        </div>
-      )}
-      <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-foreground">Login History</h2>
-          <input
-            type="datetime-local"
-            title="From"
-            value={loginFrom}
-            onChange={e => setLoginFrom(e.target.value)}
-            className="rounded border border-border bg-background px-2 py-1 text-xs text-foreground"
-          />
-          <input
-            type="datetime-local"
-            title="To"
-            value={loginTo}
-            onChange={e => setLoginTo(e.target.value)}
-            className="rounded border border-border bg-background px-2 py-1 text-xs text-foreground"
-          />
-          {(loginFrom || loginTo) && (
-            <button
-              onClick={() => { setLoginFrom(''); setLoginTo('') }}
-              className="text-xs text-muted-foreground hover:text-foreground"
-            >Clear</button>
-          )}
-        </div>
-        <div className="overflow-hidden rounded-xl border border-border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
+          <table className="glass-table w-full">
+            <thead>
               <tr>
-                {['Event', 'User', 'IP', 'Time'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>
+                {['User ID', 'Created', 'Expires'].map(h => (
+                  <th key={h}>{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
-              {(loginData?.events ?? []).map(e => (
-                <tr key={e.id}>
-                  <td className="px-4 py-2">{e.eventType}</td>
-                  <td className="px-4 py-2 text-muted-foreground">{e.userId ?? '—'}</td>
-                  <td className="px-4 py-2 text-muted-foreground">{e.ipAddress ?? '—'}</td>
-                  <td className="px-4 py-2 text-muted-foreground">{new Date(e.occurredAt).toLocaleString()}</td>
-                </tr>
-              ))}
-              {(loginData?.events.length ?? 0) === 0 && (
+            <tbody>
+              {sessionsData.sessions.map(s => <SessionRow key={s.id} session={s} />)}
+              {sessionsData.sessions.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
-                    No login events in range.
+                  <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">
+                    No active sessions.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Login History */}
+      <div className="glass-card overflow-hidden">
+        <div className="flex flex-wrap items-center gap-3 px-4 py-3" style={{ borderBottom: '1px solid var(--glass-border)' }}>
+          <p className="text-sm font-semibold text-foreground">Login History</p>
+          <input
+            type="datetime-local"
+            title="From"
+            value={loginFrom}
+            onChange={e => setLoginFrom(e.target.value)}
+            className="input-glass w-auto text-xs py-1.5"
+          />
+          <input
+            type="datetime-local"
+            title="To"
+            value={loginTo}
+            onChange={e => setLoginTo(e.target.value)}
+            className="input-glass w-auto text-xs py-1.5"
+          />
+          {(loginFrom || loginTo) && (
+            <button
+              onClick={() => { setLoginFrom(''); setLoginTo('') }}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+        <table className="glass-table w-full">
+          <thead>
+            <tr>
+              {['Event', 'User', 'IP', 'Time'].map(h => (
+                <th key={h}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {(loginData?.events ?? []).map(e => (
+              <tr key={e.id}>
+                <td className="text-sm text-foreground">{e.eventType}</td>
+                <td className="text-sm text-muted-foreground font-mono text-xs">{e.userId ?? '—'}</td>
+                <td className="text-sm text-muted-foreground font-mono text-xs">{e.ipAddress ?? '—'}</td>
+                <td className="text-xs text-muted-foreground">{new Date(e.occurredAt).toLocaleString()}</td>
+              </tr>
+            ))}
+            {(loginData?.events.length ?? 0) === 0 && (
+              <tr>
+                <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                  No login events in range.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   )

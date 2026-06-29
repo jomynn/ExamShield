@@ -25,7 +25,8 @@ describe('AppLayout', () => {
 
   it('displays the user name in the top nav', () => {
     renderLayout()
-    expect(screen.getByText('Admin')).toBeInTheDocument()
+    const matches = screen.getAllByText('Admin')
+    expect(matches.length).toBeGreaterThanOrEqual(1)
   })
 
   it('renders sidebar navigation links', () => {

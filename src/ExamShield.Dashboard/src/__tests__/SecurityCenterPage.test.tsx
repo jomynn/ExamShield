@@ -85,6 +85,6 @@ describe('SecurityCenterPage', () => {
   it('shows loading state initially', () => {
     vi.mocked(apiClient.api.getSecurityEvents).mockImplementation(() => new Promise(() => {}))
     renderPage()
-    expect(screen.getByText(/loading/i)).toBeInTheDocument()
+    expect(screen.getByRole('status', { name: /loading/i })).toBeInTheDocument()
   })
 })

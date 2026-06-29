@@ -51,28 +51,32 @@ export default function AnswerSheetsPage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-white">Answer Sheets</h1>
-        {data && (
-          <span className="text-sm text-muted-foreground">
-            {data.totalCount} total
-          </span>
-        )}
+    <div className="space-y-5 pb-4">
+      {/* Header */}
+      <div className="glass-card px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Answer Sheets</h1>
+            {data && (
+              <p className="text-sm text-muted-foreground mt-0.5">{data.totalCount} total captures</p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-3 mb-4">
+      <div className="glass-card p-4">
+        <div className="flex flex-wrap gap-3">
         <input
           value={examIdFilter}
           onChange={e => { setExamIdFilter(e.target.value); handleFilterChange() }}
           placeholder="Filter by Exam ID (UUID)"
-          className="rounded border border-[#30363D] bg-[#161B22] px-3 py-1.5 text-sm text-white placeholder-[#8B949E] w-72"
+          className="input-glass w-72"
         />
         <select
           value={statusFilter}
           onChange={e => { setStatusFilter(e.target.value); handleFilterChange() }}
-          className="rounded border border-[#30363D] bg-[#161B22] px-3 py-1.5 text-sm text-white"
+          className="input-glass w-40"
         >
           {STATUSES.map(s => (
             <option key={s} value={s}>{s || 'All statuses'}</option>
@@ -82,18 +86,18 @@ export default function AnswerSheetsPage() {
           value={deviceIdFilter}
           onChange={e => { setDeviceIdFilter(e.target.value); handleFilterChange() }}
           placeholder="Filter by Device ID (UUID)"
-          className="rounded border border-[#30363D] bg-[#161B22] px-3 py-1.5 text-sm text-white placeholder-[#8B949E] w-64"
+          className="input-glass w-56"
         />
         <input
           value={studentIdFilter}
           onChange={e => { setStudentIdFilter(e.target.value); handleFilterChange() }}
           placeholder="Filter by Student ID (UUID)"
-          className="rounded border border-[#30363D] bg-[#161B22] px-3 py-1.5 text-sm text-white placeholder-[#8B949E] w-64"
+          className="input-glass w-56"
         />
         {(examIdFilter || statusFilter || deviceIdFilter || studentIdFilter) && (
           <button
             onClick={() => { setExamIdFilter(''); setStatusFilter(''); setDeviceIdFilter(''); setStudentIdFilter(''); setPage(1) }}
-            className="text-sm text-[#8B949E] hover:text-white px-2"
+            className="text-sm text-muted-foreground hover:text-foreground px-2 transition-colors"
           >
             Clear
           </button>
@@ -108,19 +112,20 @@ export default function AnswerSheetsPage() {
               a.click()
               URL.revokeObjectURL(url)
             })}
-          className="ml-auto px-3 py-1.5 rounded border border-[#30363D] text-sm text-[#8B949E] hover:text-white hover:border-[#58A6FF]"
+          className="btn-glass ml-auto text-xs px-4 py-2"
         >
           Export CSV
         </button>
+        </div>
       </div>
 
       {viewingId && (
-        <div className="mb-6">
+        <div className="glass-card p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[#8B949E] text-sm font-mono">{viewingId}</span>
+            <span className="text-muted-foreground text-sm font-mono">{viewingId}</span>
             <button
               onClick={() => setViewingId(null)}
-              className="text-[#8B949E] hover:text-white text-sm px-3 py-1 rounded border border-[#30363D] hover:border-[#8B949E]"
+              className="btn-glass text-xs px-3 py-1.5"
             >
               Close
             </button>
@@ -132,54 +137,55 @@ export default function AnswerSheetsPage() {
         </div>
       )}
 
-      {isLoading && <div className="p-8 text-center text-[#8B949E]">Loading...</div>}
+      {isLoading && (
+        <div role="status" aria-label="Loading" className="glass-card p-12 text-center text-muted-foreground">
+          <div className="inline-block h-5 w-5 rounded-full border-2 border-border border-t-primary animate-spin" />
+        </div>
+      )}
 
       {!isLoading && (
-        <div className="bg-[#161B22] rounded-xl border border-[#30363D] overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="glass-card overflow-hidden">
+          <table className="glass-table w-full">
             <thead>
-              <tr className="border-b border-[#30363D] text-[#8B949E] text-left">
-                <th className="px-4 py-3">Capture ID</th>
-                <th className="px-4 py-3">Student ID</th>
-                <th className="px-4 py-3">Exam ID</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Captured At</th>
-                <th className="px-4 py-3">Image</th>
+              <tr>
+                <th>Capture ID</th>
+                <th>Student ID</th>
+                <th>Exam ID</th>
+                <th>Status</th>
+                <th>Captured At</th>
+                <th>Image</th>
               </tr>
             </thead>
             <tbody>
               {(data?.captures ?? []).map(c => (
-                <tr
-                  key={c.captureId}
-                  className="border-b border-[#21262D] hover:bg-[#21262D]/50"
-                >
-                  <td className="px-4 py-3 font-mono text-xs text-[#8B949E]">
+                <tr key={c.captureId}>
+                  <td className="font-mono text-xs text-muted-foreground">
                     {c.captureId.slice(0, 8)}…
                   </td>
-                  <td className="px-4 py-3 text-white font-mono text-xs">{c.studentId}</td>
-                  <td className="px-4 py-3 text-[#8B949E] font-mono text-xs">
+                  <td className="font-mono text-xs text-foreground">{c.studentId}</td>
+                  <td className="font-mono text-xs text-muted-foreground">
                     {c.examId.slice(0, 8)}…
                   </td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${STATUS_COLORS[c.status] ?? 'text-gray-400 bg-gray-900/30'}`}>
+                  <td>
+                    <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${STATUS_COLORS[c.status] ?? 'text-muted-foreground bg-muted'}`}>
                       {c.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-[#8B949E] text-xs">
+                  <td className="text-xs text-muted-foreground">
                     {new Date(c.capturedAt).toLocaleString()}
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <div className="flex gap-2">
                       {c.storageKey && canViewImage && (
                         <button
                           onClick={() => setViewingId(viewingId === c.captureId ? null : c.captureId)}
-                          className="text-xs px-2 py-1 bg-[#21262D] hover:bg-[#30363D] text-[#00BFFF] rounded"
+                          className="text-xs px-2.5 py-1 rounded-lg text-primary transition-colors hover:bg-primary/10"
                         >
                           View Image
                         </button>
                       )}
                       {c.storageKey && !canViewImage && (
-                        <span className="text-xs px-2 py-1 text-[#8B949E] flex items-center gap-1 select-none" title="Your role does not permit viewing answer sheet images">
+                        <span className="text-xs px-2 py-1 text-muted-foreground flex items-center gap-1 select-none" title="Your role does not permit viewing answer sheet images">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                             <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                           </svg>
@@ -188,7 +194,7 @@ export default function AnswerSheetsPage() {
                       )}
                       <button
                         onClick={() => setChainId(chainId === c.captureId ? null : c.captureId)}
-                        className="text-xs px-2 py-1 bg-[#21262D] hover:bg-[#30363D] text-purple-400 rounded"
+                        className="text-xs px-2.5 py-1 rounded-lg text-violet-400 transition-colors hover:bg-violet-500/10"
                       >
                         Chain
                       </button>
@@ -200,7 +206,7 @@ export default function AnswerSheetsPage() {
           </table>
 
           {(data?.captures ?? []).length === 0 && (
-            <div className="p-8 text-center text-[#8B949E]">No answer sheets match the current filters.</div>
+            <div className="p-8 text-center text-muted-foreground">No answer sheets match the current filters.</div>
           )}
 
           <Pagination
@@ -213,10 +219,10 @@ export default function AnswerSheetsPage() {
 
       {/* Chain of Custody panel */}
       {chainId && (
-        <div className="mt-6 rounded-lg border border-purple-800/40 bg-[#161B22] p-5">
+        <div className="glass-card p-5" style={{ borderColor: 'rgba(167,139,250,0.3)' }}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-purple-300">Chain of Custody</h2>
-            <button onClick={() => setChainId(null)} className="text-xs text-muted-foreground hover:text-white">✕ Close</button>
+            <h2 className="text-sm font-semibold text-violet-400">Chain of Custody</h2>
+            <button onClick={() => setChainId(null)} className="text-xs text-muted-foreground hover:text-foreground transition-colors">✕ Close</button>
           </div>
           {chainLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
           {chain && (
