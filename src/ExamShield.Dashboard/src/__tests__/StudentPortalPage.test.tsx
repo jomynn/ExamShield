@@ -9,6 +9,7 @@ vi.mock('../api/client', () => ({
   api: {
     getStudentResults: vi.fn(),
     submitReviewRequest: vi.fn(),
+    downloadCertificate: vi.fn().mockResolvedValue(new Blob(['%PDF'], { type: 'application/pdf' })),
   },
 }))
 
@@ -146,10 +147,12 @@ describe('StudentPortalPage — lookup', () => {
     expect(screen.getByText(/abc123def456/i)).toBeInTheDocument()
   })
 
-  it('shows Print Certificate button after results load', async () => {
+  it('shows PDF download button after results load', async () => {
     renderPage()
     lookUp()
-    expect(await screen.findByRole('button', { name: /print/i })).toBeInTheDocument()
+    // Button renders text "PDF" with a FileDown icon; title="Download PDF certificate"
+    const btns = await screen.findAllByRole('button', { name: /pdf/i })
+    expect(btns.length).toBeGreaterThanOrEqual(1)
   })
 
   it('shows student ID in results section', async () => {
