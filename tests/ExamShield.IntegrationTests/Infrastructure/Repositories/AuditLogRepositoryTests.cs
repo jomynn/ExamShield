@@ -4,6 +4,7 @@ using ExamShield.Domain.ValueObjects;
 using ExamShield.Infrastructure.Persistence;
 using ExamShield.Infrastructure.Persistence.Repositories;
 using ExamShield.Infrastructure.Security;
+using ExamShield.Infrastructure.Storage;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +28,7 @@ public sealed class AuditLogRepositoryTests : IAsyncLifetime
 
         _context = new ExamShieldDbContext(options);
         await _context.Database.EnsureCreatedAsync();
-        _sut = new AuditLogRepository(_context, new EcdsaServerSigningService(null));
+        _sut = new AuditLogRepository(_context, new EcdsaServerSigningService(null), new NullAuditLogArchiveService());
     }
 
     public async Task DisposeAsync()

@@ -20,19 +20,20 @@ public sealed class MinioBucketInitializerTests
         new(_client, _options, NullLogger<MinioBucketInitializer>.Instance);
 
     [Fact]
-    public async Task StartAsync_WhenBucketDoesNotExist_CreatesBucket()
+    public async Task StartAsync_WhenBothBucketsDoNotExist_CreatesBoth()
     {
         _client.BucketExistsAsync(Arg.Any<BucketExistsArgs>(), Arg.Any<CancellationToken>())
             .Returns(false);
 
         await BuildSut().StartAsync(default);
 
-        await _client.Received(1).MakeBucketAsync(
+        // Image bucket + audit bucket = 2 creates.
+        await _client.Received(2).MakeBucketAsync(
             Arg.Any<MakeBucketArgs>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task StartAsync_WhenBucketExists_SkipsCreation()
+    public async Task StartAsync_WhenBothBucketsExist_SkipsCreation()
     {
         _client.BucketExistsAsync(Arg.Any<BucketExistsArgs>(), Arg.Any<CancellationToken>())
             .Returns(true);
@@ -44,14 +45,15 @@ public sealed class MinioBucketInitializerTests
     }
 
     [Fact]
-    public async Task StartAsync_AlwaysChecksBucketExistence()
+    public async Task StartAsync_ChecksExistenceForBothBuckets()
     {
         _client.BucketExistsAsync(Arg.Any<BucketExistsArgs>(), Arg.Any<CancellationToken>())
             .Returns(true);
 
         await BuildSut().StartAsync(default);
 
-        await _client.Received(1).BucketExistsAsync(
+        // Image bucket + audit bucket = 2 existence checks.
+        await _client.Received(2).BucketExistsAsync(
             Arg.Any<BucketExistsArgs>(),
             Arg.Any<CancellationToken>());
     }

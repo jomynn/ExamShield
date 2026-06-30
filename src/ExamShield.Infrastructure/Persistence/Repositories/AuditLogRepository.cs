@@ -1,3 +1,4 @@
+using ExamShield.Application.Interfaces;
 using ExamShield.Domain.Entities;
 using ExamShield.Domain.Enums;
 using ExamShield.Domain.Interfaces;
@@ -7,7 +8,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ExamShield.Infrastructure.Persistence.Repositories;
 
-public sealed class AuditLogRepository(ExamShieldDbContext context, IServerSigningService signer) : IAuditLogRepository
+public sealed class AuditLogRepository(
+    ExamShieldDbContext context,
+    IServerSigningService signer,
+    IAuditLogArchiveService archive) : IAuditLogRepository
 {
     public async Task AppendAsync(AuditLog entry, CancellationToken ct = default)
     {
@@ -27,6 +31,9 @@ public sealed class AuditLogRepository(ExamShieldDbContext context, IServerSigni
 
         await context.AuditLogs.AddAsync(entry, ct);
         await context.SaveChangesAsync(ct);
+
+        // Best-effort off-cluster replica — exceptions are swallowed inside ArchiveAsync.
+        await archive.ArchiveAsync(entry, ct);
     }
 
     public async Task<(IReadOnlyList<AuditLog> Entries, int TotalCount)> QueryAsync(

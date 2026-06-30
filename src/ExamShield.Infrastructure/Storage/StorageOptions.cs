@@ -8,6 +8,7 @@ public sealed class StorageOptions
     public string AccessKey { get; init; } = string.Empty;
     public string SecretKey { get; init; } = string.Empty;
     public string BucketName { get; init; } = "examshield";
+    public string AuditBucketName { get; init; } = "examshield-audit";
     public bool UseSSL { get; init; } = false;
 
     // AWS S3 / Azure Blob

@@ -48,6 +48,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         var storageOptions = configuration.GetSection(StorageOptions.Section).Get<StorageOptions>() ?? new StorageOptions();
         services.AddSingleton(storageOptions);
+        IAuditLogArchiveService auditArchive = new NullAuditLogArchiveService();
         if (storageOptions.Type == "MinIO")
         {
             var minioClient = new MinioClient()
@@ -59,22 +60,29 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<IObjectStore>(new MinioObjectStore(minioClient, storageOptions.BucketName, storageOptions));
             services.AddSingleton<IImageStorage, MinioImageStorage>();
             services.AddHostedService<MinioBucketInitializer>();
+            auditArchive = new ObjectStoreAuditLogArchiveService(
+                new MinioObjectStore(minioClient, storageOptions.AuditBucketName, storageOptions));
         }
         else if (storageOptions.Type == "S3")
         {
             var s3 = new AmazonS3Client(RegionEndpoint.GetBySystemName(storageOptions.Region));
             services.AddSingleton<IAmazonS3>(s3);
             services.AddSingleton<IImageStorage>(new S3ImageStorage(s3, storageOptions));
+            auditArchive = new ObjectStoreAuditLogArchiveService(
+                new S3ObjectStore(s3, storageOptions.AuditBucketName, storageOptions));
         }
         else if (storageOptions.Type == "AzureBlob")
         {
             var container = new BlobContainerClient(storageOptions.BlobConnectionString, storageOptions.BucketName);
             services.AddSingleton<IImageStorage>(new AzureBlobImageStorage(container));
+            // Azure archive: NullAuditLogArchiveService (Azure Blob object-store adapter pending).
         }
         else
         {
             services.AddSingleton<IImageStorage, InMemoryImageStorage>();
+            // InMemory: NullAuditLogArchiveService (test / local dev without MinIO).
         }
+        services.AddSingleton<IAuditLogArchiveService>(auditArchive);
         var ocrOptions = configuration.GetSection(OcrOptions.Section).Get<OcrOptions>() ?? new OcrOptions();
         if (ocrOptions.Type == "Http")
         {
