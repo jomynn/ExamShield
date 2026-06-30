@@ -110,7 +110,11 @@ jobs:
 
       - name: Install dependencies
         working-directory: src/ExamShield.OcrService
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-dev.txt
+
+      - name: Run unit tests
+        working-directory: src/ExamShield.OcrService
+        run: python -m pytest tests/ -v --tb=short
 
       - name: Smoke-test OCR service startup
         working-directory: src/ExamShield.OcrService
