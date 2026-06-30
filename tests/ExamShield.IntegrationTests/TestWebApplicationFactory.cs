@@ -127,6 +127,10 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<IWatermarkService>();
             services.AddSingleton<IWatermarkService, NullWatermarkService>();
 
+            // Bypass QR stamp — same reason as watermark above.
+            services.RemoveAll<IQrStampService>();
+            services.AddSingleton<IQrStampService, NullQrStampService>();
+
             // Swap real SMTP email sender for a no-op (no SMTP server in CI).
             services.RemoveAll<IEmailSender>();
             services.AddSingleton<IEmailSender, NullEmailSender>();

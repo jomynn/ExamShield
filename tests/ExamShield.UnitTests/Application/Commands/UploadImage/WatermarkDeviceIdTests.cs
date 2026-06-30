@@ -22,7 +22,10 @@ public sealed class WatermarkDeviceIdTests
     {
         var encryption = Substitute.For<IImageEncryptionService>();
         encryption.Encrypt(Arg.Any<byte[]>()).Returns(c => (c.Arg<byte[]>(), Array.Empty<byte>()));
-        return new(_captures, new HashVerificationService(), _storage, _auditLog, _watermark, _security, encryption);
+        var qrStamp = Substitute.For<IQrStampService>();
+        qrStamp.Stamp(Arg.Any<byte[]>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<string>())
+            .Returns(c => c.ArgAt<byte[]>(0));
+        return new(_captures, new HashVerificationService(), _storage, _auditLog, _watermark, _security, encryption, qrStamp);
     }
 
     [Fact]

@@ -107,6 +107,7 @@ public static class ServiceCollectionExtensions
         // for backward compatibility with captured images stored before the upgrade.
         services.AddSingleton<IWatermarkService, LsbSteganographyService>();
         services.AddSingleton(new HmacWatermarkService(hmacKey));
+        services.AddSingleton<IQrStampService, QrStampService>();
 
         // Key Management Service — config-based in dev, swap for Vault/KMS/AKV in production.
         var kmsType = configuration["Kms:Type"] ?? "Config";

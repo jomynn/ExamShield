@@ -21,6 +21,7 @@ public sealed class UploadImageCommandHandlerTests
     private readonly IWatermarkService _watermarkService = Substitute.For<IWatermarkService>();
     private readonly ISecurityEventRepository _securityEvents = Substitute.For<ISecurityEventRepository>();
     private readonly IImageEncryptionService _encryption = Substitute.For<IImageEncryptionService>();
+    private readonly IQrStampService _qrStamp = Substitute.For<IQrStampService>();
     private readonly HashVerificationService _hashService = new();
     private readonly UploadImageCommandHandler _sut;
 
@@ -34,12 +35,15 @@ public sealed class UploadImageCommandHandlerTests
     {
         _watermarkService.Embed(Arg.Any<byte[]>(), Arg.Any<WatermarkPayload>())
             .Returns(WatermarkedImage);
+        _qrStamp.Stamp(Arg.Any<byte[]>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<string>())
+            .Returns(c => c.ArgAt<byte[]>(0));  // pass-through
         _encryption.Encrypt(WatermarkedImage).Returns((EncryptedImage, EncryptedDek));
         _imageStorage.StoreAsync(Arg.Any<Guid>(), Arg.Any<byte[]>(), Arg.Any<CancellationToken>())
             .Returns("captures/test-key");
 
         _sut = new UploadImageCommandHandler(
-            _repository, _hashService, _imageStorage, _auditLog, _watermarkService, _securityEvents, _encryption);
+            _repository, _hashService, _imageStorage, _auditLog, _watermarkService, _securityEvents,
+            _encryption, _qrStamp);
     }
 
     private Capture CaptureWithSampleHash()

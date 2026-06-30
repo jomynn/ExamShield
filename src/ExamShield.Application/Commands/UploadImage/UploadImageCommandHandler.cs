@@ -18,6 +18,7 @@ public sealed class UploadImageCommandHandler : IRequestHandler<UploadImageComma
     private readonly IWatermarkService _watermarkService;
     private readonly ISecurityEventRepository _securityEvents;
     private readonly IImageEncryptionService _encryption;
+    private readonly IQrStampService _qrStamp;
 
     public UploadImageCommandHandler(
         ICaptureRepository repository,
@@ -26,7 +27,8 @@ public sealed class UploadImageCommandHandler : IRequestHandler<UploadImageComma
         IAuditLogRepository auditLog,
         IWatermarkService watermarkService,
         ISecurityEventRepository securityEvents,
-        IImageEncryptionService encryption)
+        IImageEncryptionService encryption,
+        IQrStampService qrStamp)
     {
         _repository = repository;
         _hashService = hashService;
@@ -35,6 +37,7 @@ public sealed class UploadImageCommandHandler : IRequestHandler<UploadImageComma
         _watermarkService = watermarkService;
         _securityEvents = securityEvents;
         _encryption = encryption;
+        _qrStamp = qrStamp;
     }
 
     public async Task<UploadImageResult> Handle(UploadImageCommand command, CancellationToken ct)
@@ -77,7 +80,16 @@ public sealed class UploadImageCommandHandler : IRequestHandler<UploadImageComma
         };
         var watermarkedBytes = _watermarkService.Embed(command.ImageBytes, payload);
 
-        var (ciphertext, encryptedDek) = _encryption.Encrypt(watermarkedBytes);
+        // Overlay a visible QR code so any examiner can scan the paper copy and
+        // verify provenance on the spot. Applied after hash verification and LSB
+        // watermark embedding — the stored hash always refers to the raw capture.
+        var stampedBytes = _qrStamp.Stamp(
+            watermarkedBytes,
+            capture.Id.Value,
+            capture.ExamId.Value,
+            capture.ExpectedHash.Hex);
+
+        var (ciphertext, encryptedDek) = _encryption.Encrypt(stampedBytes);
         var storageKey = await _imageStorage.StoreAsync(command.CaptureId, ciphertext, ct);
 
         capture.RecordUpload(storageKey, encryptedDek);
