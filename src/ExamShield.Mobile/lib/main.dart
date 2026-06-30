@@ -7,14 +7,16 @@ import 'domain/services/device_registration_service.dart';
 import 'domain/services/sync_service.dart';
 import 'infrastructure/api/api_client.dart';
 import 'infrastructure/queue/sqlite_offline_queue.dart';
+import 'infrastructure/security/network_security.dart';
 import 'infrastructure/storage/secure_storage.dart';
 import 'ui/screens/login_screen.dart';
 import 'ui/screens/main_screen.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   const baseUrl = String.fromEnvironment('API_URL', defaultValue: 'http://10.0.2.2:5083');
-  final api = ApiClient(baseUrl: baseUrl);
+  final httpClient = await NetworkSecurity.createHttpClient();
+  final api = ApiClient(baseUrl: baseUrl, httpClient: httpClient);
   const secureStorage = SecureStorage();
   final authService = AuthService(api: api, storage: secureStorage);
   final crypto = CryptoService();
