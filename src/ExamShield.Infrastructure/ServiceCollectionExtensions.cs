@@ -75,7 +75,8 @@ public static class ServiceCollectionExtensions
         {
             var container = new BlobContainerClient(storageOptions.BlobConnectionString, storageOptions.BucketName);
             services.AddSingleton<IImageStorage>(new AzureBlobImageStorage(container));
-            // Azure archive: NullAuditLogArchiveService (Azure Blob object-store adapter pending).
+            var auditContainer = new BlobContainerClient(storageOptions.BlobConnectionString, storageOptions.AuditBucketName);
+            auditArchive = new ObjectStoreAuditLogArchiveService(new AzureBlobObjectStore(auditContainer));
         }
         else
         {
