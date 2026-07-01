@@ -170,10 +170,93 @@ describe('SettingsPage — notification channels', () => {
     expect(await screen.findByText(/test alert sent successfully/i)).toBeInTheDocument()
   })
 
-  it('shows failure message when test alert fails', async () => {
+  it('shows failure message when test alert returns sent=false', async () => {
     vi.mocked(apiClient.api.testAlert).mockResolvedValue({ sent: false, error: 'SMTP unreachable' })
     renderPage()
     fireEvent.click(await screen.findByRole('button', { name: /send test alert/i }))
     expect(await screen.findByText(/smtp unreachable/i)).toBeInTheDocument()
+  })
+
+  it('shows failure message when test alert request rejects', async () => {
+    vi.mocked(apiClient.api.testAlert).mockRejectedValue(new Error('network error'))
+    renderPage()
+    fireEvent.click(await screen.findByRole('button', { name: /send test alert/i }))
+    expect(await screen.findByText(/request failed/i)).toBeInTheDocument()
+  })
+
+  it('shows LINE Notify token field when LINE Notify is toggled on', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText(/alert channels/i)
+    await user.click(screen.getByLabelText(/line notify/i))
+    expect(await screen.findByPlaceholderText(/LINE Notify access token/i)).toBeInTheDocument()
+  })
+
+  it('shows Generic Webhook URL field when Generic Webhook is toggled on', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText(/alert channels/i)
+    await user.click(screen.getByLabelText(/generic webhook/i))
+    expect(await screen.findByPlaceholderText(/your-service\.example\.com/i)).toBeInTheDocument()
+  })
+
+  it('typing in email recipients field updates the value', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText(/alert channels/i)
+    await user.click(screen.getByLabelText(/email/i))
+    const recipientsInput = await screen.findByPlaceholderText(/ops@example\.com/i)
+    await user.type(recipientsInput, 'sec@example.com')
+    expect(recipientsInput).toHaveValue('sec@example.com')
+  })
+})
+
+describe('SettingsPage — form field interactions', () => {
+  it('OCR confidence slider change updates displayed percentage', async () => {
+    renderPage()
+    const slider = await screen.findByLabelText(/ocr confidence threshold/i)
+    fireEvent.change(slider, { target: { value: '0.70' } })
+    expect(screen.getByText('70%')).toBeInTheDocument()
+  })
+
+  it('notifications enabled checkbox can be toggled off', async () => {
+    renderPage()
+    const checkbox = await screen.findByLabelText(/notifications enabled/i)
+    expect(checkbox).toBeChecked()
+    fireEvent.click(checkbox)
+    expect(checkbox).not.toBeChecked()
+  })
+
+  it('notification severity select can be changed', async () => {
+    renderPage()
+    const select = await screen.findByLabelText(/notification severity/i)
+    fireEvent.change(select, { target: { value: 'Critical' } })
+    expect(select).toHaveValue('Critical')
+  })
+
+  it('access token expiry field can be changed', async () => {
+    renderPage()
+    const input = await screen.findByLabelText(/access token expiry/i)
+    fireEvent.change(input, { target: { value: '30' } })
+    expect(input).toHaveValue(30)
+  })
+
+  it('refresh token expiry field can be changed', async () => {
+    renderPage()
+    const input = await screen.findByLabelText(/refresh token expiry/i)
+    fireEvent.change(input, { target: { value: '14' } })
+    expect(input).toHaveValue(14)
+  })
+
+  it('updated values are submitted when Save Settings is clicked', async () => {
+    renderPage()
+    const input = await screen.findByLabelText(/access token expiry/i)
+    fireEvent.change(input, { target: { value: '30' } })
+    fireEvent.click(screen.getByRole('button', { name: /save settings/i }))
+    await waitFor(() =>
+      expect(apiClient.api.updateSettings).toHaveBeenCalledWith(
+        expect.objectContaining({ accessTokenExpiryMinutes: 30 })
+      )
+    )
   })
 })
