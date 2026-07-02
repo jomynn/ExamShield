@@ -209,6 +209,46 @@ describe('SettingsPage — notification channels', () => {
     await user.type(recipientsInput, 'sec@example.com')
     expect(recipientsInput).toHaveValue('sec@example.com')
   })
+
+  it('typing in Slack webhook URL field updates the value', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText(/alert channels/i)
+    await user.click(screen.getByLabelText(/slack/i))
+    const input = await screen.findByPlaceholderText(/hooks\.slack\.com/i)
+    await user.type(input, 'https://hooks.slack.com/services/T1/B1/x')
+    expect(input).toHaveValue('https://hooks.slack.com/services/T1/B1/x')
+  })
+
+  it('typing in LINE Notify token field updates the value', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText(/alert channels/i)
+    await user.click(screen.getByLabelText(/line notify/i))
+    const input = await screen.findByPlaceholderText(/LINE Notify access token/i)
+    await user.type(input, 'my-line-token')
+    expect(input).toHaveValue('my-line-token')
+  })
+
+  it('typing in Generic Webhook URL field updates the value', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText(/alert channels/i)
+    await user.click(screen.getByLabelText(/generic webhook/i))
+    const input = await screen.findByPlaceholderText(/your-service\.example\.com/i)
+    await user.type(input, 'https://example.com/notify')
+    expect(input).toHaveValue('https://example.com/notify')
+  })
+
+  it('shows error message when saving notification channels fails', async () => {
+    vi.mocked(apiClient.api.updateNotificationChannelSettings).mockRejectedValue(
+      new Error('Network failure')
+    )
+    renderPage()
+    await screen.findByRole('button', { name: /save channels/i })
+    fireEvent.click(screen.getByRole('button', { name: /save channels/i }))
+    expect(await screen.findByText(/failed to save notification settings/i)).toBeInTheDocument()
+  })
 })
 
 describe('SettingsPage — form field interactions', () => {

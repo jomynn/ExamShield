@@ -85,25 +85,6 @@ function ChartCard({
   )
 }
 
-// ── Severity badge ────────────────────────────────────────────────────────────
-function SeverityBadge({ severity }: { severity: string }) {
-  const map: Record<string, { bg: string; color: string }> = {
-    Critical: { bg: 'rgba(239,68,68,0.15)',   color: '#f87171' },
-    High:     { bg: 'rgba(251,146,60,0.15)',   color: '#fb923c' },
-    Warning:  { bg: 'rgba(250,204,21,0.15)',   color: '#facc15' },
-    Info:     { bg: 'rgba(34,211,238,0.15)',   color: '#22d3ee' },
-  }
-  const s = map[severity] ?? { bg: 'rgba(148,163,184,0.15)', color: '#94a3b8' }
-  return (
-    <span
-      className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-      style={{ background: s.bg, color: s.color, border: `1px solid ${s.color}22` }}
-    >
-      {severity}
-    </span>
-  )
-}
-
 // ── Action icon ───────────────────────────────────────────────────────────────
 function ActionIcon({ action }: { action: string }) {
   const iconMap: Record<string, { icon: React.ElementType; color: string }> = {

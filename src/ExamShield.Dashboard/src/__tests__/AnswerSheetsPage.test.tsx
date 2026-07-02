@@ -403,6 +403,22 @@ describe('AnswerSheetsPage — flag as tampered', () => {
     )
   })
 
+  it('shows error message when flagTampered mutation fails', async () => {
+    mockFlagMutate.mockImplementation(
+      (_vars: unknown, callbacks?: { onError?: () => void }) => callbacks?.onError?.()
+    )
+    vi.mocked(useChainOfCustody).mockReturnValue({ data: CHAIN_DATA, isLoading: false } as ReturnType<typeof useChainOfCustody>)
+    renderPage()
+    await screen.findByText(/stu-1/)
+    fireEvent.click(screen.getAllByRole('button', { name: /^chain$/i })[0])
+    await screen.findByText(/flag as tampered/i)
+    fireEvent.change(screen.getByPlaceholderText(/reason for flagging/i), {
+      target: { value: 'Suspicious pixel change' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /^flag$/i }))
+    expect(await screen.findByText(/failed — capture may already be tampered/i)).toBeInTheDocument()
+  })
+
   it('hides flag form when capture is already Tampered', async () => {
     vi.mocked(useChainOfCustody).mockReturnValue({
       data: { ...CHAIN_DATA, status: 'Tampered' },

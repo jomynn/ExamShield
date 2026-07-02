@@ -99,4 +99,30 @@ describe('PipelineDemoPage — controls', () => {
     const hashHeading = Array.from(h2s).find(el => el.textContent === 'Hash')
     expect(hashHeading).toBeTruthy()
   })
+
+  it('clicking Simulate Tamper toggles tamper mode on', () => {
+    renderPage()
+    fireEvent.click(screen.getByRole('button', { name: /simulate tamper/i }))
+    expect(screen.getByRole('button', { name: /tamper mode on/i })).toBeInTheDocument()
+  })
+
+  it('shows security alert when tamper mode is active and Hash stage fires', () => {
+    renderPage()
+    fireEvent.click(screen.getByRole('button', { name: /simulate tamper/i }))
+    fireEvent.click(screen.getByRole('button', { name: /run simulation/i }))
+    act(() => {
+      // Advance past stage 0 (Capture, 1200ms) + stage 1 (Hash, 600ms) → tamper triggers
+      vi.advanceTimersByTime(2000)
+    })
+    expect(screen.getByText(/hash mismatch detected/i)).toBeInTheDocument()
+  })
+
+  it('simulation returns to stopped state after all stages complete', () => {
+    renderPage()
+    fireEvent.click(screen.getByRole('button', { name: /run simulation/i }))
+    act(() => {
+      vi.advanceTimersByTime(15000) // total pipeline ~12300ms; advance past all 11 stages
+    })
+    expect(screen.getByRole('button', { name: /run simulation/i })).toBeInTheDocument()
+  })
 })

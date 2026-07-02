@@ -1,7 +1,7 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import LoginPage from '../pages/LoginPage'
 
 function renderLogin() {
@@ -71,5 +71,43 @@ describe('LoginPage — MFA step', () => {
     await userEvent.type(screen.getByLabelText(/authenticator code/i), '000000')
     await userEvent.click(screen.getByRole('button', { name: /verify/i }))
     expect(await screen.findByText(/invalid authenticator code/i)).toBeInTheDocument()
+  })
+})
+
+describe('LoginPage — login catch branch', () => {
+  it('shows invalid credentials error when onLogin rejects', async () => {
+    const onLogin = vi.fn().mockRejectedValue(new Error('unauthorized'))
+    render(<MemoryRouter><LoginPage onLogin={onLogin} /></MemoryRouter>)
+    await userEvent.type(screen.getByLabelText(/email/i), 'admin@examshield.local')
+    await userEvent.type(screen.getByLabelText(/password/i), 'wrongpass')
+    await userEvent.click(screen.getByRole('button', { name: /sign in/i }))
+    expect(await screen.findByText(/invalid credentials/i)).toBeInTheDocument()
+  })
+})
+
+describe('LoginPage — OIDC providers', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
+
+  it('renders SSO buttons for known providers and unknown provider fallback', async () => {
+    vi.stubEnv('VITE_OIDC_PROVIDERS', 'google,azure,custom')
+    vi.resetModules()
+    const { default: LoginPageDyn } = await import('../pages/LoginPage')
+    render(<MemoryRouter><LoginPageDyn /></MemoryRouter>)
+    expect(screen.getByRole('button', { name: /continue with google/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /continue with microsoft/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /continue with custom/i })).toBeInTheDocument()
+  })
+
+  it('clicking an OIDC provider button triggers handleOidcLogin without throwing', async () => {
+    vi.stubEnv('VITE_OIDC_PROVIDERS', 'google')
+    vi.resetModules()
+    const { default: LoginPageDyn } = await import('../pages/LoginPage')
+    render(<MemoryRouter><LoginPageDyn /></MemoryRouter>)
+    expect(() =>
+      fireEvent.click(screen.getByRole('button', { name: /continue with google/i }))
+    ).not.toThrow()
   })
 })

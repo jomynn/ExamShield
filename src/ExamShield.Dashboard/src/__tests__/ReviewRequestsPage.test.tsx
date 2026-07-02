@@ -138,4 +138,78 @@ describe('ReviewRequestsPage', () => {
       expect(apiClient.api.getAllReviewRequests).toHaveBeenCalledWith(undefined)
     )
   })
+
+  // ── Reject flow ──────────────────────────────────────────────────────────────
+
+  it('shows rejection note textarea when Reject is clicked', async () => {
+    renderPage()
+    await screen.findByText('OCR misread question 5')
+    fireEvent.click(screen.getByRole('button', { name: /act/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^reject$/i }))
+    expect(screen.getByPlaceholderText(/rejection reason/i)).toBeInTheDocument()
+  })
+
+  it('shows Confirm Reject button after clicking Reject', async () => {
+    renderPage()
+    await screen.findByText('OCR misread question 5')
+    fireEvent.click(screen.getByRole('button', { name: /act/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^reject$/i }))
+    expect(screen.getByRole('button', { name: /confirm reject/i })).toBeInTheDocument()
+  })
+
+  it('Confirm Reject is disabled when rejection reason is empty', async () => {
+    renderPage()
+    await screen.findByText('OCR misread question 5')
+    fireEvent.click(screen.getByRole('button', { name: /act/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^reject$/i }))
+    expect(screen.getByRole('button', { name: /confirm reject/i })).toBeDisabled()
+  })
+
+  it('calls rejectReviewRequest with note on Confirm Reject', async () => {
+    renderPage()
+    await screen.findByText('OCR misread question 5')
+    fireEvent.click(screen.getByRole('button', { name: /act/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^reject$/i }))
+    fireEvent.change(screen.getByPlaceholderText(/rejection reason/i), {
+      target: { value: 'Evidence insufficient' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /confirm reject/i }))
+    await waitFor(() =>
+      expect(apiClient.api.rejectReviewRequest).toHaveBeenCalledWith('rr-111', 'Evidence insufficient')
+    )
+  })
+
+  it('Cancel from reject mode returns to idle (Resolve/Reject buttons)', async () => {
+    renderPage()
+    await screen.findByText('OCR misread question 5')
+    fireEvent.click(screen.getByRole('button', { name: /act/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^reject$/i }))
+    await screen.findByPlaceholderText(/rejection reason/i)
+    fireEvent.click(screen.getByRole('button', { name: /^cancel$/i }))
+    expect(screen.getByRole('button', { name: /^resolve$/i })).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText(/rejection reason/i)).not.toBeInTheDocument()
+  })
+
+  it('Cancel from resolve mode returns to idle', async () => {
+    renderPage()
+    await screen.findByText('OCR misread question 5')
+    fireEvent.click(screen.getByRole('button', { name: /act/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^resolve$/i }))
+    await screen.findByPlaceholderText(/resolution note/i)
+    fireEvent.click(screen.getByRole('button', { name: /^cancel$/i }))
+    expect(screen.queryByPlaceholderText(/resolution note/i)).not.toBeInTheDocument()
+  })
+
+  it('shows pending count badge on Pending tab when viewing All tab', async () => {
+    vi.mocked(apiClient.api.getAllReviewRequests).mockResolvedValue({
+      items: [{ ...mockItems[0] }], // only pending item
+    })
+    renderPage()
+    await screen.findByText('OCR misread question 5')
+    fireEvent.click(screen.getByRole('button', { name: /^all$/i }))
+    // badge shows pending count when not on the Pending tab
+    await waitFor(() =>
+      expect(screen.getByText('1')).toBeInTheDocument()
+    )
+  })
 })

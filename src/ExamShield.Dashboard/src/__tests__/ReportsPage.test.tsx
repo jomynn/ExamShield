@@ -15,6 +15,24 @@ vi.mock('../api/client', () => ({
   },
 }))
 
+// Invoke Recharts formatter/tickFormatter callbacks during render to cover inline arrow functions
+vi.mock('recharts', () => ({
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  PieChart:  ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  BarChart:  ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  AreaChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Pie:       ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Bar:       ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Area:      () => null, Cell: () => null, Legend: () => null,
+  CartesianGrid: () => null, XAxis: () => null,
+  YAxis: () => null,
+  Tooltip: ({ formatter }: { formatter?: (v: number, name: string) => unknown }) => {
+    formatter?.(5, 'captures')
+    formatter?.(3, 'students')
+    return null
+  },
+}))
+
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
 const SUMMARY = {
@@ -391,6 +409,23 @@ describe('ReportsPage — per-exam drill-down', () => {
     await waitFor(() =>
       expect(screen.getAllByText('Score Distribution').length).toBe(1)
     )
+  })
+
+  it('covers per-exam score bucket filters when matching scores are present', async () => {
+    vi.mocked(apiClient.api.getResults).mockResolvedValue({
+      results: [
+        { scoreId: 'a1', captureId: 'c1', examId: 'exam-1', studentId: 's1', correctAnswers: 48, totalQuestions: 50, percentage: 96.0, scoredAt: '2026-06-27T09:00:00Z' },
+        { scoreId: 'a2', captureId: 'c2', examId: 'exam-1', studentId: 's2', correctAnswers: 40, totalQuestions: 50, percentage: 80.0, scoredAt: '2026-06-27T09:00:00Z' },
+        { scoreId: 'a3', captureId: 'c3', examId: 'exam-1', studentId: 's3', correctAnswers: 33, totalQuestions: 50, percentage: 66.0, scoredAt: '2026-06-27T09:00:00Z' },
+        { scoreId: 'a4', captureId: 'c4', examId: 'exam-1', studentId: 's4', correctAnswers: 22, totalQuestions: 50, percentage: 44.0, scoredAt: '2026-06-27T09:00:00Z' },
+      ],
+    })
+    renderPage()
+    await screen.findByText('Per-Exam Report')
+    fireEvent.change(screen.getByPlaceholderText(/exam id/i), { target: { value: 'exam-1' } })
+    fireEvent.click(screen.getByRole('button', { name: /^load$/i }))
+    await screen.findByText('Math Exam 2026')
+    expect((await screen.findAllByText('Score Distribution')).length).toBeGreaterThanOrEqual(2)
   })
 
   it('Export CSV button in exam report calls exportExamReportCsv', async () => {

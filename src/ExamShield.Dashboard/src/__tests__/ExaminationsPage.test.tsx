@@ -179,6 +179,27 @@ describe('ExaminationsPage — create exam', () => {
 
     await waitFor(() => expect(screen.queryByLabelText(/exam name/i)).not.toBeInTheDocument())
   })
+
+  it('description field onChange updates the value', async () => {
+    renderPage()
+    await screen.findByRole('button', { name: /create exam/i })
+    fireEvent.click(screen.getByRole('button', { name: /create exam/i }))
+    const descInput = screen.getByLabelText(/description/i)
+    fireEvent.change(descInput, { target: { value: 'Advanced placement exam' } })
+    expect(descInput).toHaveValue('Advanced placement exam')
+  })
+
+  it('scheduledAt and endsAt fields onChange update the create form values', async () => {
+    renderPage()
+    await screen.findByRole('button', { name: /create exam/i })
+    fireEvent.click(screen.getByRole('button', { name: /create exam/i }))
+    const startInput = screen.getByLabelText(/scheduled start/i)
+    const endInput = screen.getByLabelText(/scheduled end/i)
+    fireEvent.change(startInput, { target: { value: '2026-08-01T09:00' } })
+    fireEvent.change(endInput, { target: { value: '2026-08-01T12:00' } })
+    expect(startInput).toHaveValue('2026-08-01T09:00')
+    expect(endInput).toHaveValue('2026-08-01T12:00')
+  })
 })
 
 // ── Search & filter ───────────────────────────────────────────────────────────
@@ -222,6 +243,32 @@ describe('ExaminationsPage — search and filter', () => {
       )
     )
   })
+
+  it('filters by scheduledFrom when datetime-local input changes', async () => {
+    renderPage()
+    await screen.findByText('Mathematics Final 2026')
+    fireEvent.change(screen.getByTitle('Scheduled from'), {
+      target: { value: '2026-06-01T08:00' },
+    })
+    await waitFor(() =>
+      expect(apiClient.api.getExams).toHaveBeenCalledWith(
+        1, 20, undefined, undefined, '2026-06-01T08:00', undefined
+      )
+    )
+  })
+
+  it('filters by scheduledTo when datetime-local input changes', async () => {
+    renderPage()
+    await screen.findByText('Mathematics Final 2026')
+    fireEvent.change(screen.getByTitle('Scheduled to'), {
+      target: { value: '2026-06-30T23:59' },
+    })
+    await waitFor(() =>
+      expect(apiClient.api.getExams).toHaveBeenCalledWith(
+        1, 20, undefined, undefined, undefined, '2026-06-30T23:59'
+      )
+    )
+  })
 })
 
 // ── Export CSV ────────────────────────────────────────────────────────────────
@@ -239,6 +286,19 @@ describe('ExaminationsPage — export CSV', () => {
     await waitFor(() =>
       expect(apiClient.api.exportExams).toHaveBeenCalled()
     )
+  })
+
+  it('triggers blob URL creation and revocation after export', async () => {
+    const createObjURL = vi.fn(() => 'blob:test-url')
+    const revokeObjURL = vi.fn()
+    Object.defineProperty(URL, 'createObjectURL', { value: createObjURL, configurable: true })
+    Object.defineProperty(URL, 'revokeObjectURL', { value: revokeObjURL, configurable: true })
+
+    renderPage()
+    fireEvent.click(await screen.findByRole('button', { name: /export csv/i }))
+
+    await waitFor(() => expect(createObjURL).toHaveBeenCalled())
+    expect(revokeObjURL).toHaveBeenCalledWith('blob:test-url')
   })
 })
 
@@ -327,6 +387,28 @@ describe('ExaminationsPage — edit exam modal', () => {
     expect(screen.queryByRole('heading', { name: /edit exam/i })).not.toBeInTheDocument()
     expect(apiClient.api.updateExam).not.toHaveBeenCalled()
   })
+
+  it('description, scheduledAt and endsAt onChange update the edit form field values', async () => {
+    renderPage()
+    await screen.findByText('Mathematics Final 2026')
+    fireEvent.click(screen.getByRole('button', { name: /^edit$/i }))
+    await screen.findByRole('heading', { name: /edit exam/i })
+
+    const modal = screen.getByRole('heading', { name: /edit exam/i })
+      .closest('div[class*="bg-card"]')! as HTMLElement
+
+    const descInput = modal.querySelector('input[placeholder="Description (optional)"]')! as HTMLInputElement
+    fireEvent.change(descInput, { target: { value: 'Updated description' } })
+    expect(descInput.value).toBe('Updated description')
+
+    const [scheduledInput, endsInput] = Array.from(
+      modal.querySelectorAll<HTMLInputElement>('input[type="datetime-local"]')
+    )
+    fireEvent.change(scheduledInput, { target: { value: '2026-09-01T09:00' } })
+    fireEvent.change(endsInput, { target: { value: '2026-09-01T12:00' } })
+    expect(scheduledInput.value).toBe('2026-09-01T09:00')
+    expect(endsInput.value).toBe('2026-09-01T12:00')
+  })
 })
 
 // ── Active exam actions: Answer Key, Students, Close ─────────────────────────
@@ -410,6 +492,18 @@ describe('ExaminationsPage — Answer Key modal', () => {
     const modal = alreadySetHeading.closest('div[class*="bg-background"]')!
     fireEvent.click(within(modal).getByRole('button', { name: /^close$/i }))
     expect(screen.queryByText(/already set/i)).not.toBeInTheDocument()
+  })
+
+  it('closes the answer key modal after successful save', async () => {
+    renderPage()
+    await screen.findByText('Physics Midterm')
+    fireEvent.click(screen.getByRole('button', { name: /answer key/i }))
+    const inputs = await screen.findAllByPlaceholderText('A')
+    fireEvent.change(inputs[0], { target: { value: 'B' } })
+    fireEvent.click(screen.getByRole('button', { name: /save answer key/i }))
+    await waitFor(() =>
+      expect(screen.queryByRole('heading', { name: /set answer key/i })).not.toBeInTheDocument()
+    )
   })
 })
 

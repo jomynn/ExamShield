@@ -173,6 +173,20 @@ describe('AuditLogPage — pagination', () => {
       )
     )
   })
+
+  it('goes back to page 1 when Previous is clicked from page 2', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText(/page 1 of 3/i)
+    await user.click(screen.getByRole('button', { name: /next page/i }))
+    await waitFor(() =>
+      expect(apiClient.api.getAuditLog).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }))
+    )
+    await user.click(screen.getByRole('button', { name: /previous page/i }))
+    await waitFor(() =>
+      expect(apiClient.api.getAuditLog).toHaveBeenCalledWith(expect.objectContaining({ page: 1 }))
+    )
+  })
 })
 
 describe('AuditLogPage — export', () => {

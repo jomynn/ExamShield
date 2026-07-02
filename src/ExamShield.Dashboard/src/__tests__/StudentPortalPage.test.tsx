@@ -61,8 +61,10 @@ function lookUp(id = STUDENT_ID) {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.unstubAllGlobals()
   vi.mocked(apiClient.api.getStudentResults).mockResolvedValue(mockResults)
   vi.mocked(apiClient.api.submitReviewRequest).mockResolvedValue(undefined)
+  vi.mocked(apiClient.api.downloadCertificate).mockResolvedValue(new Blob(['%PDF'], { type: 'application/pdf' }))
 })
 
 describe('StudentPortalPage — layout', () => {
@@ -167,6 +169,38 @@ describe('StudentPortalPage — lookup', () => {
     renderPage()
     lookUp()
     expect(await screen.findByText(/no scored results/i)).toBeInTheDocument()
+  })
+
+  it('renders percentage in red when score is below 60%', async () => {
+    vi.mocked(apiClient.api.getStudentResults).mockResolvedValue({
+      studentId: STUDENT_ID,
+      results: [{ ...mockResults.results[0], scoreId: 's3', percentage: 40.0 }],
+    })
+    renderPage()
+    lookUp()
+    const pctEl = await screen.findByText('40.0%')
+    expect(pctEl).toHaveClass('text-red-500')
+  })
+
+  it('calls downloadCertificate with captureId when PDF button clicked', async () => {
+    vi.stubGlobal('URL', { createObjectURL: vi.fn(() => 'blob:mock-pdf'), revokeObjectURL: vi.fn() })
+    renderPage()
+    lookUp()
+    const pdfBtns = await screen.findAllByRole('button', { name: /pdf/i })
+    fireEvent.click(pdfBtns[0])
+    await waitFor(() =>
+      expect(apiClient.api.downloadCertificate).toHaveBeenCalledWith('c1')
+    )
+  })
+
+  it('generates filename from exam name when downloading PDF', async () => {
+    const createObjectURL = vi.fn(() => 'blob:mock-pdf')
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL: vi.fn() })
+    renderPage()
+    lookUp()
+    const pdfBtns = await screen.findAllByRole('button', { name: /pdf/i })
+    fireEvent.click(pdfBtns[0])
+    await waitFor(() => expect(createObjectURL).toHaveBeenCalled())
   })
 })
 

@@ -122,4 +122,11 @@ describe('UserPanel', () => {
     renderPanel({ userName: 'John Doe' })
     expect(screen.getByText('JD')).toBeInTheDocument()
   })
+
+  it('calls onClose when "Active Sessions" security link is clicked', () => {
+    const onClose = vi.fn()
+    renderPanel({ onClose })
+    fireEvent.click(screen.getByText('Active Sessions'))
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
 })

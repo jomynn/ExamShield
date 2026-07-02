@@ -98,4 +98,15 @@ describe('NotificationPanel', () => {
     // type.replace(/([A-Z])/g, ' $1').trim() → "Hash Mismatch"
     expect(screen.getByText('Hash Mismatch')).toBeInTheDocument()
   })
+
+  it('calls onClose when mousedown fires outside the panel and anchor', () => {
+    const onClose = vi.fn()
+    const btn = document.createElement('button')
+    document.body.appendChild(btn)
+    const ref = { current: btn } as React.RefObject<HTMLButtonElement | null>
+    renderPanel({ onClose, anchorRef: ref })
+    fireEvent.mouseDown(document.body)
+    expect(onClose).toHaveBeenCalledTimes(1)
+    btn.remove()
+  })
 })

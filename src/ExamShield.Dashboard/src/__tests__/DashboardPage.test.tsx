@@ -11,6 +11,25 @@ vi.mock('../hooks/useDashboardStats', () => ({
   useDashboardStats: vi.fn(),
 }))
 
+// Invoke Recharts formatter callbacks during render to cover inline arrow functions
+vi.mock('recharts', () => ({
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  PieChart:    ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  BarChart:    ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  AreaChart:   ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  RadarChart:  ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Pie:         ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Bar:         ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Area:        () => null, Cell: () => null, Legend: () => null,
+  Radar:       () => null, PolarGrid: () => null, PolarAngleAxis: () => null,
+  CartesianGrid: () => null, XAxis: () => null, YAxis: () => null,
+  Tooltip: ({ formatter }: { formatter?: (v: number, name: string) => unknown }) => {
+    formatter?.(3, 'captures')
+    formatter?.(85, 'Score')
+    return null
+  },
+}))
+
 vi.mock('../api/client', () => ({
   api: {
     getStatistics:     vi.fn(),

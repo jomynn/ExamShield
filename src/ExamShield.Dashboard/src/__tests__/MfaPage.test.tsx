@@ -119,4 +119,21 @@ describe('MfaPage', () => {
     const inputs = screen.getAllByPlaceholderText(/6-digit code/i)
     expect(inputs).toHaveLength(1)
   })
+
+  it('shows invalid code error when verifyMfa rejects', async () => {
+    vi.mocked(apiClient.api.verifyMfa).mockRejectedValue(new Error('invalid'))
+    renderPage()
+    fireEvent.click(await screen.findByRole('button', { name: /enable mfa/i }))
+    await screen.findByPlaceholderText(/6-digit code/i)
+    fireEvent.change(screen.getByPlaceholderText(/6-digit code/i), { target: { value: '000000' } })
+    fireEvent.click(screen.getByRole('button', { name: /verify/i }))
+    expect(await screen.findByText(/invalid code/i)).toBeInTheDocument()
+  })
+
+  it('calls disableMfa when Disable MFA button is clicked', async () => {
+    vi.mocked(apiClient.api.getMfaStatus).mockResolvedValue({ mfaEnabled: true })
+    renderPage()
+    fireEvent.click(await screen.findByRole('button', { name: /disable mfa/i }))
+    await waitFor(() => expect(apiClient.api.disableMfa).toHaveBeenCalled())
+  })
 })

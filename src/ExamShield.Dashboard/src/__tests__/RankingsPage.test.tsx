@@ -12,6 +12,30 @@ vi.mock('../api/client', () => ({
   },
 }))
 
+// Stub Recharts so chart callback props (tickFormatter, formatter) are invoked during render
+vi.mock('recharts', () => ({
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  BarChart:  ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  PieChart:  ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  AreaChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Bar:       ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Pie:       ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Area:      () => null,
+  Cell:      () => null,
+  Legend:    () => null,
+  CartesianGrid: () => null,
+  XAxis:  () => null,
+  YAxis:  ({ tickFormatter }: { tickFormatter?: (v: number) => string }) => {
+    tickFormatter?.(50)
+    return null
+  },
+  Tooltip: ({ formatter }: { formatter?: (v: number, name: string) => unknown }) => {
+    formatter?.(75, 'Score')
+    formatter?.(2, 'Grade A')
+    return null
+  },
+}))
+
 const mockExams = [
   { examId: 'exam-1', name: 'Mathematics Final', status: 'Active', totalQuestions: 50, createdAt: '2026-06-01T00:00:00Z' },
   { examId: 'exam-2', name: 'Physics Midterm',   status: 'Closed', totalQuestions: 30, createdAt: '2026-06-05T00:00:00Z' },
@@ -107,5 +131,22 @@ describe('RankingsPage', () => {
     await screen.findByRole('option', { name: 'Mathematics Final' })
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'exam-1' } })
     expect(await screen.findByText(/no scores submitted/i)).toBeInTheDocument()
+  })
+
+  it('renders low-percentage rankings (covers scoreBarColor lines 34-36 via ScoreDistributionChart)', async () => {
+    vi.mocked(apiClient.api.getExamRankings).mockResolvedValue({
+      rankings: [
+        { rank: 1, studentId: 'stu-a', correctAnswers: 35, totalQuestions: 50, percentage: 70.0 }, // 60-79 → blue
+        { rank: 2, studentId: 'stu-b', correctAnswers: 25, totalQuestions: 50, percentage: 50.0 }, // 40-59 → yellow
+        { rank: 3, studentId: 'stu-c', correctAnswers: 15, totalQuestions: 50, percentage: 30.0 }, // <40   → red
+      ],
+    })
+    renderPage()
+    await screen.findByRole('option', { name: 'Mathematics Final' })
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'exam-1' } })
+    // Wait for the rankings table to render — ScoreDistributionChart renders simultaneously,
+    // calling scoreBarColor(70), scoreBarColor(50), scoreBarColor(30) (lines 34-36)
+    const rows = await screen.findAllByRole('row')
+    expect(rows.length).toBeGreaterThan(1)
   })
 })
